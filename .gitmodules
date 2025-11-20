@@ -1,0 +1,3 @@
+[submodule "splatter-image"]
+	path = splatter-image
+	url = git@github.com:Kacper-M-Michalik/splatter-image.git
