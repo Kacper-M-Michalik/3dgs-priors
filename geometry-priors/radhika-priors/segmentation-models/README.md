@@ -1,0 +1,1 @@
+Note that the RGB images used when testing the Segment Anything Model (SAM: https://github.com/facebookresearch/segment-anything), are the same as the rgb images in the shapenet data within depth-models. 
