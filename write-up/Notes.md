@@ -24,3 +24,15 @@ Segmentation Maks - DINO provides tokens describing segment, can feed into model
 Plucker Coords - Basically a map where each pixel is a vector representing the ray direction, CNN does not understand that the top left pixel is a ray in some specific angle, so feeding this info should be good, ray directions need to be calculated on virtual camera information (focal length, etc.).
 
 
+Adjusting Model (New Channels):
+1. Modify Input layer channel count
+2. Copy old weights into new input layer
+3. Zero all weights for new channels
+4. Freeze Model except new layer
+5. (Fine Tuning) Add LoRA Layers to the rest of model, (LoRA matrices stay unfrozen)
+6. Train
+
+Adding Multi Modal data:
+1. Add FiLM layer between blocks and/or at bottleneck -> Requires creating anotehr model that takes input multimodal data, output alpha + beta that get applied to intermediate channels
+OR
+1. Add Cross Attention layer between blocks and/or at bottleneck -> Requires model than can upscale pixels to match multimodal embedding dimensions or vice versa
