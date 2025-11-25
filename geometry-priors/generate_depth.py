@@ -1,10 +1,5 @@
-import sys
-sys.path.insert(0, '/content/models/depth/lib/python3.12/site-packages')
-
 import torch
-import numpy as np
 import shutil
-import pandas as pd
 import cv2
 import os
 import argparse
@@ -21,10 +16,9 @@ def pred_depth(device, model, transform, rgb):
     pred = pred / (pred.max() + 1e-8)
     return pred
 
-def main(args):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-  
+def main(args):  
     # Select large model
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     midas_model_type = "DPT_Large"  
     model = torch.hub.load("intel-isl/MiDaS", midas_model_type).to(device).eval()
     transforms = torch.hub.load("intel-isl/MiDaS", "transforms")
@@ -36,39 +30,30 @@ def main(args):
     print(out_path)
 
     for set in ["test", "train", "val"]:
-        subset = "cars_{set}"
+        subset = "cars_{}".format(set)
         search_path = os.path.join(in_path, subset)
         dest_path = os.path.join(out_path, subset)
 
         intrins = sorted(glob.glob(os.path.join(search_path, "*", "intrinsics.txt")))
         for intrin in intrins:
-            folder_name = os.path.dirname(intrin)
-            folder_path = os.path.basepath(intrin)
-            print(folder_name)
-            print(folder_path)
-            break
-            
-            intrin_out_path = os.path.join(dest_path, folder_name)
-            print(intrin_out_path)
-            #if not os.path.exists(intrin_out_path):
-            #    shutil.copytree(folder_path, dest_path)
+            folder_path = os.path.dirname(intrin)       
+            intrin_out_path = os.path.join(dest_path, os.path.basename(folder_path))
 
-            #os.mkdir()
-            # add "rgb"
-            #create output dir + "depth"
-            #get all pictures
-                #loop through all, call pred_depth
-                    #rgb = cv2.imread(path)[:, :, ::-1]
-                    #     # Produce depth map array
-                    #     depth = pred_depth(device, model, transform, rgb) 
-                    #     # Convert numpy array back to tensor
-                    #     pred_tensor = torch.from_numpy(depth).float() 
+            if not os.path.exists(intrin_out_path):
+                shutil.copytree(folder_path, intrin_out_path)
+        
+            depth_out_path = os.path.join(intrin_out_path, "depth") 
+            if not os.path.exists(depth_out_path):
+                os.mkdir(depth_out_path)
 
-                    #     # torch.save(pred_tensor, output_path)
-
-                    #     # The following is needed only if edge operator results are required
-                    #     # visualize_edges(rgb, depth, img)
-                          #save picture in depth
+            rgbs = glob.glob(os.path.join(folder_path, "rgb", "*.png"))
+            for rgb_path in rgbs:
+                depth_file_id = os.path.basename(rgb_path).split('.')[0] + ".pt"
+                final_output_path = os.path.join(depth_out_path, depth_file_id)
+                rgb = cv2.imread(rgb_path)[:, :, ::-1]
+                depth = pred_depth(device, model, transform, rgb)
+                pred_tensor = torch.from_numpy(depth).float() 
+                torch.save(pred_tensor, final_output_path)    
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Evaluate model')
