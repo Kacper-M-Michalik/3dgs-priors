@@ -87,8 +87,8 @@ def main(args):
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Generate normal map priors')
 
-    parser.add_argument('--in_folder', type=str, required=True)
-    parser.add_argument('--out_folder', type=str, required=True)
+    parser.add_argument('--in_folder', type=str, required=True, help='Input folder containing images')
+    parser.add_argument('--out_folder', type=str, required=True, help='Output folder to save normal priors')
 
     parser.add_argument(
         '--checkpoint',
@@ -100,11 +100,12 @@ def parse_arguments():
     parser.add_argument('--sampling_ratio', type=float, default=0.4)
     parser.add_argument('--importance_ratio', type=float, default=0.7)
 
+    # Model arguments
     parser.add_argument('--input_height', type=int, default=224)
     parser.add_argument('--input_width', type=int, default=224)
 
     parser.add_argument('--architecture', type=str, default="BN")
-    parser.add_argument('--pretrained', type=str, default="scannet")
+    parser.add_argument('--pretrained', type=str, default="scannet", help = "Checkpoints")
 
     return parser.parse_args()
 
