@@ -101,8 +101,8 @@ def parse_arguments():
     parser.add_argument('--importance_ratio', type=float, default=0.7)
 
     # Model arguments
-    parser.add_argument('--input_height', type=int, default=224)
-    parser.add_argument('--input_width', type=int, default=224)
+    parser.add_argument('--input_height', type=int, default=512)
+    parser.add_argument('--input_width', type=int, default=512)
 
     parser.add_argument('--architecture', type=str, default="BN")
     parser.add_argument('--pretrained', type=str, default="scannet", help = "Checkpoints")
