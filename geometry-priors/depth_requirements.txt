@@ -1,8 +1,8 @@
 --extra-index-url https://download.pytorch.org/whl/cu117
-torch==1.13.0+cu117
-torchvision==0.14.0+cu117
-numpy==1.23.4
-opencv-python==4.6.0.66
-imutils==0.5.4
-timm==0.6.12
-einops==0.6.0
+torch
+torchvision
+numpy
+opencv-python
+imutils
+timm
+einops
