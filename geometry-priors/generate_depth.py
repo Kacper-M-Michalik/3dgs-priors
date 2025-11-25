@@ -111,8 +111,8 @@ def main(args):
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Evaluate model')
-    parser.add_argument('--in_folder', type=str, default='out', required = True, help='Inut folder to process')
-    parser.add_argument('--out_folder', type=str, default='out', required = True, help='Output folder to save resultsing files to')
+    parser.add_argument('--in_folder', type=str, default='out', required = True, help='Input folder to process')
+    parser.add_argument('--out_folder', type=str, default='out', required = True, help='Output folder to save resulting files to')
     return parser.parse_args()
 
 if __name__ == "__main__":

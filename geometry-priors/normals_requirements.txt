@@ -1,0 +1,13 @@
+--extra-index-url https://download.pytorch.org/whl/cu117
+torch
+torchvision
+numpy
+opencv-python
+imutils
+timm
+einops
+Pillow
+tqdm
+scipy
+argparse
+matplotlib
