@@ -1,10 +1,10 @@
 --extra-index-url https://download.pytorch.org/whl/cu117
 torch
 torchvision
-pyarrow
 pandas
 numpy
 opencv-python
 imutils
 timm
 einops
+pyarrow

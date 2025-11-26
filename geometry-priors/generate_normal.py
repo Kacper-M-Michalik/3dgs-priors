@@ -3,22 +3,19 @@ from torch.utils.data import Dataset, DataLoader
 from typing import NamedTuple
 import pandas as pd
 import numpy as np
-import cv2
 import os
 import argparse
 import os
 import glob
-
 import sys
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_PATH = os.path.join(SCRIPT_DIR, "surface_normal_uncertainty")
-
 if REPO_PATH not in sys.path:
     sys.path.append(REPO_PATH)
 
 from models.NNET import NNET
 from data.dataloader_custom import CustomLoadPreprocess
-import utils.utils as utils
 
 class Subset(NamedTuple):
     name: str
@@ -29,31 +26,24 @@ class ProcessedImage(NamedTuple):
     file_id: int
     image: np.array
 
-class ImageDataset(Dataset):
-    def __init__(self, file_paths, transform):
-        self.file_paths = file_paths
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.file_paths)
-
-    def __getitem__(self, idx):
-        rgb_path = self.file_paths[idx]        
-        rgb = cv2.imread(rgb_path)[:, :, ::-1]         
-        file_id = int(os.path.basename(rgb_path).split('.')[0]) # + ".pt"        
-        # Return processed tensor and filename
-        return self.transform(rgb).squeeze(0), file_id
-
 def save(path, df):
     df.to_parquet(path)
 
 def main(args):  
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = NNET(args).to(device).eval()
-    model = utils.load_checkpoint(args.checkpoint, model)
+    ckpt = torch.load(args.checkpoint, map_location='cpu')['model']
+    load_dict = {}
+    for k, v in ckpt.items():
+        if k.startswith('module.'):
+            k_ = k.replace('module.', '')
+            load_dict[k_] = v
+        else:
+            load_dict[k] = v
+    model.load_state_dict(load_dict)    
     model.eval()
 
-    batch_size = 16
+    batch_size = 8
     workers = 4
     # Needed for downsize
     target_size = (128, 128) 
@@ -93,46 +83,37 @@ def main(args):
             
             rgb_folder = os.path.join(folder_path, "rgb")
             
-            # LOOK AT THEIR LOADER
+            # Use the custom loader, batchsize other than 1 result in crashes/frozen notebook
             dataset = CustomLoadPreprocess(args, rgb_folder)
-            loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=workers)
+            loader = DataLoader(dataset, batch_size=batch_size, drop_last=False, shuffle=False, num_workers=workers)
 
             print("Intrin Num:{}".format(i))
 
             # Only append a fully completed batch, allows us to safely resume a run thats been stopped
             full_batch = []
             with torch.no_grad():
-                for sample in loader:
-                    img = sample["img"].to(device)        
-                    file_id = sample["img_name"][0]
-                
-                    norm_out_list, _, _ = model(img)
+                for batch in loader:                    
+                    imgs = batch["img"].to(device)        
+                    file_ids = batch["img_name"]
 
-                    print(file_id)
-                    print(norm_out_list)
-
-                    break
-                    
-                    # preds = torch.nn.functional.interpolate(
-                    #     preds.unsqueeze(1),
-                    #     size=target_size,
-                    #     mode="bicubic",
-                    #     align_corners=False
-                    # ).squeeze(1)
-
-                    # The fuck?
+                    norm_out_list, _, _ = model(imgs)   
                     norm_out = norm_out_list[-1]
-                    pred_norm = norm_out[:, :3, :, :]
-                    arr = pred_norm.detach().cpu().permute(0, 2, 3, 1).numpy()
-                    arr = ((arr + 1.0) * 0.5) * 255.0
-                    arr = np.clip(arr, 0, 255).astype(np.uint8)
-                    out_file = os.path.join(normal_out_path, img_name)
-                    img_rgb = arr[0]           
-                    img_bgr = img_rgb[:, :, ::-1]
-                    cv2.imwrite(out_file, img_bgr)
+                    norm_out = norm_out[:, :3, :, :]
 
-                    #.append(ProcessedImage(uuid=uuid, file_id=file_id.item(), image=preds_uint8[j].tobytes()))
+                    norm_out = torch.nn.functional.interpolate(
+                         norm_out,
+                         size=target_size,
+                         mode="bicubic",
+                         align_corners=False
+                    )
 
+                    norm_out = torch.nn.functional.normalize(norm_out, dim=1)
+                    norm_out = (norm_out + 1) * 127.5
+                    norm_out = norm_out.clamp(0, 255).byte().cpu().numpy()
+                   
+                    for j, file_id in enumerate(file_ids):   
+                        full_batch.append(ProcessedImage(uuid=uuid, file_id=file_id, image=norm_out[j].tobytes()))
+            
             for entry in full_batch:
                 data.append({
                     "split": set.name,
