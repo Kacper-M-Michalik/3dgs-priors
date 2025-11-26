@@ -1,22 +1,12 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
-from typing import NamedTuple
 import pandas as pd
-import numpy as np
+import shutil
 import cv2
 import os
 import argparse
 import os
 import glob
-
-class Subset(NamedTuple):
-    name: str
-    resume_index: 0
-
-class ProcessedImage(NamedTuple):
-    uuid: str
-    file_id: int
-    depth: np.array
 
 class ImageDataset(Dataset):
     def __init__(self, file_paths, transform):
@@ -29,12 +19,9 @@ class ImageDataset(Dataset):
     def __getitem__(self, idx):
         rgb_path = self.file_paths[idx]        
         rgb = cv2.imread(rgb_path)[:, :, ::-1]         
-        file_id = int(os.path.basename(rgb_path).split('.')[0]) # + ".pt"        
+        file_id = os.path.basename(rgb_path) # .split('.')[0] + ".pt"        
         # Return processed tensor and filename
         return self.transform(rgb).squeeze(0), file_id
-
-def save(path, df):
-    df.to_parquet(path)
 
 def main(args):  
     # Select large model
@@ -44,43 +31,41 @@ def main(args):
     transforms = torch.hub.load("intel-isl/MiDaS", "transforms")
     transform = transforms.dpt_transform
 
+    in_path = os.path.join(args.in_folder, "srn_cars")    
+    out_path = os.path.join(args.out_folder, "srn_cars_prior")  
+    print(in_path)
+    print(out_path)
+    
+    if not os.path.exists(out_path):
+        shutil.copytree(in_path, out_path)
+
     batch_size = 16
     workers = 4
+
     # Needed for downsize
     target_size = (128, 128) 
 
-    in_path = os.path.join(args.in_folder, "srn_cars")    
-    out_path = os.path.join(args.out_folder, "srn_cars_depths.parquet")  
-    print(in_path)
-    print(out_path)
-
-    set_names = ["test", "train", "val"] 
-    sets = []
-
-    df = pd.DataFrame()
-    data = []
-    if os.path.exists(out_path):
-        df = pd.read_parquet(out_path)
-        for set in set_names:
-            processed_uuids = df.loc[df['split'] == set, 'uuid'].unique()
-            processed_uuids.sort()
-            sets.append(Subset(name=set, resume_index=len(processed_uuids)))
-    else:
-      for set in set_names:
-          sets.append(Subset(name=set, resume_index=0))
-
-    for set in sets:
-        subset = "cars_{}".format(set.name)
+    for set in ["test", "train", "val"]:
+        subset = "cars_{}".format(set)
         search_path = os.path.join(in_path, subset)
+        dest_path = os.path.join(out_path, subset)
 
         # Allows us to resume from previous progress
+        resume_index = 0
         intrins = sorted(glob.glob(os.path.join(search_path, "*", "intrinsics.txt")))
-        
-        print("Split: {}, Resuming from index {}".format(set.name, set.resume_index))
 
-        for i, intrin in enumerate(intrins[set.resume_index:], start=set.resume_index):
-            folder_path = os.path.dirname(intrin)   
-            uuid = os.path.basename(folder_path)        
+        for i, intrin in enumerate(intrins):
+            if not os.path.exists(os.path.join(dest_path, os.path.basename(os.path.dirname(intrin)), "depth")):
+                resume_index = max(0, i-1)
+                break
+        
+        print("Resuming from index {}".format(resume_index))
+
+        for i, intrin in enumerate(intrins[resume_index:], start=resume_index):
+            folder_path = os.path.dirname(intrin)           
+            depth_out_path = os.path.join(dest_path, os.path.basename(folder_path), "depth") 
+            if not os.path.exists(depth_out_path):
+                os.mkdir(depth_out_path)
 
             rgbs = glob.glob(os.path.join(folder_path, "rgb", "*.png"))
             dataset = ImageDataset(rgbs, transform)
@@ -88,8 +73,6 @@ def main(args):
 
             print("Intrin Num:{}, RGBs found: {}".format(i, len(rgbs)))
 
-            # Only append a fully completed batch, allows us to safely resume a run thats been stopped
-            full_batch = []
             with torch.no_grad():
                 for batch_imgs, batch_filenames in loader:      
                     # Prediction              
@@ -109,33 +92,31 @@ def main(args):
                     min_val, max_val = torch.aminmax(batch_flat, dim=1, keepdim=True)
                     min_val = min_val.view(preds.size(0), 1, 1)
                     max_val = max_val.view(preds.size(0), 1, 1)
-                    preds_normalized = (preds - min_val) / (max_val - min_val + 1e-8)                    
+                    preds_normalized = (preds - min_val) / (max_val - min_val + 1e-8)
+                    # Save as tensor
+                    #preds_cpu = preds_normalized.cpu()   
+                    #for j, filename in enumerate(batch_filenames):
+                    #    final_output_path = os.path.join(depth_out_path, filename)
+                    #    torch.save(preds_cpu[j].clone(), final_output_path)         
+
+                    # Save as image
+                    #preds_uint8 = preds_normalized.mul(255).byte().cpu().numpy()
+                    #for j, filename in enumerate(batch_filenames):    
+                    #    final_output_path = os.path.join(depth_out_path, filename)
+                    #    cv2.imwrite(final_output_path, preds_uint8[j])
+                    
+                    # Save as iamge to dataframe
                     preds_uint8 = preds_normalized.mul(255).byte().cpu().numpy()
+                    for j, filename in enumerate(batch_filenames):    
+                        final_output_path = os.path.join(depth_out_path, filename)
+                        cv2.imwrite(final_output_path, preds_uint8[j])
 
-                    for j, file_id in enumerate(batch_filenames):    
-                        # Clone necessary?
-                        full_batch.append(ProcessedImage(uuid=uuid, file_id=file_id.item(), depth=preds_uint8[j].tobytes()))
-
-            for entry in full_batch:
-                data.append({
-                    "split": set.name,
-                    "uuid": entry.uuid,
-                    "frame_id": entry.file_id,                    
-                    "depth": entry.depth
-                })
-
-            # Do occasional save if requested
-            if args.save_iter != -1 and ((i-1) % args.save_iter) == 0:
-                save(out_path, pd.concat([df, pd.DataFrame(data)], ignore_index=True))
-        
-        # Save on subset completion
-        save(out_path, pd.concat([df, pd.DataFrame(data)], ignore_index=True))                  
+                    
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Evaluate model')
-    parser.add_argument('--in_folder', type=str, default='out', required = True, help='Input folder to process')
-    parser.add_argument('--out_folder', type=str, default='out', required = True, help='Output folder to save resulting files to')
-    parser.add_argument('--save_iter', type=int, default=-1, help='How often to make an intermediate save processed depths')
+    parser.add_argument('--in_folder', type=str, default='out', required = True, help='Inut folder to process')
+    parser.add_argument('--out_folder', type=str, default='out', required = True, help='Output folder to save resultsing files to')
     return parser.parse_args()
 
 if __name__ == "__main__":
