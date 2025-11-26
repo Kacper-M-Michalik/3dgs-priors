@@ -148,6 +148,24 @@ The normal map generated for images when given larger input dimensions seem to h
 
 (talk about final model chosen and show example on a shapenet model)
 
+\subsubsection{Depth Map Exploration}
+Depth maps store the distance of a surface from the camera per-pixel. These distances vary in type, such as metric, which considers the physical distance from the camera to the observed point, and relative (such as those produced by the models below). Monocular depth estimation (MDE) models input just a singular image, and produce a depth map (relative distance). 
+
+Produced depth maps were compared against the ``ground truths'' produced by \url{https://github.com/Xharlie/ShapenetRender_more_variation}, as was done in the normal priors exploration. An example of the depth map produced by them is visible in Figure  \ref{ground_truth}. However, it is important to note that these depth map ``ground truths'' were not always perfect, as can be seen in the following example: 
+
+- (INSERT) Image needed here of poor ground truth. 
+
+This inclined us to take the quantitative results produced by comparing MDE models tested against these ground truths with a pinch of salt. For each produced depth map, the following metrics were used to compare against the ground truths. 
+\begin{enumerate}
+\item \textbf{Absolute Relative Error}: Measures the average difference between the predicted depth and the ground truth, normalised by the ground truth depth.
+\item \textbf{Root Mean Squared Error (RMSE)}: Calculates the standard deviation of the residual errors.
+\item \textbf{Scale-invariant RMSE (SI-RMSE)}: Computes the RMSE while ignoring the unknown absolute scale and shift between the prediction and ground truth.
+\item $\mathbf{\delta}$ at $\mathbf{1.25}$ ($\delta_{1.25}$): Represents the percentage of predicted pixels $p$ that satisfy the condition $\max(\frac{p}{p^{gt}}, \frac{p^{gt}}{p}) < 1.25$, which takes into account close pixel-wise agreement.
+\end{enumerate}
+
+The following table (LINK to label) summarises the mean metrics across the MiDaS models tested. 
+ 
+
 \subsubsection{Prior Model Integration}
 TWO MODEL SCRIPTS, PREGENERATED FOR TRAINING/EVAL/VAL
 FINAL MODAL ORCHESTRATOR PATTERN

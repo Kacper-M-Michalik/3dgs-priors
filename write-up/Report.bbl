@@ -2,17 +2,21 @@
 
 \bibitem{xu2019disn}
 Qiangeng Xu, Weiyue Wang, Duygu Ceylan, Radomir Mech, and Ulrich Neumann.
-\newblock Disn: Deep implicit surface network for high-quality single-view 3d reconstruction.
+\newblock Disn: Deep implicit surface network for high-quality single-view 3d
+  reconstruction.
 \newblock In {\em NeurIPS}, 2019.
 
 \bibitem{ShapeNet}
-Angel~X. Chang, Thomas~A. Funkhouser, Leonidas~J. Guibas, Pat Hanrahan, Qi{-}Xing Huang, Zimo Li, Silvio Savarese, Manolis Savva, Shuran Song, Hao Su, Jianxiong Xiao, Li~Yi, and Fisher Yu.
+Angel~X. Chang, Thomas~A. Funkhouser, Leonidas~J. Guibas, Pat Hanrahan,
+  Qi{-}Xing Huang, Zimo Li, Silvio Savarese, Manolis Savva, Shuran Song, Hao
+  Su, Jianxiong Xiao, Li~Yi, and Fisher Yu.
 \newblock Shapenet: An information-rich 3d model repository.
 \newblock {\em CoRR}, abs/1512.03012, 2015.
 
 \bibitem{Bae2021}
 Gwangbin Bae, Ignas Budvytis, and Roberto Cipolla.
-\newblock Estimating and exploiting the aleatoric uncertainty in surface normal estimation.
+\newblock Estimating and exploiting the aleatoric uncertainty in surface normal
+  estimation.
 \newblock In {\em International Conference on Computer Vision (ICCV)}, 2021.
 
 \bibitem{NYUv2}
@@ -22,22 +26,30 @@ Pushmeet~Kohli Nathan~Silberman, Derek~Hoiem and Rob Fergus.
 
 \bibitem{qi2018geonet}
 Xiaojuan Qi, Renjie Liao, Zhengzhe Liu, Raquel Urtasun, and Jiaya Jia.
-\newblock Geonet: Geometric neural network for joint depth and surface normal estimation.
-\newblock In {\em Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition}, pages 283--291, 2018.
+\newblock Geonet: Geometric neural network for joint depth and surface normal
+  estimation.
+\newblock In {\em Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition}, pages 283--291, 2018.
 
 \bibitem{qi2020geonet++}
-Xiaojuan Qi, Zhengzhe Liu, Renjie Liao, Philip~HS Torr, Raquel Urtasun, and Jiaya Jia.
-\newblock Geonet++: Iterative geometric neural network with edge-aware refinement for joint depth and surface normal estimation.
-\newblock {\em IEEE Transactions on Pattern Analysis and Machine Intelligence}, 2020.
+Xiaojuan Qi, Zhengzhe Liu, Renjie Liao, Philip~HS Torr, Raquel Urtasun, and
+  Jiaya Jia.
+\newblock Geonet++: Iterative geometric neural network with edge-aware
+  refinement for joint depth and surface normal estimation.
+\newblock {\em IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  2020.
 
 \bibitem{dai2017scannet}
-Angela Dai, Angel~X. Chang, Manolis Savva, Maciej Halber, Thomas Funkhouser, and Matthias Nie{\ss}ner.
+Angela Dai, Angel~X. Chang, Manolis Savva, Maciej Halber, Thomas Funkhouser,
+  and Matthias Nie{\ss}ner.
 \newblock Scannet: Richly-annotated 3d reconstructions of indoor scenes.
-\newblock In {\em Proc. Computer Vision and Pattern Recognition (CVPR), IEEE}, 2017.
+\newblock In {\em Proc. Computer Vision and Pattern Recognition (CVPR), IEEE},
+  2017.
 
 \bibitem{huang2019framenet}
 Jingwei Huang, Yichao Zhou, Thomas Funkhouser, and Leonidas Guibas.
-\newblock Framenet: Learning local canonical frames of 3d surfaces from a single rgb image.
+\newblock Framenet: Learning local canonical frames of 3d surfaces from a
+  single rgb image.
 \newblock {\em arXiv preprint arXiv:1903.12305}, 2019.
 
 \end{thebibliography}
