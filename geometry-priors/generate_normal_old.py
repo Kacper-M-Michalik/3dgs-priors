@@ -58,7 +58,6 @@ def main(args):
             os.makedirs(normal_out_path, exist_ok=True)
 
             rgb_folder = os.path.join(folder_path, "rgb")
-            img_paths = sorted(glob.glob(os.path.join(rgb_folder, "*.png")))
 
             # Use repo’s own preprocessing (identical to test.py)
             dataset = CustomLoadPreprocess(args, rgb_folder)
@@ -69,6 +68,8 @@ def main(args):
                     img = sample["img"].to(device)        
                     img_name = sample["img_name"][0] + ".png"
 
+                    print(img_name)
+                    break
                     # Forward pass logic from test.py
                     norm_out_list, _, _ = model(img)
                     norm_out = norm_out_list[-1]

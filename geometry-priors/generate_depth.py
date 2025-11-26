@@ -112,8 +112,7 @@ def main(args):
                     preds_normalized = (preds - min_val) / (max_val - min_val + 1e-8)                    
                     preds_uint8 = preds_normalized.mul(255).byte().cpu().numpy()
 
-                    for j, file_id in enumerate(batch_filenames):    
-                        # Clone necessary?
+                    for j, file_id in enumerate(batch_filenames):   
                         full_batch.append(ProcessedImage(uuid=uuid, file_id=file_id.item(), image=preds_uint8[j].tobytes()))
 
             for entry in full_batch:
@@ -135,7 +134,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Evaluate model')
     parser.add_argument('--in_folder', type=str, default='out', required = True, help='Input folder to process')
     parser.add_argument('--out_folder', type=str, default='out', required = True, help='Output folder to save resulting files to')
-    parser.add_argument('--save_iter', type=int, default=-1, help='How often to make an intermediate save processed depths')
+    parser.add_argument('--save_iter', type=int, default=-1, help='How often to make an intermediate save')
+    
     return parser.parse_args()
 
 if __name__ == "__main__":

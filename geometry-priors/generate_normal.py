@@ -59,7 +59,7 @@ def main(args):
     target_size = (128, 128) 
 
     in_path = os.path.join(args.in_folder, "srn_cars")    
-    out_path = os.path.join(args.out_folder, "srn_cars_depths.parquet")  
+    out_path = os.path.join(args.out_folder, "srn_cars_normals.parquet")  
     print(in_path)
     print(out_path)
 
@@ -90,42 +90,48 @@ def main(args):
         for i, intrin in enumerate(intrins[set.resume_index:], start=set.resume_index):
             folder_path = os.path.dirname(intrin)   
             uuid = os.path.basename(folder_path)        
-
-            rgbs = glob.glob(os.path.join(folder_path, "rgb", "*.png"))
+            
+            rgb_folder = os.path.join(folder_path, "rgb")
             
             # LOOK AT THEIR LOADER
-            dataset = ImageDataset(rgbs, transform)
-            loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=workers)
+            dataset = CustomLoadPreprocess(args, rgb_folder)
+            loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=workers)
 
-            print("Intrin Num:{}, RGBs found: {}".format(i, len(rgbs)))
+            print("Intrin Num:{}".format(i))
 
             # Only append a fully completed batch, allows us to safely resume a run thats been stopped
             full_batch = []
             with torch.no_grad():
-                for batch_imgs, batch_filenames in loader:      
-                    # Prediction              
-                    batch_imgs = batch_imgs.to(device)            
-                    preds = model(batch_imgs)
+                for sample in loader:
+                    img = sample["img"].to(device)        
+                    file_id = sample["img_name"][0]
+                
+                    norm_out_list, _, _ = model(img)
 
-                    # Batched downsize
-                    preds = torch.nn.functional.interpolate(
-                        preds.unsqueeze(1),
-                        size=target_size,
-                        mode="bicubic",
-                        align_corners=False
-                    ).squeeze(1)
+                    print(file_id)
+                    print(norm_out_list)
 
-                    # Batched 0 to 1 normalization
-                    batch_flat = preds.flatten(start_dim=1)
-                    min_val, max_val = torch.aminmax(batch_flat, dim=1, keepdim=True)
-                    min_val = min_val.view(preds.size(0), 1, 1)
-                    max_val = max_val.view(preds.size(0), 1, 1)
-                    preds_normalized = (preds - min_val) / (max_val - min_val + 1e-8)                    
-                    preds_uint8 = preds_normalized.mul(255).byte().cpu().numpy()
+                    break
+                    
+                    # preds = torch.nn.functional.interpolate(
+                    #     preds.unsqueeze(1),
+                    #     size=target_size,
+                    #     mode="bicubic",
+                    #     align_corners=False
+                    # ).squeeze(1)
 
-                    for j, file_id in enumerate(batch_filenames):    
-                        # Clone necessary?
-                        full_batch.append(ProcessedImage(uuid=uuid, file_id=file_id.item(), image=preds_uint8[j].tobytes()))
+                    # The fuck?
+                    norm_out = norm_out_list[-1]
+                    pred_norm = norm_out[:, :3, :, :]
+                    arr = pred_norm.detach().cpu().permute(0, 2, 3, 1).numpy()
+                    arr = ((arr + 1.0) * 0.5) * 255.0
+                    arr = np.clip(arr, 0, 255).astype(np.uint8)
+                    out_file = os.path.join(normal_out_path, img_name)
+                    img_rgb = arr[0]           
+                    img_bgr = img_rgb[:, :, ::-1]
+                    cv2.imwrite(out_file, img_bgr)
+
+                    #.append(ProcessedImage(uuid=uuid, file_id=file_id.item(), image=preds_uint8[j].tobytes()))
 
             for entry in full_batch:
                 data.append({
@@ -147,11 +153,9 @@ def parse_arguments():
 
     parser.add_argument('--in_folder', type=str, required=True, help='Input folder containing images')
     parser.add_argument('--out_folder', type=str, required=True, help='Output folder to save normal priors')
+    parser.add_argument('--save_iter', type=int, default=-1, help='How often to make an intermediate save')
 
-    parser.add_argument(
-        '--checkpoint',
-        type=str,
-        default=os.path.join(REPO_PATH, "checkpoints", "scannet.pt")
+    parser.add_argument('--checkpoint',type=str, default=os.path.join(REPO_PATH, "checkpoints", "scannet.pt")
     ) # Checkpoints to be downloaded separately.
 
     # Arguments required by NNET/Decoder
@@ -161,7 +165,6 @@ def parse_arguments():
     # Model arguments
     parser.add_argument('--input_height', type=int, default=512)
     parser.add_argument('--input_width', type=int, default=512)
-
     parser.add_argument('--architecture', type=str, default="BN")
     parser.add_argument('--pretrained', type=str, default="scannet", help = "Checkpoints")
 

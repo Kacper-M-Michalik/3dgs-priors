@@ -2,7 +2,7 @@
 torch
 torchvision
 numpy
-opencv-python
+pandas
 imutils
 timm
 einops
@@ -10,4 +10,3 @@ Pillow
 tqdm
 scipy
 argparse
-matplotlib
