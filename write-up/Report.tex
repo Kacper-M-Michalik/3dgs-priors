@@ -27,23 +27,56 @@ Group Number: TEST
 \subsection{Section 1.1: Introduction to the problem}
 [Provide a thorough introduction to the problem and why it is important. Briefly explain what general techniques there are and how your project fits.]
 
+\noindent
+RCONSTRUCTING 3D MODELS FROM IMAGES IS ACHANLEGNING TASK THAT REQUIRES LARGES NUMBER OF REFERNCE/INPTU IMAGES AND INTENSE PROCESSING
+TYPICALLY DONE WITH ENRF OR OTHER
+MODERN ADVANCEMENTS FOCUS ON REDUCING INPOUT PHOTO NUMBER ND PROCESSIGN COMPELXITY
+SPECIFICALLY, Developments in 3D Gaussian Splatting methods allow for 3D scene reconstruction using single or few RGB images. 
+While faster than other scene reconstruction techniques and requiring only a "one-shot" pass, these approaches often suffer from challenges such as layout/scale drift, over-smooth geometry and hallucinations in occluded regions. 
+This project focuses on one recent method, SplatterImage, as a baseline. 
+By storing 3D Gaussians in an image, it reduces reconstruction to learning an image-to-image neural network, allowing the use of a 2D U-Net to form the representation. 
+Each pixel stores the parameters for a corresponding 3D Gaussian, allowing for reconstruction in a single feed-forward pass. This reduces the need for large amounts of compute. 
+Despite its speed, SplatterImage does have some issues that have been noted in related works, 
+particularly in reconstructing structures unseen in the input view, including for views significantly different from the source. 
+This project aims to address this by proposing a lightweight augmentation to the model, by integrating explicit geometry priors 
+(such as planes, normals, visibility cues, depth, segmentation, edge maps) with minimal architectural changes.
+
+EXPAND/REWORD ABOVE
+
 \subsection{Section 1.2: Background and related work}
 [Include a few very relevant related works and how your work relates to those, expanding on the previous section. We do not expect you to cover all previous works.]
+discuss 3dgs
+discuss triplane?
+discuss splatterimage
 
 \subsection{Section 1.3: Overview of the idea}
 [Provide an overview stating why the idea of the project makes sense and what the main motivation is.]
+splatteriamge suffers from hallucination and problems simply due to lack of data
+feeding models additional data improves reconstruction 
+with modern compute and ml advancements there now exist many good quality pretrained geometry related models
+for example generating depth, normal maps, segmentation
+we propose using the knowledge/capacibiltiy of these models to predict additional priors of input images, creating a modified model that accepts these priors
+these should result in an improved recostruction quality
+we propose performing ablation study to see which priors are most effective/significant in changing the reconstruction quality
 
 \section{Chapter 2: Method}
 \subsection{Section 2.1: Baseline algorithm}
 [Explain the baseline architecture you used to build your algorithm on. You may reproduce figures from the original papers.]
 
+explain 3dshg output
+explain spaltteriamge architecture with diagram
+
 \subsection{Section 2.2: Algorithm improvements}
 [Explain what you implemented to improve over the baseline. You may include figures to explain the idea and logic. Focus on the ideas and not the implementation.]
+
+explain insertion of additional layers
+explain addition of transofrmer/FiLM layers to allow multimodal input from segmentation tokens 
+explain addition of LORA matrices due to compute limitations/allowign working of exisitng model
 
 \subsection{Section 2.3: Implementation details}
 [Explain how you implemented the improvements. You may include code snippets with the corresponding explanations.]
 
-\subsubsection{Normal map priors}
+\subsubsection{Normal Map Exploration}
 
 We studied using normal maps as a 3D spatial prior to augment the visual tokens for the Splatter Image. A normal map stores surface normal data as RGB colour information, which shows how light interacts with the surface at a per-pixel level, hence we wanted to investigate if that could help the model generate the 3D surface of the input image.
 
@@ -115,11 +148,51 @@ The normal map generated for images when given larger input dimensions seem to h
 
 (talk about final model chosen and show example on a shapenet model)
 
+\subsubsection{Prior Model Integration}
+TWO MODEL SCRIPTS, PREGENERATED FOR TRAINING/EVAL/VAL
+FINAL MODAL ORCHESTRATOR PATTERN
+PER MODEL SCRIPT BACTEHD, SAVES TO IMAGE DUE TO SPACE LIMITATIONS
+GENERATE PARQUET PER PRIOR
+PARQUETS UPLOADED TO HF
+
+ON THE FLY VERSION?
+ANOTEHR OCRHSESTOROR, IMAGES ADDED AND FED INTO MODEL TO ALLOW NOVEL IMAGES
+
+\subsubsection{Model Changes}
+MODEL CHANGES
+added layer parameters
+on creation if congfig, inject lora and perform weight graft
+
+\subsubsection{Training and Evaluation Changes}
+new priors stacked into input
+eval/train on ready dataset have minimal changes
+added new dataloader code
+novel evaluator?
+
 \subsection{Section 2.3: Data pipelines}
 [Explain your data format, how you consume the data in your algorithms, and data augmentation.]
 
+EXPLAIN SRN CARS format
+EXPLAIN TRANSFORMATION TO PARQUET
+EXPLAIN STORE OF uint8s
+UPLOADED TO HF
+
+TRAINIGN LOADS HF DATASET
+LOAD HF PRETRAINED WEIGHTS
+PERFORMS WEIGHT GRAFT
+TRAINING OCCURS
+WEIGHTS FUSED UPLOADED TO HF
+
 \subsection{Section 2.4: Training procedures}
 [Explain which framework and optimizers you use, how you implemented the training logic.]
+
+USE TORCH
+LIST LORA INSERTTION LIRBARY
+LIST BASELINE WEIGHT PARAMS
+
+WE WRITE TRAINIG NNTOEBOOK RUSN ON CLOAB WITH A100
+LSIT TRAINING PARAMS
+WEIGHTS FUSED AND UPLAODED TO HF
 
 \subsection{Section 2.5: Testing and validation procedures}
 [Explain which framework you use, how you implemented the testing/ validation logic.]
@@ -175,6 +248,9 @@ We then use Visual Information Fidelity to compare the normal maps generated by 
 
 \subsection{Section 4.2: Discussion of limitations}
 [Explain the limitations of your technique. You may want to refer to previous sections or show figures on the limitations.]
+
+halluciantion in hidden areas still a problem
+data, lot of data and compute needed
 
 \subsection{Section 4.3: Future directions}
 [State a few future directions for research and development. These typically follow from the discussion on limitations.]

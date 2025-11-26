@@ -1,15 +1,15 @@
 # Fdb version 4
-["bibtex Report"] 1764133602.24918 "Report.aux" "Report.bbl" "Report" 1764133603.34372 0
+["bibtex Report"] 1764141367.81364 "Report.aux" "Report.bbl" "Report" 1764141530.78961 0
   "./citations.bib" 1764133593.04607 3057 97c2e9e6c3ea2011b08248e32838e7ea ""
   "/usr/share/texlive/texmf-dist/bibtex/bst/base/unsrt.bst" 1292289607 18030 1376b4b231b50c66211e47e42eda2875 ""
-  "Report.aux" 1764133603.04174 5075 c9339143b6420268d0637a98ea9f2697 "pdflatex"
+  "Report.aux" 1764141530.51463 5498 1e646833c2f2c50ea8dc206614ace1af "pdflatex"
   (generated)
   "Report.bbl"
   "Report.blg"
   (rewritten before read)
-["pdflatex"] 1764133602.37706 "/home/kacper/Cambridge/3dgs-priors/write-up/Report.tex" "Report.pdf" "Report" 1764133603.34389 0
+["pdflatex"] 1764141529.84315 "/home/kacper/Cambridge/3dgs-priors/write-up/Report.tex" "Report.pdf" "Report" 1764141530.78978 0
   "/etc/texmf/web2c/texmf.cnf" 1759623311.47996 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/kacper/Cambridge/3dgs-priors/write-up/Report.tex" 1764133593.04607 8716 ff702ad2d3f50fe258bc37ecfb517088 ""
+  "/home/kacper/Cambridge/3dgs-priors/write-up/Report.tex" 1764141529.58573 12364 fd0896c73369d0e68ed2322bb120eba0 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm" 1136768653 1328 c834bbb027764024c09d3d2bf908b5f0 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm" 1136768653 1324 c910af8c371558dc20f2d7822f66fe64 ""
@@ -85,10 +85,10 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1759623344.50143 5472669 54eaf61a88b6b7896ebd0dac973cb29c ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1759623462 8212919 e2f08c942a5a2af31298c7ae6cd34fb3 ""
-  "Report.aux" 1764133603.04174 5075 c9339143b6420268d0637a98ea9f2697 "pdflatex"
-  "Report.bbl" 1764133602.36974 2170 7d419185c2890f254b36432db2acf30d "bibtex Report"
-  "Report.out" 1764133603.04174 5458 fd425184d5373c982434b5664bdd3435 "pdflatex"
-  "Report.tex" 1764133593.04607 8716 ff702ad2d3f50fe258bc37ecfb517088 ""
+  "Report.aux" 1764141530.51463 5498 1e646833c2f2c50ea8dc206614ace1af "pdflatex"
+  "Report.bbl" 1764141367.94986 2170 7d419185c2890f254b36432db2acf30d "bibtex Report"
+  "Report.out" 1764141530.51463 6040 3eb41b91ea9064f4247655668df09f83 "pdflatex"
+  "Report.tex" 1764141529.58573 12364 fd0896c73369d0e68ed2322bb120eba0 ""
   "images/BN.png" 1764133593.05007 26067 538b1bffd038dceda1fa70aaefea4a80 ""
   "images/BN_filtered.png" 1764133593.05007 11840 d3c8dae3010a780cc33fabb396699b47 ""
   "images/BN_resized.png" 1764133593.05007 32309 bbdbf130ecd0e3e676d33781cda014cf ""

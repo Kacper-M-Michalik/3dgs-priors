@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.10.5)  26 NOV 2025 05:06
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.10.5)  26 NOV 2025 07:18
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -295,83 +295,89 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <8> on input line 20.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <6> on input line 20.
- [1
+
+Overfull \hbox (10.25015pt too wide) in paragraph at lines 30--43
+\OT1/cmr/m/n/10 RCONSTRUCTING 3D MOD-ELS FROM IM-AGES IS ACHAN-LEG-N-ING TASK THAT RE-QUIRES LARGES
+ []
+
+[1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 52.
+(Font)              <7> on input line 85.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 52.
-<images/normal_gnd_truth.png, id=109, 2455.67438pt x 685.05937pt>
+(Font)              <5> on input line 85.
+<images/normal_gnd_truth.png, id=121, 2455.67438pt x 685.05937pt>
 File: images/normal_gnd_truth.png Graphic file (type png)
 <use images/normal_gnd_truth.png>
-Package pdftex.def Info: images/normal_gnd_truth.png  used on input line 56.
+Package pdftex.def Info: images/normal_gnd_truth.png  used on input line 89.
 (pdftex.def)             Requested size: 426.79134pt x 119.06139pt.
-<images/original.png, id=120, 224.84pt x 224.84pt>
+ [2 <./images/normal_gnd_truth.png>]
+<images/original.png, id=144, 224.84pt x 224.84pt>
 File: images/original.png Graphic file (type png)
 <use images/original.png>
-Package pdftex.def Info: images/original.png  used on input line 70.
+Package pdftex.def Info: images/original.png  used on input line 103.
 (pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
-<images/BN.png, id=121, 161.8848pt x 161.8848pt>
+<images/BN.png, id=145, 161.8848pt x 161.8848pt>
 File: images/BN.png Graphic file (type png)
 <use images/BN.png>
-Package pdftex.def Info: images/BN.png  used on input line 76.
+Package pdftex.def Info: images/BN.png  used on input line 109.
 (pdftex.def)             Requested size: 151.05345pt x 151.06015pt.
-<images/GN.png, id=122, 161.8848pt x 161.8848pt>
+<images/GN.png, id=146, 161.8848pt x 161.8848pt>
 File: images/GN.png Graphic file (type png)
 <use images/GN.png>
-Package pdftex.def Info: images/GN.png  used on input line 82.
+Package pdftex.def Info: images/GN.png  used on input line 115.
 (pdftex.def)             Requested size: 151.05345pt x 151.06015pt.
-<images/BN_resized.png, id=123, 224.84pt x 224.84pt>
+<images/BN_resized.png, id=147, 224.84pt x 224.84pt>
 File: images/BN_resized.png Graphic file (type png)
 <use images/BN_resized.png>
-Package pdftex.def Info: images/BN_resized.png  used on input line 96.
+Package pdftex.def Info: images/BN_resized.png  used on input line 129.
 (pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
-<images/GN_resized.png, id=124, 224.84pt x 224.84pt>
+<images/GN_resized.png, id=148, 224.84pt x 224.84pt>
 File: images/GN_resized.png Graphic file (type png)
 <use images/GN_resized.png>
-Package pdftex.def Info: images/GN_resized.png  used on input line 102.
+Package pdftex.def Info: images/GN_resized.png  used on input line 135.
 (pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
-<images/gnd_truth.png, id=125, 224.84pt x 224.84pt>
+<images/gnd_truth.png, id=149, 224.84pt x 224.84pt>
 File: images/gnd_truth.png Graphic file (type png)
 <use images/gnd_truth.png>
-Package pdftex.def Info: images/gnd_truth.png  used on input line 107.
+Package pdftex.def Info: images/gnd_truth.png  used on input line 140.
 (pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
- [2 <./images/normal_gnd_truth.png> <./images/original.png> <./images/BN.png> <./images/GN.png>]
+ [3 <./images/original.png> <./images/BN.png> <./images/GN.png> <./images/BN_resized.png> <./images/GN_resized.png> <./images/gnd_truth.png>]
 File: images/gnd_truth.png Graphic file (type png)
 <use images/gnd_truth.png>
-Package pdftex.def Info: images/gnd_truth.png  used on input line 135.
+Package pdftex.def Info: images/gnd_truth.png  used on input line 208.
 (pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
 File: images/BN_resized.png Graphic file (type png)
 <use images/BN_resized.png>
-Package pdftex.def Info: images/BN_resized.png  used on input line 141.
+Package pdftex.def Info: images/BN_resized.png  used on input line 214.
 (pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
-<images/BN_filtered.png, id=152, 224.84pt x 224.84pt>
+<images/BN_filtered.png, id=172, 224.84pt x 224.84pt>
 File: images/BN_filtered.png Graphic file (type png)
 <use images/BN_filtered.png>
-Package pdftex.def Info: images/BN_filtered.png  used on input line 147.
+Package pdftex.def Info: images/BN_filtered.png  used on input line 220.
 (pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
- [3 <./images/BN_resized.png> <./images/GN_resized.png> <./images/gnd_truth.png>] [4 <./images/BN_filtered.png>] (./Report.bbl) [5] (./Report.aux)
+ [4 <./images/BN_filtered.png>] (./Report.bbl [5]) [6] (./Report.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
 Package rerunfilecheck Info: File `Report.out' has not changed.
-(rerunfilecheck)             Checksum: FD425184D5373C982434B5664BDD3435;5458.
+(rerunfilecheck)             Checksum: 3EB41B91EA9064F4247655668DF09F83;6040.
  ) 
 Here is how much of TeX's memory you used:
- 10782 strings out of 474222
- 172205 string characters out of 5748733
- 1932975 words of memory out of 5000000
- 32896 multiletter control sequences out of 15000+600000
+ 10789 strings out of 474222
+ 172331 string characters out of 5748733
+ 1935975 words of memory out of 5000000
+ 32899 multiletter control sequences out of 15000+600000
  563137 words of font info for 53 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,8n,79p,850b,568s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on Report.pdf (5 pages, 509047 bytes).
+Output written on Report.pdf (6 pages, 515441 bytes).
 PDF statistics:
- 221 PDF objects out of 1000 (max. 8388607)
- 177 compressed objects within 2 object streams
- 43 named destinations out of 1000 (max. 500000)
- 225 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 237 PDF objects out of 1000 (max. 8388607)
+ 192 compressed objects within 2 object streams
+ 47 named destinations out of 1000 (max. 500000)
+ 249 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -9,6 +9,17 @@ import argparse
 import os
 import glob
 
+import sys
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_PATH = os.path.join(SCRIPT_DIR, "surface_normal_uncertainty")
+
+if REPO_PATH not in sys.path:
+    sys.path.append(REPO_PATH)
+
+from models.NNET import NNET
+from data.dataloader_custom import CustomLoadPreprocess
+import utils.utils as utils
+
 class Subset(NamedTuple):
     name: str
     resume_index: 0
@@ -37,12 +48,10 @@ def save(path, df):
     df.to_parquet(path)
 
 def main(args):  
-    # Select large model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    midas_model_type = "DPT_Large"  
-    model = torch.hub.load("intel-isl/MiDaS", midas_model_type).to(device).eval()
-    transforms = torch.hub.load("intel-isl/MiDaS", "transforms")
-    transform = transforms.dpt_transform
+    model = NNET(args).to(device).eval()
+    model = utils.load_checkpoint(args.checkpoint, model)
+    model.eval()
 
     batch_size = 16
     workers = 4
@@ -83,6 +92,8 @@ def main(args):
             uuid = os.path.basename(folder_path)        
 
             rgbs = glob.glob(os.path.join(folder_path, "rgb", "*.png"))
+            
+            # LOOK AT THEIR LOADER
             dataset = ImageDataset(rgbs, transform)
             loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=workers)
 
@@ -121,7 +132,7 @@ def main(args):
                     "split": set.name,
                     "uuid": entry.uuid,
                     "frame_id": entry.file_id,                    
-                    "depth": entry.image
+                    "normal": entry.image
                 })
 
             # Do occasional save if requested
@@ -129,20 +140,38 @@ def main(args):
                 save(out_path, pd.concat([df, pd.DataFrame(data)], ignore_index=True))
         
         # Save on subset completion
-        save(out_path, pd.concat([df, pd.DataFrame(data)], ignore_index=True))                  
-
+        save(out_path, pd.concat([df, pd.DataFrame(data)], ignore_index=True))  
+                
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='Evaluate model')
-    parser.add_argument('--in_folder', type=str, default='out', required = True, help='Input folder to process')
-    parser.add_argument('--out_folder', type=str, default='out', required = True, help='Output folder to save resulting files to')
-    parser.add_argument('--save_iter', type=int, default=-1, help='How often to make an intermediate save processed depths')
+    parser = argparse.ArgumentParser(description='Generate normal map priors')
+
+    parser.add_argument('--in_folder', type=str, required=True, help='Input folder containing images')
+    parser.add_argument('--out_folder', type=str, required=True, help='Output folder to save normal priors')
+
+    parser.add_argument(
+        '--checkpoint',
+        type=str,
+        default=os.path.join(REPO_PATH, "checkpoints", "scannet.pt")
+    ) # Checkpoints to be downloaded separately.
+
+    # Arguments required by NNET/Decoder
+    parser.add_argument('--sampling_ratio', type=float, default=0.4)
+    parser.add_argument('--importance_ratio', type=float, default=0.7)
+
+    # Model arguments
+    parser.add_argument('--input_height', type=int, default=512)
+    parser.add_argument('--input_width', type=int, default=512)
+
+    parser.add_argument('--architecture', type=str, default="BN")
+    parser.add_argument('--pretrained', type=str, default="scannet", help = "Checkpoints")
+
     return parser.parse_args()
 
 if __name__ == "__main__":
     args = parse_arguments()
 
-    print("Processing cars dataset with depth priors")
-    print("In folder: {}".format(args.in_folder))
-    print("Out folder: {}".format(args.out_folder))
+    print("Processing cars dataset with normal priors")
+    print("Input folder:", args.in_folder)
+    print("Output folder:", args.out_folder)
 
     main(args)
