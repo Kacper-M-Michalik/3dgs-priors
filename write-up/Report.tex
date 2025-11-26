@@ -1,0 +1,185 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{natbib}
+\usepackage{hyperref}
+\usepackage{subcaption}
+
+\title
+{
+    Single-Image 3DGS Scene Reconstruction with Geometry-Aware Priors
+}
+\author
+{
+    Machine Visual Perception Course Project Report
+}
+
+\begin{document}
+\maketitle
+
+\section*{Information}
+Authors: TEST
+\newline
+Group Number: TEST
+
+\section{Chapter 1: Introduction and Motivation}
+\subsection{Section 1.1: Introduction to the problem}
+[Provide a thorough introduction to the problem and why it is important. Briefly explain what general techniques there are and how your project fits.]
+
+\subsection{Section 1.2: Background and related work}
+[Include a few very relevant related works and how your work relates to those, expanding on the previous section. We do not expect you to cover all previous works.]
+
+\subsection{Section 1.3: Overview of the idea}
+[Provide an overview stating why the idea of the project makes sense and what the main motivation is.]
+
+\section{Chapter 2: Method}
+\subsection{Section 2.1: Baseline algorithm}
+[Explain the baseline architecture you used to build your algorithm on. You may reproduce figures from the original papers.]
+
+\subsection{Section 2.2: Algorithm improvements}
+[Explain what you implemented to improve over the baseline. You may include figures to explain the idea and logic. Focus on the ideas and not the implementation.]
+
+\subsection{Section 2.3: Implementation details}
+[Explain how you implemented the improvements. You may include code snippets with the corresponding explanations.]
+
+\subsubsection{Normal map priors}
+
+We studied using normal maps as a 3D spatial prior to augment the visual tokens for the Splatter Image. A normal map stores surface normal data as RGB colour information, which shows how light interacts with the surface at a per-pixel level, hence we wanted to investigate if that could help the model generate the 3D surface of the input image.
+
+We investigated using various different models to generate a normal map from the input image.
+
+For our ground truths we use \cite{xu2019disn} which presents a Deep Implicit Surface Network to generate a 3D mesh from a 2D image by predicting the underlying signed distance fields and provides a dataset of higher resolution images of the ShapeNet models from \cite{ShapeNet} each paired with a depth image, a normal map and an albedo image at \url{https://github.com/Xharlie/ShapenetRender_more_variation}. We then feed these images into the normal map generation models and compare them to the given normal maps to evaluate their performance.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=15cm]{images/normal_gnd_truth.png}
+    \caption{Example of image with maps used as ground truth taken from \cite{Bae2021}}
+    \label{fig:ground_truth}
+\end{figure}
+
+For the models We referenced \cite{Bae2021} which implements a network which estimates the per-pixel surface normal probability distribution and uses uncertainty-guided sampling to improve the quality of prediction of surface normals. The paper provided code at \url{ https://github.com/baegwangbin/surface_normal_uncertainty} that implemented this method on a network trained on NYUv2 \cite{NYUv2}, with the ground truth and data split provided by GeoNet \cite{qi2018geonet} \cite{qi2020geonet++} and another trained on ScanNet \cite{dai2017scannet}, with the ground truth and data split provided by FrameNet \cite{huang2019framenet}. Both models take in the input image and dimensions and return a normal map of the input image with the same dimensions as output.
+
+We run both pretrained models on the dataset.
+
+\begin{figure}[h]
+    \centering
+
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/original.png}
+        \caption{Original}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/BN.png}
+        \caption{NYUv2 output}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/GN.png}
+        \caption{GeoNet output}
+    \end{subfigure}
+
+    \caption{Comparison of original input and two model outputs}
+\end{figure}
+
+We then try passing in larger input dimensions than the actual ones into the models, such that a normal map larger than the original input is produced. We then resize the image to the original input dimensions.
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/BN_resized.png}
+        \caption{NYUv2 output}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/GN_resized.png}
+        \caption{GeoNet output}
+    \end{subfigure}
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/gnd_truth.png}
+        \caption{Ground truth from \cite{xu2019disn}}
+    \end{subfigure}
+
+    \caption{Comparison of model outputs with input dimensions 448x448 instead of 224x224 alongside ground truth}
+\end{figure}
+
+The normal map generated for images when given larger input dimensions seem to have more clearly defined edges and surface contouring. Details on the evaluation of the two different models (trained on NYUv2 and GeoNet respectively) are in section 2.5.
+
+(talk about final model chosen and show example on a shapenet model)
+
+\subsection{Section 2.3: Data pipelines}
+[Explain your data format, how you consume the data in your algorithms, and data augmentation.]
+
+\subsection{Section 2.4: Training procedures}
+[Explain which framework and optimizers you use, how you implemented the training logic.]
+
+\subsection{Section 2.5: Testing and validation procedures}
+[Explain which framework you use, how you implemented the testing/ validation logic.]
+
+\subsubsection{Normal map priors evaluation}
+To compare our generated normal maps to the ground truth normal maps provided in \cite{xu2019disn}, we first mask out the background of the generated normal maps such that the difference in background colour does not contribute to the evaluation metrics for normal map generation.
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/gnd_truth.png}
+        \caption{Ground truth from \cite{xu2019disn}}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/BN_resized.png}
+        \caption{NYUv2 output (448x448) version}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/BN_filtered.png}
+        \caption{Output with background masking}
+    \end{subfigure}
+
+    \caption{Example of masking out background for model evaluation against ground truth}
+\end{figure}
+
+We then use Visual Information Fidelity to compare the normal maps generated by the two models to the ground truth.
+
+\section{Chapter 3: Experiments and Evaluation}
+\subsection{Section 3.1: Datasets}
+[Explain the datasets utilized: what they contain, why they are utilized, assumptions, limitations, possible extensions.]
+
+\subsection{Section 3.2: Training and testing results}
+[Explain the training and testing results with graphs and elaborating on why they make sense, what could be improved.]
+
+\subsection{Section 3.3: Qualitative results}
+[Show in figures and explain visual results. Include different interesting cases covering different aspects/ limitations/ dataset diversity. If not converged, explain what we can expect once converged. Include any other didactic examples here.]
+
+\subsection{[Optional] Section 3.4: Quantitative results}
+[A table and associated explanations for quantitative results.]
+
+\subsection{[Optional] Section 3.5: Comparison to state-of-the-art}
+[Qualitative and/ or quantitative comparisons to one or more recent works, especially the baseline work.]
+
+\section{Chapter 4: Conclusions and Future Directions}
+\subsection{Section 4.1: Conclusions}
+[Summarize what the project was about and the main conclusions.]
+
+\subsection{Section 4.2: Discussion of limitations}
+[Explain the limitations of your technique. You may want to refer to previous sections or show figures on the limitations.]
+
+\subsection{Section 4.3: Future directions}
+[State a few future directions for research and development. These typically follow from the discussion on limitations.]
+
+\bibliographystyle{unsrt}
+\bibliography{citations}
+
+\end{document}
