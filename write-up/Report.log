@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.1.25)  26 NOV 2025 13:22
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.1.25)  27 NOV 2025 14:44
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -353,92 +353,138 @@ HAT RE-QUIRES LARGES
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 85.
+(Font)              <7> on input line 83.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 85.
-<images/normal_gnd_truth.png, id=125, 2455.67438pt x 685.05937pt>
+(Font)              <5> on input line 83.
+<images/normal_gnd_truth.png, id=129, 2455.67438pt x 685.05937pt>
 File: images/normal_gnd_truth.png Graphic file (type png)
 <use images/normal_gnd_truth.png>
-Package pdftex.def Info: images/normal_gnd_truth.png  used on input line 89.
+Package pdftex.def Info: images/normal_gnd_truth.png  used on input line 87.
 (pdftex.def)             Requested size: 426.79134pt x 119.06139pt.
  [2 <./images/normal_gnd_truth.png>]
-<images/original.png, id=148, 224.84pt x 224.84pt>
+<images/original.png, id=154, 224.84pt x 224.84pt>
 File: images/original.png Graphic file (type png)
 <use images/original.png>
-Package pdftex.def Info: images/original.png  used on input line 103.
+Package pdftex.def Info: images/original.png  used on input line 101.
 (pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
-<images/BN.png, id=149, 161.8848pt x 161.8848pt>
+<images/BN.png, id=155, 161.8848pt x 161.8848pt>
 File: images/BN.png Graphic file (type png)
 <use images/BN.png>
-Package pdftex.def Info: images/BN.png  used on input line 109.
+Package pdftex.def Info: images/BN.png  used on input line 108.
 (pdftex.def)             Requested size: 151.05345pt x 151.06015pt.
-<images/GN.png, id=150, 161.8848pt x 161.8848pt>
+<images/GN.png, id=156, 161.8848pt x 161.8848pt>
 File: images/GN.png Graphic file (type png)
 <use images/GN.png>
 Package pdftex.def Info: images/GN.png  used on input line 115.
 (pdftex.def)             Requested size: 151.05345pt x 151.06015pt.
-<images/BN_resized.png, id=151, 224.84pt x 224.84pt>
-File: images/BN_resized.png Graphic file (type png)
-<use images/BN_resized.png>
-Package pdftex.def Info: images/BN_resized.png  used on input line 129.
-(pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
-<images/GN_resized.png, id=152, 224.84pt x 224.84pt>
-File: images/GN_resized.png Graphic file (type png)
-<use images/GN_resized.png>
-Package pdftex.def Info: images/GN_resized.png  used on input line 135.
-(pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
-<images/gnd_truth.png, id=153, 224.84pt x 224.84pt>
+<images/gnd_truth.png, id=157, 224.84pt x 224.84pt>
 File: images/gnd_truth.png Graphic file (type png)
 <use images/gnd_truth.png>
-Package pdftex.def Info: images/gnd_truth.png  used on input line 140.
+Package pdftex.def Info: images/gnd_truth.png  used on input line 129.
 (pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
+<images/BN_resized.png, id=160, 224.84pt x 224.84pt>
+File: images/BN_resized.png Graphic file (type png)
+<use images/BN_resized.png>
+Package pdftex.def Info: images/BN_resized.png  used on input line 134.
+(pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
+<images/GN_resized.png, id=161, 224.84pt x 224.84pt>
+File: images/GN_resized.png Graphic file (type png)
+<use images/GN_resized.png>
+Package pdftex.def Info: images/GN_resized.png  used on input line 140.
+(pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
+File: images/gnd_truth.png Graphic file (type png)
+<use images/gnd_truth.png>
+Package pdftex.def Info: images/gnd_truth.png  used on input line 156.
+(pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
+File: images/BN_resized.png Graphic file (type png)
+<use images/BN_resized.png>
+Package pdftex.def Info: images/BN_resized.png  used on input line 162.
+(pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
+<images/BN_filtered.png, id=165, 224.84pt x 224.84pt>
+File: images/BN_filtered.png Graphic file (type png)
+<use images/BN_filtered.png>
+Package pdftex.def Info: images/BN_filtered.png  used on input line 168.
+(pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
+ [3 <./images/original.png> <./images/BN.png> <./images/GN.png> <./images/gnd_t
+ruth.png> <./images/BN_resized.png> <./images/GN_resized.png>]
+<images/vif_plot.png, id=183, 891.0891pt x 617.9085pt>
+File: images/vif_plot.png Graphic file (type png)
+<use images/vif_plot.png>
+Package pdftex.def Info: images/vif_plot.png  used on input line 179.
+(pdftex.def)             Requested size: 472.03123pt x 327.32965pt.
+<images/shapenet_orig.png, id=186, 128.48pt x 128.48pt>
+File: images/shapenet_orig.png Graphic file (type png)
+<use images/shapenet_orig.png>
+Package pdftex.def Info: images/shapenet_orig.png  used on input line 191.
+(pdftex.def)             Requested size: 151.05345pt x 151.06595pt.
+<images/shapenet_output.png, id=189, 92.5056pt x 92.5056pt>
+File: images/shapenet_output.png Graphic file (type png)
+<use images/shapenet_output.png>
+Package pdftex.def Info: images/shapenet_output.png  used on input line 197.
+(pdftex.def)             Requested size: 151.05345pt x 151.06085pt.
+<images/shapenet_output_resized.png, id=190, 370.0224pt x 370.0224pt>
+File: images/shapenet_output_resized.png Graphic file (type png)
+<use images/shapenet_output_resized.png>
+Package pdftex.def Info: images/shapenet_output_resized.png  used on input line
+ 204.
+(pdftex.def)             Requested size: 151.05345pt x 151.0552pt.
 
-
-LaTeX Warning: Reference `ground_truth' on page 3 undefined on input line 154.
-
-[3 <./images/original.png> <./images/BN.png> <./images/GN.png> <./images/BN_res
-ized.png> <./images/GN_resized.png> <./images/gnd_truth.png>]
-Overfull \hbox (6.89714pt too wide) in paragraph at lines 163--164
+[4 <./images/BN_filtered.png> <./images/vif_plot.png>]
+Overfull \hbox (6.89714pt too wide) in paragraph at lines 226--227
 []$\OML/cmm/m/it/10 ^^N$ \OT1/cmr/m/n/10 at $[]$ ($\OML/cmm/m/it/10 ^^N[]$\OT1/
 cmr/m/n/10 ): Rep-re-sents the per-cent-age of pre-dicted pix-els $\OML/cmm/m/i
 t/10 p$ \OT1/cmr/m/n/10 that sat-isfy the con-di-tion $[]([]\OML/cmm/m/it/10 ; 
 []\OT1/cmr/m/n/10 ) \OML/cmm/m/it/10 <
  []
 
-[4]
+[5 <./images/shapenet_orig.png> <./images/shapenet_output.png> <./images/shapen
+et_output_resized.png>]
+<images/SAM_output.png, id=229, 1148.3703pt x 320.8788pt>
+File: images/SAM_output.png Graphic file (type png)
+<use images/SAM_output.png>
+Package pdftex.def Info: images/SAM_output.png  used on input line 241.
+(pdftex.def)             Requested size: 448.42822pt x 125.2989pt.
+<images/PanopticFPN_output.png, id=230, 269.005pt x 269.005pt>
+File: images/PanopticFPN_output.png Graphic file (type png)
+<use images/PanopticFPN_output.png>
+Package pdftex.def Info: images/PanopticFPN_output.png  used on input line 248.
+
+(pdftex.def)             Requested size: 118.0078pt x 118.00955pt.
+
+Underfull \hbox (badness 2426) in paragraph at lines 249--249
+[]\OT1/cmr/m/n/9 (b) |Panop-tic Seg-men-ta-tion
+ []
+
+[6 <./images/SAM_output.png> <./images/PanopticFPN_output.png (PNG copy)>]
 File: images/gnd_truth.png Graphic file (type png)
 <use images/gnd_truth.png>
-Package pdftex.def Info: images/gnd_truth.png  used on input line 226.
+Package pdftex.def Info: images/gnd_truth.png  used on input line 322.
 (pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
 File: images/BN_resized.png Graphic file (type png)
 <use images/BN_resized.png>
-Package pdftex.def Info: images/BN_resized.png  used on input line 232.
+Package pdftex.def Info: images/BN_resized.png  used on input line 328.
 (pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
-<images/BN_filtered.png, id=191, 224.84pt x 224.84pt>
 File: images/BN_filtered.png Graphic file (type png)
 <use images/BN_filtered.png>
-Package pdftex.def Info: images/BN_filtered.png  used on input line 238.
+Package pdftex.def Info: images/BN_filtered.png  used on input line 334.
 (pdftex.def)             Requested size: 151.05345pt x 151.06056pt.
- [5 <./images/BN_filtered.png>] (./Report.bbl) [6] (./Report.aux)
+
+[7] (./Report.bbl [8]) [9] (./Report.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
-
-
-LaTeX Warning: There were undefined references.
-
 Package rerunfilecheck Info: File `Report.out' has not changed.
-(rerunfilecheck)             Checksum: 8F70992A679967D5D9D5257AC7413BAF;6219.
+(rerunfilecheck)             Checksum: 1654EACACE599FA87397AB7D183FDA8B;6567.
  ) 
 Here is how much of TeX's memory you used:
- 10801 strings out of 476106
- 172379 string characters out of 5793933
+ 10896 strings out of 476106
+ 174792 string characters out of 5793933
  1935975 words of memory out of 5000000
- 32661 multiletter control sequences out of 15000+600000
+ 32741 multiletter control sequences out of 15000+600000
  563756 words of font info for 55 fonts, out of 8000000 for 9000
  59 hyphenation exceptions out of 8191
- 75i,8n,79p,806b,568s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,8n,79p,847b,569s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/shar
 e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texl
@@ -451,10 +497,10 @@ msfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/
 cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti1
 0.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
 
-Output written on Report.pdf (6 pages, 553538 bytes).
+Output written on Report.pdf (9 pages, 891442 bytes).
 PDF statistics:
- 269 PDF objects out of 1000 (max. 8388607)
- 215 compressed objects within 3 object streams
- 52 named destinations out of 1000 (max. 500000)
- 257 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 336 PDF objects out of 1000 (max. 8388607)
+ 266 compressed objects within 3 object streams
+ 67 named destinations out of 1000 (max. 500000)
+ 295 words of extra memory for PDF output out of 10000 (max. 10000000)
 

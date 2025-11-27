@@ -11,11 +11,11 @@
 \citation{Bae2021}
 \citation{Bae2021}
 \citation{Bae2021}
+\citation{dai2017scannet}
+\citation{huang2019framenet}
 \citation{NYUv2}
 \citation{qi2018geonet}
 \citation{qi2020geonet++}
-\citation{dai2017scannet}
-\citation{huang2019framenet}
 \@writefile{toc}{\contentsline {section}{\numberline {2}Chapter 2: Method}{2}{section.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Section 2.1: Baseline algorithm}{2}{subsection.2.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Section 2.2: Algorithm improvements}{2}{subsection.2.2}\protected@file@percent }
@@ -26,39 +26,80 @@
 \newlabel{fig:ground_truth}{{1}{2}{Example of image with maps used as ground truth taken from \cite {Bae2021}}{figure.caption.2}{}}
 \citation{xu2019disn}
 \citation{xu2019disn}
+\citation{xu2019disn}
+\citation{xu2019disn}
+\citation{xu2019disn}
+\newlabel{fig:highdefinput}{{2a}{3}{Original}{figure.caption.3}{}}
+\newlabel{sub@fig:highdefinput}{{a}{3}{Original}{figure.caption.3}{}}
+\newlabel{fig:highdefoutput}{{2b}{3}{ScanNet output}{figure.caption.3}{}}
+\newlabel{sub@fig:highdefoutput}{{b}{3}{ScanNet output}{figure.caption.3}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Comparison of original input and two model outputs}}{3}{figure.caption.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Comparison of model outputs with input dimensions 448x448 instead of 224x224 alongside ground truth}}{3}{figure.caption.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.2}Depth Map Exploration}{3}{subsubsection.2.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Comparison of model outputs when setting input dimensions as 448x448 instead of 224x224 alongside ground truth}}{3}{figure.caption.4}\protected@file@percent }
+\citation{vifIntro}
+\citation{vifMetrics}
+\citation{ShapeNet}
+\citation{ShapeNet}
+\citation{ShapeNet}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Example of masking out background for model evaluation against ground truth}}{4}{figure.caption.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Comparison of VIF between ground truth and different models}}{4}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:vifgraph}{{5}{4}{Comparison of VIF between ground truth and different models}{figure.caption.6}{}}
+\newlabel{fig:lowdefinput}{{6a}{5}{Original image from \cite {ShapeNet} of size 128x128}{figure.caption.7}{}}
+\newlabel{sub@fig:lowdefinput}{{a}{5}{Original image from \cite {ShapeNet} of size 128x128}{figure.caption.7}{}}
+\newlabel{fig:lowdefoutput}{{6b}{5}{Output from ScanNet model with 128x128 passed in as input dimensions}{figure.caption.7}{}}
+\newlabel{sub@fig:lowdefoutput}{{b}{5}{Output from ScanNet model with 128x128 passed in as input dimensions}{figure.caption.7}{}}
+\newlabel{fig:lowdefoutputfixed}{{6c}{5}{Output from ScanNet model with 512x512 passed in as input dimensions}{figure.caption.7}{}}
+\newlabel{sub@fig:lowdefoutputfixed}{{c}{5}{Output from ScanNet model with 512x512 passed in as input dimensions}{figure.caption.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Original ShapeNet image and normal map outputs}}{5}{figure.caption.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.2}Depth Map Exploration}{5}{subsubsection.2.3.2}\protected@file@percent }
+\citation{wu2019detectron2}
+\citation{kirillov2023segany}
+\citation{Gatis_rembg_2025}
+\citation{kim2022inspyrenet}
+\citation{zheng2024birefnet}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.3}Segmentation and Salient Object Detection Exploration}{6}{subsubsection.2.3.3}\protected@file@percent }
+\newlabel{fig:sam_example}{{7a}{6}{SAM Results (3 candidate masks produced per input)}{figure.caption.8}{}}
+\newlabel{sub@fig:sam_example}{{a}{6}{SAM Results (3 candidate masks produced per input)}{figure.caption.8}{}}
+\newlabel{fig:panoptic_example}{{7b}{6}{Panoptic Segmentation (Detectron2 Model) Result}{figure.caption.8}{}}
+\newlabel{sub@fig:panoptic_example}{{b}{6}{Panoptic Segmentation (Detectron2 Model) Result}{figure.caption.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Sample outputs from standard segmentation approaches.}}{6}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:seg_issues}{{7}{6}{Sample outputs from standard segmentation approaches}{figure.caption.8}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.4}Prior Model Integration}{6}{subsubsection.2.3.4}\protected@file@percent }
 \citation{xu2019disn}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.3}Prior Model Integration}{4}{subsubsection.2.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.4}Model Changes}{4}{subsubsection.2.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.5}Training and Evaluation Changes}{4}{subsubsection.2.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Section 2.3: Data pipelines}{4}{subsection.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Section 2.4: Training procedures}{4}{subsection.2.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Section 2.5: Testing and validation procedures}{4}{subsection.2.6}\protected@file@percent }
 \citation{xu2019disn}
 \citation{xu2019disn}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.6.1}Normal map priors evaluation}{5}{subsubsection.2.6.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Example of masking out background for model evaluation against ground truth}}{5}{figure.caption.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Chapter 3: Experiments and Evaluation}{5}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Section 3.1: Datasets}{5}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Section 3.2: Training and testing results}{5}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Section 3.3: Qualitative results}{5}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}[Optional] Section 3.4: Quantitative results}{5}{subsection.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}[Optional] Section 3.5: Comparison to state-of-the-art}{5}{subsection.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.5}Model Changes}{7}{subsubsection.2.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.6}Training and Evaluation Changes}{7}{subsubsection.2.3.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Section 2.3: Data pipelines}{7}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Section 2.4: Training procedures}{7}{subsection.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Section 2.5: Testing and validation procedures}{7}{subsection.2.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.6.1}Normal map priors evaluation}{7}{subsubsection.2.6.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Example of masking out background for model evaluation against ground truth}}{7}{figure.caption.9}\protected@file@percent }
 \bibstyle{unsrt}
 \bibdata{citations}
 \bibcite{xu2019disn}{{1}{}{{}}{{}}}
 \bibcite{ShapeNet}{{2}{}{{}}{{}}}
 \bibcite{Bae2021}{{3}{}{{}}{{}}}
-\bibcite{NYUv2}{{4}{}{{}}{{}}}
-\bibcite{qi2018geonet}{{5}{}{{}}{{}}}
-\bibcite{qi2020geonet++}{{6}{}{{}}{{}}}
-\bibcite{dai2017scannet}{{7}{}{{}}{{}}}
-\bibcite{huang2019framenet}{{8}{}{{}}{{}}}
+\bibcite{dai2017scannet}{{4}{}{{}}{{}}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Chapter 3: Experiments and Evaluation}{8}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Section 3.1: Datasets}{8}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Section 3.2: Training and testing results}{8}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Section 3.3: Qualitative results}{8}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}[Optional] Section 3.4: Quantitative results}{8}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}[Optional] Section 3.5: Comparison to state-of-the-art}{8}{subsection.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Chapter 4: Conclusions and Future Directions}{8}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Section 4.1: Conclusions}{8}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Section 4.2: Discussion of limitations}{8}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Section 4.3: Future directions}{8}{subsection.4.3}\protected@file@percent }
+\bibcite{huang2019framenet}{{5}{}{{}}{{}}}
+\bibcite{NYUv2}{{6}{}{{}}{{}}}
+\bibcite{qi2018geonet}{{7}{}{{}}{{}}}
+\bibcite{qi2020geonet++}{{8}{}{{}}{{}}}
+\bibcite{vifIntro}{{9}{}{{}}{{}}}
+\bibcite{vifMetrics}{{10}{}{{}}{{}}}
+\bibcite{wu2019detectron2}{{11}{}{{}}{{}}}
+\bibcite{kirillov2023segany}{{12}{}{{}}{{}}}
+\bibcite{Gatis_rembg_2025}{{13}{}{{}}{{}}}
+\bibcite{kim2022inspyrenet}{{14}{}{{}}{{}}}
+\bibcite{zheng2024birefnet}{{15}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\@writefile{toc}{\contentsline {section}{\numberline {4}Chapter 4: Conclusions and Future Directions}{6}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Section 4.1: Conclusions}{6}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Section 4.2: Discussion of limitations}{6}{subsection.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Section 4.3: Future directions}{6}{subsection.4.3}\protected@file@percent }
-\gdef \@abspage@last{6}
+\gdef \@abspage@last{9}

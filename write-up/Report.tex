@@ -228,6 +228,39 @@ This inclined us to take the quantitative results produced by comparing MDE mode
 
 The following table (LINK to label) summarises the mean metrics across the MiDaS models tested. 
  
+\subsubsection{Segmentation and Salient Object Detection Exploration}
+
+Separating pixels belonging to the foreground object, through a segmentation mask or, as will be detailed below, using a salient object detection (SOD) model, can be another prior. This involves producing a binary mask that separates an object from its background. 
+
+Initially, we explored standard semantic and panoptic segmentation models, such as those found in the Detectron2 \cite{wu2019detectron2} model zoo, and the Segment Anything Model (SAM) \cite{kirillov2023segany}. These models are often used for segmentation, but as illustrated in Figure \ref{fig:seg_issues}, these produced non-contiguous masks that often had sections that included more background pixels. Segmentation models are also limited on their training classes, and despite being tested on categories in this set, their masks were improved on by salient object detection models. 
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.95\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/SAM_output.png} 
+        \caption{SAM Results (3 candidate masks produced per input)}
+        \label{fig:sam_example}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.25\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/PanopticFPN_output.png}
+        \caption{Panoptic Segmentation (Detectron2 Model) Result}
+        \label{fig:panoptic_example}
+    \end{subfigure}
+    
+    \caption{Sample outputs from standard segmentation approaches.}
+    \label{fig:seg_issues}
+\end{figure}
+
+SOD models identify the most visually distinct object in a scene, which allows producing a binary mask that tightly hugs the object boundary. 
+
+To quantitatively evaluate SOD models, we noted that the ShapeNet images used (the same as in the normal and depth priors section) had transparent backgrounds, allowing using the alpha channel to be used as the `ground truth' for the object silhouette. 
+
+We tested three SOD architectures: rembg (based on the U-2-Net architecture) \cite{Gatis_rembg_2025}, InSPyReNet \cite{kim2022inspyrenet}, and BiRefNet \cite{zheng2024birefnet}. 
+We evaluated performance using Mean Absolute Error (MAE), Intersection over Union (IoU), and $F_{\beta}$-Measure.
+
 
 \subsubsection{Prior Model Integration}
 TWO MODEL SCRIPTS, PREGENERATED FOR TRAINING/EVAL/VAL
