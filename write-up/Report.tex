@@ -80,8 +80,6 @@ explain addition of LORA matrices due to compute limitations/allowign working of
 
 We studied using normal maps as a 3D spatial prior to augment the visual tokens for the Splatter Image. A normal map stores surface normal data as RGB colour information, which shows how light interacts with the surface at a per-pixel level, hence we wanted to investigate if that could help the model generate the 3D surface of the input image.
 
-We investigated using various different models to generate a normal map from the input image.
-
 For our ground truths we use \cite{xu2019disn} which presents a Deep Implicit Surface Network to generate a 3D mesh from a 2D image by predicting the underlying signed distance fields and provides a dataset of higher resolution images of the ShapeNet models from \cite{ShapeNet} each paired with a depth image, a normal map and an albedo image at \url{https://github.com/Xharlie/ShapenetRender_more_variation}. We then feed these images into the normal map generation models and compare them to the given normal maps to evaluate their performance.
 
 \begin{figure}[h]
@@ -91,7 +89,7 @@ For our ground truths we use \cite{xu2019disn} which presents a Deep Implicit Su
     \label{fig:ground_truth}
 \end{figure}
 
-For the models We referenced \cite{Bae2021} which implements a network which estimates the per-pixel surface normal probability distribution and uses uncertainty-guided sampling to improve the quality of prediction of surface normals. The paper provided code at \url{ https://github.com/baegwangbin/surface_normal_uncertainty} that implemented this method on a network trained on NYUv2 \cite{NYUv2}, with the ground truth and data split provided by GeoNet \cite{qi2018geonet} \cite{qi2020geonet++} and another trained on ScanNet \cite{dai2017scannet}, with the ground truth and data split provided by FrameNet \cite{huang2019framenet}. Both models take in the input image and dimensions and return a normal map of the input image with the same dimensions as output.
+For the models we referenced \cite{Bae2021} which implements a network which estimates the per-pixel surface normal probability distribution and uses uncertainty-guided sampling to improve the quality of prediction of surface normals. The paper provided code at \url{ https://github.com/baegwangbin/surface_normal_uncertainty} that implemented this method on a network trained on ScanNet \cite{dai2017scannet}, with the ground truth and data split provided by FrameNet \cite{huang2019framenet}, and another trained on NYUv2 \cite{NYUv2}, with the ground truth and data split provided by GeoNet \cite{qi2018geonet} \cite{qi2020geonet++}. Both models take in the original image and dimensions of the image as input and return a corresponding normal map with the same dimensions as the given input dimensions.
 
 We run both pretrained models on the dataset.
 
@@ -102,56 +100,121 @@ We run both pretrained models on the dataset.
         \centering
         \includegraphics[width=\linewidth]{images/original.png}
         \caption{Original}
+        \label{fig:highdefinput}
     \end{subfigure}
     \hfill
     \begin{subfigure}{0.32\linewidth}
         \centering
         \includegraphics[width=\linewidth]{images/BN.png}
-        \caption{NYUv2 output}
+        \caption{ScanNet output}
+        \label{fig:highdefoutput}
     \end{subfigure}
     \hfill
     \begin{subfigure}{0.32\linewidth}
         \centering
         \includegraphics[width=\linewidth]{images/GN.png}
-        \caption{GeoNet output}
+        \caption{NYUv2 output}
     \end{subfigure}
 
     \caption{Comparison of original input and two model outputs}
 \end{figure}
 
-We then try passing in larger input dimensions than the actual ones into the models, such that a normal map larger than the original input is produced. We then resize the image to the original input dimensions.
+We then pass in input dimensions larger than the actual ones into the models, such that a normal map larger than the original input is produced. We then resize the image to the original input dimensions.
 
 \begin{figure}[H]
     \centering
 
     \begin{subfigure}{0.32\linewidth}
         \centering
+        \includegraphics[width=\linewidth]{images/gnd_truth.png}
+        \caption{Ground truth from \cite{xu2019disn}}
+    \end{subfigure}
+    \begin{subfigure}{0.32\linewidth}
+        \centering
         \includegraphics[width=\linewidth]{images/BN_resized.png}
-        \caption{NYUv2 output}
+        \caption{ScanNet output}
     \end{subfigure}
     \hfill
     \begin{subfigure}{0.32\linewidth}
         \centering
         \includegraphics[width=\linewidth]{images/GN_resized.png}
-        \caption{GeoNet output}
+        \caption{NYUv2 output}
     \end{subfigure}
+
+    \caption{Comparison of model outputs when setting input dimensions as 448x448 instead of 224x224 alongside ground truth}
+\end{figure}
+
+The normal map generated for images when given larger input dimensions seem to have more clearly defined edges and surface contouring. Details on the evaluation of the two different models (trained on ScanNet and NYUv2 respectively) are in section 2.5.
+
+To compare our generated normal maps to the ground truth normal maps provided in \cite{xu2019disn}, we first mask out the background of the generated normal maps such that the difference in background colour does not contribute to the evaluation metrics for normal map generation.
+
+\begin{figure}[H]
+    \centering
+
     \begin{subfigure}{0.32\linewidth}
         \centering
         \includegraphics[width=\linewidth]{images/gnd_truth.png}
         \caption{Ground truth from \cite{xu2019disn}}
     \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/BN_resized.png}
+        \caption{ScanNet output (448x448) version}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/BN_filtered.png}
+        \caption{Output with background masking}
+    \end{subfigure}
 
-    \caption{Comparison of model outputs with input dimensions 448x448 instead of 224x224 alongside ground truth}
+    \caption{Example of masking out background for model evaluation against ground truth}
 \end{figure}
 
-The normal map generated for images when given larger input dimensions seem to have more clearly defined edges and surface contouring. Details on the evaluation of the two different models (trained on NYUv2 and GeoNet respectively) are in section 2.5.
+We then use Pixel Based Visual Information Fidelity to compare the normal maps generated by the two models to the ground truth. Visual Information Fidelity is a reference image quality metric that quantifies the amount of visual information preserved after image processing \cite{vifIntro} and can be used to measure various image quality attributes such as noise level and sharpness \cite{vifMetrics}.
 
-(talk about final model chosen and show example on a shapenet model)
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{images/vif_plot.png}
+    \caption{Comparison of VIF between ground truth and different models}
+    \label{fig:vifgraph}
+\end{figure}
+
+From Figure \ref{fig:vifgraph} we see that the model trained on ScanNet generates normal maps that are closer to the ground truth compared to that trained on NYUv2 on average. Hence, in the final model we decided to use the model trained on ScanNet on the ShapeNet database in \cite{ShapeNet}.
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/shapenet_orig.png}
+        \caption{Original image from \cite{ShapeNet} of size 128x128}
+        \label{fig:lowdefinput}
+    \end{subfigure}
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/shapenet_output.png}
+        \caption{Output from ScanNet model with 128x128 passed in as input dimensions}
+        \label{fig:lowdefoutput}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/shapenet_output_resized.png}
+        \caption{Output from ScanNet model with 512x512 passed in as input dimensions}
+        \label{fig:lowdefoutputfixed}
+    \end{subfigure}
+
+    \caption{Original ShapeNet image and normal map outputs}
+\end{figure}
+
+Without passing in dimensions larger than the input image into the model, we can see from comparing Figures \ref{fig:highdefinput} and \ref{fig:highdefoutput} to Figures \ref{fig:lowdefinput} and \ref{fig:lowdefoutput} that the quality of the normal map generated decreases as the resolution of the original input image decreases. Hence, we pass in much larger input dimensions (512x512) to generate a normal map of higher quality, as shown in Figure \ref{fig:lowdefoutputfixed}.
 
 \subsubsection{Depth Map Exploration}
 Depth maps store the distance of a surface from the camera per-pixel. These distances vary in type, such as metric, which considers the physical distance from the camera to the observed point, and relative (such as those produced by the models below). Monocular depth estimation (MDE) models input just a singular image, and produce a depth map (relative distance). 
 
-Produced depth maps were compared against the ``ground truths'' produced by \url{https://github.com/Xharlie/ShapenetRender_more_variation}, as was done in the normal priors exploration. An example of the depth map produced by them is visible in Figure  \ref{ground_truth}. However, it is important to note that these depth map ``ground truths'' were not always perfect, as can be seen in the following example: 
+Produced depth maps were compared against the ``ground truths'' produced by \url{https://github.com/Xharlie/ShapenetRender_more_variation}, as was done in the normal priors exploration. An example of the depth map produced by them is visible in Figure  \ref{fig:ground_truth}. However, it is important to note that these depth map ``ground truths'' were not always perfect, as can be seen in the following example: 
 
 - (INSERT) Image needed here of poor ground truth. 
 
