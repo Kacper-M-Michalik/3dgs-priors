@@ -7,12 +7,12 @@ import os
 import argparse
 import glob
 from PIL import Image
-from transformers import AutoModelForImageSegmentation
+from transparent_background import Remover # <--- NEW LIBRARY
 from torchvision import transforms
 
 class Subset(NamedTuple):
     name: str
-    resume_index: 0
+    resume_index: int
 
 class ProcessedImage(NamedTuple):
     uuid: str
@@ -20,9 +20,8 @@ class ProcessedImage(NamedTuple):
     image: np.array
 
 class ImageDataset(Dataset):
-    def __init__(self, file_paths, transform):
+    def __init__(self, file_paths):
         self.file_paths = file_paths
-        self.transform = transform
 
     def __len__(self):
         return len(self.file_paths)
@@ -31,7 +30,7 @@ class ImageDataset(Dataset):
         rgb_path = self.file_paths[idx]
         rgb = Image.open(rgb_path).convert("RGB")
         file_id = int(os.path.basename(rgb_path).split('.')[0])
-        return self.transform(rgb), file_id
+        return rgb, file_id
 
 def save(path, df):
     folder = os.path.dirname(path)
@@ -40,26 +39,13 @@ def save(path, df):
     df.to_parquet(path)
 
 def main(args):  
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"BiRefNet loaded on device: {device}...")
-    
-    model = AutoModelForImageSegmentation.from_pretrained(
-        'ZhengPeng7/BiRefNet', 
-        trust_remote_code=True
-    ).to(device).eval() 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    remover = Remover(mode='base', device=device) 
 
-    # Resize to 384x384 for Model Processing
-    INFERENCE_SIZE = (384, 384) 
-    transform = transforms.Compose([
-        transforms.Resize(INFERENCE_SIZE), 
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ])
-  
-    batch_size = 8
-    workers = 2 
+    batch_size = 1 
+    workers = 0   
     
-    target_size = (128, 128) # Needed for downsize, to match input
+    target_size = (128, 128) 
 
     in_path = os.path.join(args.in_folder, "srn_cars")    
     out_path = os.path.join(args.out_folder, "srn_cars_segmentation.parquet")  
@@ -93,28 +79,31 @@ def main(args):
             uuid = os.path.basename(folder_path)        
 
             rgbs = sorted(glob.glob(os.path.join(folder_path, "rgb", "*.png")))
-            dataset = ImageDataset(rgbs, transform)
+            dataset = ImageDataset(rgbs)
             loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=workers)
 
             full_batch = []
-            with torch.no_grad():
-                for batch_imgs, batch_filenames in loader:      
-                    batch_imgs = batch_imgs.to(device)
+            
+            for batch_imgs, batch_filenames in loader:      
+                for k in range(len(batch_filenames)):
+                    img_tensor = batch_imgs[k] 
+                    file_id = batch_filenames[k]
 
-                    preds = model(batch_imgs)[-1].sigmoid()
-                    preds = torch.nn.functional.interpolate( # Batched downsize
-                        preds,
-                        size=target_size,
-                        mode="bicubic",
-                        align_corners=False
-                    )
-
-                    # Thresholded at 0.5 to get binary mask
-                    preds_binary = (preds > 0.5).float()
-                    preds_uint8 = preds_binary.mul(255).byte().cpu().numpy().squeeze(1)
-
-                    for j, file_id in enumerate(batch_filenames):   
-                        full_batch.append(ProcessedImage(uuid=uuid, file_id=file_id.item(), image=preds_uint8[j].tobytes()))
+                    img_np = img_tensor.numpy() # For pre-processing differences
+                    img_pil = Image.fromarray(img_np.astype('uint8'), 'RGB')
+                    out = remover.process(img_pil) # Returns PIL Image with alpha channel
+                    out_np = np.array(out)
+                    alpha = out_np[:, :, 3] # (H, W)
+                    
+                    # Resizing
+                    alpha_img = Image.fromarray(alpha)
+                    alpha_resized = alpha_img.resize(target_size, resample=Image.NEAREST)
+                    
+                    mask_np = np.array(alpha_resized)
+                    mask_binary = (mask_np > 127).astype(np.uint8) * 255
+                    
+                    # Not batched, so no loop. 
+                    full_batch.append(ProcessedImage(uuid=uuid, file_id=file_id.item(), image=preds_uint8[j].tobytes()))
 
 
             for entry in full_batch:
@@ -129,11 +118,11 @@ def main(args):
                 print(f"Auto-saving at iteration {i}...")
                 save(out_path, pd.concat([df, pd.DataFrame(data)], ignore_index=True))
         
-        save(out_path, pd.concat([df, pd.DataFrame(data)], ignore_index=True))              # Save on subset completion     
-
+        # Save on subset completion
+        save(out_path, pd.concat([df, pd.DataFrame(data)], ignore_index=True))    
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='Generate segmentation priors using BiRefNet')
+    parser = argparse.ArgumentParser(description='Generate segmentation priors using InSPyReNet')
     parser.add_argument('--in_folder', type=str, required=True, help='Input folder containing images')
     parser.add_argument('--out_folder', type=str, required=True, help='Output folder to save segmentation priors')
     parser.add_argument('--save_iter', type=int, default=50, help='How often to make an intermediate save')
@@ -141,8 +130,5 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    print("In folder: {}".format(args.in_folder))
-    print("Out folder: {}".format(args.out_folder))
-
-    print("Processing cars dataset with segmentation priors (BiRefNet)")
+    print("Processing cars dataset with segmentation priors (InSPyReNet)")
     main(args)

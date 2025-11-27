@@ -11,3 +11,4 @@ transformers
 timm
 accelerate
 kornia
+transparent-background
