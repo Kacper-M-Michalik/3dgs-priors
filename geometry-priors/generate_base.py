@@ -24,7 +24,7 @@ def main(args):
     in_path = os.path.join(args.in_folder, "srn_cars")    
     print(in_path)
 
-    sets = []
+    sets = ["test", "train", "val"]
 
     rgb_data = []
     pose_data = []
@@ -44,7 +44,7 @@ def main(args):
             uuid = os.path.basename(folder_path)        
 
             rgbs = glob.glob(os.path.join(folder_path, "rgb", "*.png"))
-            poses = glob.glob(os.path.join(folder_path, "pose", "*.png"))
+            poses = glob.glob(os.path.join(folder_path, "pose", "*.txt"))
 
             print("Intrin Num:{}, RGBs found: {}, Poses found: {}".format(i, len(rgbs), len(poses)))
             
@@ -55,10 +55,7 @@ def main(args):
                     "split": set,
                     "uuid": uuid,
                     "intrinsics": data            
-                })
-                
-                print(data)
-                raise "test"  
+                }) 
 
             for rgb_path in rgbs:
                 file_id = int(os.path.basename(rgb_path).split('.')[0]) 
@@ -84,10 +81,7 @@ def main(args):
                         "uuid": uuid,
                         "frame_id": file_id,                    
                         "pose": data
-                    })
-
-                    print(data)
-                    raise "test"      
+                    })  
 
             # Do occasional save if requested
             if args.save_iter != -1 and ((i-1) % args.save_iter) == 0:
