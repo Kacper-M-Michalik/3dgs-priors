@@ -68,7 +68,7 @@ def main(args):
                     "split": set,
                     "uuid": uuid,
                     "frame_id": file_id,                    
-                    "depth": rgb.tobytes()
+                    "rgb": rgb.tobytes()
                 })
 
             for pose_path in poses:
