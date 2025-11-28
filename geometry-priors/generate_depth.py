@@ -84,7 +84,7 @@ def main(args):
 
             rgbs = glob.glob(os.path.join(folder_path, "rgb", "*.png"))
             dataset = ImageDataset(rgbs, transform)
-            loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=workers)
+            loader = DataLoader(dataset, batch_size=batch_size, drop_last=False, shuffle=False, num_workers=workers)
 
             print("Intrin Num:{}, RGBs found: {}".format(i, len(rgbs)))
 

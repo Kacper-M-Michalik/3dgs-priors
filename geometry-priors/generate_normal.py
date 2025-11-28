@@ -111,6 +111,7 @@ def main(args):
                     norm_out = (norm_out + 1) * 127.5
                     norm_out = norm_out.clamp(0, 255).byte().cpu().numpy()
                    
+                    # C H W -> 3 * 128 * 128 format
                     for j, file_id in enumerate(file_ids):   
                         full_batch.append(ProcessedImage(uuid=uuid, file_id=file_id, image=norm_out[j].tobytes()))
             
