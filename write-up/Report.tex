@@ -32,10 +32,13 @@ RCONSTRUCTING 3D MODELS FROM IMAGES IS ACHANLEGNING TASK THAT REQUIRES LARGES NU
 TYPICALLY DONE WITH ENRF OR OTHER
 MODERN ADVANCEMENTS FOCUS ON REDUCING INPOUT PHOTO NUMBER ND PROCESSIGN COMPELXITY
 SPECIFICALLY, Developments in 3D Gaussian Splatting methods allow for 3D scene reconstruction using single or few RGB images. 
+
 While faster than other scene reconstruction techniques and requiring only a "one-shot" pass, these approaches often suffer from challenges such as layout/scale drift, over-smooth geometry and hallucinations in occluded regions. 
+
 This project focuses on one recent method, SplatterImage \cite{splatterImage}, as a baseline. 
 By storing 3D Gaussians in an image, it reduces reconstruction to learning an image-to-image neural network, allowing the use of a 2D U-Net to form the representation. 
-Each pixel stores the parameters for a corresponding 3D Gaussian, allowing for reconstruction in a single feed-forward pass. This reduces the need for large amounts of compute. 
+Each pixel stores the parameters for a corresponding 3D Gaussian, allowing for reconstruction in a single feed-forward pass. This reduces the need for large amounts of compute.
+
 Despite its speed, SplatterImage does have some issues that have been noted in related works, 
 particularly in reconstructing structures unseen in the input view, including for views significantly different from the source. 
 This project aims to address this by proposing a lightweight augmentation to the model, by integrating explicit geometry priors 
@@ -55,9 +58,12 @@ discuss triplane?
 The triplane representation was proposed to efficiently and expressively represent 3D volumes \cite{triplane}, as a compromise between rendering speed and memory consumption. They were shown to scale to large datasets like Objaverse \cite{objaversexl}\cite{objaverse}, but at the cost of hundreds of GPUs for multiple days \cite{triplanebasedmodel}.
 
 discuss 3dgs
+
+3D Gaussian splatting \cite{3dgs} was proposed to offer real-time radiance field rendering by introducing a 3D Gaussian scene representation, speeding up scene optimization and novel view synthesis while maintaining a high quality.
+
 discuss splatterimage
 
-Splatter Image \cite{splatterImage} applies Gaussian Splatting to monocular reconstrution by using a set of 3D Gaussians as the 3D representation. It predicts a 3D Gaussian for each of the input image pixels and uses a 2D image as the container of the 3D Gaussians, storing the parameters of one Gaussian per pixel. This reduces the reconstruction problem to learning an image-to-image neural network, allowing the reconstructor to be implemented utilizing only efficient 2D operators. The use of Gaussian Splatting in this approach increases rendering and space efficiency, which benefits inference and training. Our work continues to expand on this method through investigating different geometry priors and integrating them into the current model as appropriate.
+Splatter Image \cite{splatterImage} then applies Gaussian Splatting to monocular reconstrution by using a set of 3D Gaussians as the 3D representation. It predicts a 3D Gaussian for each of the input image pixels and uses a 2D image as the container of the 3D Gaussians, storing the parameters of one Gaussian per pixel. This reduces the reconstruction problem to learning an image-to-image neural network, allowing the reconstructor to be implemented utilizing only efficient 2D operators. The use of Gaussian Splatting in this approach increases rendering and space efficiency, which benefits inference and training. Our work continues to expand on this method through investigating different geometry priors and integrating them into the current model as appropriate.
 
 \subsection{Section 1.3: Overview of the idea}
 [Provide an overview stating why the idea of the project makes sense and what the main motivation is.]
@@ -75,6 +81,13 @@ we propose performing ablation study to see which priors are most effective/sign
 
 explain 3dshg output
 explain spaltteriamge architecture with diagram
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=10cm]{write-up/images/splatter_image_diagram.png}
+    \caption{Overview of SplatterImage taken from \cite{splatterImage}}
+    \label{fig:splatter_img_diagram}
+\end{figure}
 
 \subsection{Section 2.2: Algorithm improvements}
 [Explain what you implemented to improve over the baseline. You may include figures to explain the idea and logic. Focus on the ideas and not the implementation.]
@@ -293,7 +306,7 @@ eval/train on ready dataset have minimal changes
 added new dataloader code
 novel evaluator?
 
-\subsection{Section 2.3: Data pipelines}
+\subsection{Section 2.4: Data pipelines}
 [Explain your data format, how you consume the data in your algorithms, and data augmentation.]
 
 EXPLAIN SRN CARS format
@@ -307,7 +320,7 @@ PERFORMS WEIGHT GRAFT
 TRAINING OCCURS
 WEIGHTS FUSED UPLOADED TO HF
 
-\subsection{Section 2.4: Training procedures}
+\subsection{Section 2.5: Training procedures}
 [Explain which framework and optimizers you use, how you implemented the training logic.]
 
 USE TORCH
@@ -318,37 +331,8 @@ WE WRITE TRAINIG NNTOEBOOK RUSN ON CLOAB WITH A100
 LSIT TRAINING PARAMS
 WEIGHTS FUSED AND UPLAODED TO HF
 
-\subsection{Section 2.5: Testing and validation procedures}
+\subsection{Section 2.6: Testing and validation procedures}
 [Explain which framework you use, how you implemented the testing/ validation logic.]
-
-\subsubsection{Normal map priors evaluation}
-To compare our generated normal maps to the ground truth normal maps provided in \cite{xu2019disn}, we first mask out the background of the generated normal maps such that the difference in background colour does not contribute to the evaluation metrics for normal map generation.
-
-\begin{figure}[H]
-    \centering
-
-    \begin{subfigure}{0.32\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{images/gnd_truth.png}
-        \caption{Ground truth from \cite{xu2019disn}}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}{0.32\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{images/BN_resized.png}
-        \caption{NYUv2 output (448x448) version}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}{0.32\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{images/BN_filtered.png}
-        \caption{Output with background masking}
-    \end{subfigure}
-
-    \caption{Example of masking out background for model evaluation against ground truth}
-\end{figure}
-
-We then use Visual Information Fidelity to compare the normal maps generated by the two models to the ground truth.
 
 \section{Chapter 3: Experiments and Evaluation}
 \subsection{Section 3.1: Datasets}
