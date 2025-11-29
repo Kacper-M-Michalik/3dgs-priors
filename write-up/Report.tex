@@ -48,14 +48,13 @@ EXPAND/REWORD ABOVE
 
 Needs elaboration and rewording
 
-discuss 3dgs
-
 Over the years, other representations for single-view 3D reconstruction have been used. Traditional methods typically use explicit 3D representations such as point clouds \cite{pointCloud} or meshes \cite{mesh}. Implicit representations like NeRF \cite{nerf} have also been used, but are slow to render. 
 
 discuss triplane?
 
 The triplane representation was proposed to efficiently and expressively represent 3D volumes \cite{triplane}, as a compromise between rendering speed and memory consumption. They were shown to scale to large datasets like Objaverse \cite{objaversexl}\cite{objaverse}, but at the cost of hundreds of GPUs for multiple days \cite{triplanebasedmodel}.
 
+discuss 3dgs
 discuss splatterimage
 
 Splatter Image \cite{splatterImage} applies Gaussian Splatting to monocular reconstrution by using a set of 3D Gaussians as the 3D representation. It predicts a 3D Gaussian for each of the input image pixels and uses a 2D image as the container of the 3D Gaussians, storing the parameters of one Gaussian per pixel. This reduces the reconstruction problem to learning an image-to-image neural network, allowing the reconstructor to be implemented utilizing only efficient 2D operators. The use of Gaussian Splatting in this approach increases rendering and space efficiency, which benefits inference and training. Our work continues to expand on this method through investigating different geometry priors and integrating them into the current model as appropriate.
@@ -93,7 +92,7 @@ We studied using normal maps as a 3D spatial prior to augment the visual tokens 
 
 For our ground truths we use \cite{xu2019disn} which presents a Deep Implicit Surface Network to generate a 3D mesh from a 2D image by predicting the underlying signed distance fields and provides a dataset of higher resolution images of the ShapeNet models from \cite{ShapeNet} each paired with a depth image, a normal map and an albedo image at \url{https://github.com/Xharlie/ShapenetRender_more_variation}. We then feed these images into the normal map generation models and compare them to the given normal maps to evaluate their performance.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=15cm]{images/normal_gnd_truth.png}
     \caption{Example of image with maps used as ground truth taken from \cite{Bae2021}}
@@ -104,7 +103,7 @@ For the models we referenced \cite{Bae2021} which implements a network which est
 
 We run both pretrained models on the dataset.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
 
     \begin{subfigure}{0.32\linewidth}
