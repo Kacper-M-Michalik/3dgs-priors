@@ -89,6 +89,8 @@ explain spaltteriamge architecture with diagram
     \label{fig:splatter_img_diagram}
 \end{figure}
 
+Splatter Image uses a standard image-to-image neural network architecture to predict a Gaussian for each pixel of the input image I, generating the output image M as the Splatter Image. Learning to predict the Splatter Image can be done on a single GPU using at most 20GB of memory at training time for most single-view reconstruction experiments (except for Objaverse, where 2 GPUs were used and 26GB of memory was used on each). Most of this neural network architecture is identical to the SongUNet of \cite{songunet}, but the last layer is replaced with a $1 \times 1$ convolutional layer with $12 + k_c$ output channels, where $k_c \in \{3, 12\}$ depending on the colour model. The output tensor codes for parameters that are then transformed to opacity, offset, depth, scale, rotation and colour respectively. These parameters are then activated by non-linear functions to obtain the Gaussian paramters, such as the opacity and depth. The Gaussian Splatting implementation of \cite{3dgs} is used for rasterization to generate $360^\circ$ views of the original input image.
+
 \subsection{Section 2.2: Algorithm improvements}
 [Explain what you implemented to improve over the baseline. You may include figures to explain the idea and logic. Focus on the ideas and not the implementation.]
 
@@ -103,7 +105,7 @@ explain addition of LORA matrices due to compute limitations/allowign working of
 
 We studied using normal maps as a 3D spatial prior to augment the visual tokens for the Splatter Image. A normal map stores surface normal data as RGB colour information, which shows how light interacts with the surface at a per-pixel level, hence we wanted to investigate if that could help the model generate the 3D surface of the input image.
 
-For our ground truths we use \cite{xu2019disn} which presents a Deep Implicit Surface Network to generate a 3D mesh from a 2D image by predicting the underlying signed distance fields and provides a dataset of higher resolution images of the ShapeNet models from \cite{ShapeNet} each paired with a depth image, a normal map and an albedo image at \url{https://github.com/Xharlie/ShapenetRender_more_variation}. We then feed these images into the normal map generation models and compare them to the given normal maps to evaluate their performance.
+For our ground truths we use \cite{xu2019disn} which provides a dataset of higher resolution images of the ShapeNet models from \cite{ShapeNet} each paired with a depth image, a normal map and an albedo image at \url{https://github.com/Xharlie/ShapenetRender_more_variation}. We then feed these images into the normal map generation models and compare them to the given normal maps to evaluate their performance.
 
 \begin{figure}[H]
     \centering
@@ -137,6 +139,7 @@ We run both pretrained models on the dataset.
         \centering
         \includegraphics[width=\linewidth]{images/GN.png}
         \caption{NYUv2 output}
+        \label{fig:gn1}
     \end{subfigure}
 
     \caption{Comparison of original input and two model outputs}
@@ -162,12 +165,13 @@ We then pass in input dimensions larger than the actual ones into the models, su
         \centering
         \includegraphics[width=\linewidth]{images/GN_resized.png}
         \caption{NYUv2 output}
+        \label{fig:gn2}
     \end{subfigure}
 
     \caption{Comparison of model outputs when setting input dimensions as 448x448 instead of 224x224 alongside ground truth}
 \end{figure}
 
-The normal map generated for images when given larger input dimensions seem to have more clearly defined edges and surface contouring. Details on the evaluation of the two different models (trained on ScanNet and NYUv2 respectively) are in section 2.5.
+The normal map generated for images when given larger input dimensions seem to have more clearly defined edges and surface contouring. It is also important to note that the ground truth for NYUv2 is only defined for the centre crop of the image and the prediction is therefore not accurate outside the centre. This is shown in figures \ref{fig:gn1} and \ref{fig:gn2} where noise is generated around the borders of the normal maps.
 
 To compare our generated normal maps to the ground truth normal maps provided in \cite{xu2019disn}, we first mask out the background of the generated normal maps such that the difference in background colour does not contribute to the evaluation metrics for normal map generation.
 
@@ -310,6 +314,8 @@ novel evaluator?
 [Explain your data format, how you consume the data in your algorithms, and data augmentation.]
 
 EXPLAIN SRN CARS format
+We took our input data from the ShapeNet-SRN dataset from \cite{srn} at $128 \times 128$ resolution.
+
 EXPLAIN TRANSFORMATION TO PARQUET
 EXPLAIN STORE OF uint8s
 UPLOADED TO HF
@@ -337,6 +343,10 @@ WEIGHTS FUSED AND UPLAODED TO HF
 \section{Chapter 3: Experiments and Evaluation}
 \subsection{Section 3.1: Datasets}
 [Explain the datasets utilized: what they contain, why they are utilized, assumptions, limitations, possible extensions.]
+
+The standard benchmark for evaluating single-view 3D reconstruction is ShapeNet-SRN \cite{srn}, hence we used this to test and evaluate our main model implementation. For this dataset, we specifically use the "Car" class, which used the "car" class of ShapeNet v2 \cite{ShapeNet} with 2.5k 3D CAD model instances. The SRN dataset was generated by disabling transparencies and specularities and training on 50 observations of each instance at a resolution of $128 \times 128$ pixels, with camera poses being randomly generated on a sphere with the object at the origin. A limitation of this dataset is the lack of subject variety in the dataset as the model may end up overfitting to cars. A possible extension to address this limitation could be to include other classes in the ShapeNet-SRN database to make sure that the model can still generalise to other types of objects.
+
+An extension of this dataset is implemented in \cite{xu2019disn}, which presents a Deep Implicit Surface Network to generate a 3D mesh from a 2D image by predicting the underlying signed distance fields. In the paper, they generated a 2D dataset composed of renderings of the models in ShapeNet Core \cite{ShapeNet}. For each mesh model, the dataset provides 366 renderings with samller variation and 36 views with larger variation (bigger yaw angle range and larger distance variation). The object is allowed to move away from the origin, which provides more degrees of freedom in terms of camera parameters, and the "roll" angle of the camera is ignored since it was deemed very rare in real-world scenarios. The images were rendered at a higher resolution of $224 \times 224$ pixels and were paired with a depth image, a normal map and an albedo image as shown in figure \ref{fig:ground_truth}. This dataset was mainly used as a ground truth to evaluate the generation of geometry priors (e.g. normal map and depth map). A limitation of this dataset would be its small size since only 72 examples are present, and a possible extension could be to include more examples by implementing similar techniques on other objects in the ShapeNet core dataset.
 
 \subsection{Section 3.2: Training and testing results}
 [Explain the training and testing results with graphs and elaborating on why they make sense, what could be improved.]
