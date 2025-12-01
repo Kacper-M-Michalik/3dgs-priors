@@ -112,6 +112,7 @@ def main(args):
                     preds_normalized = (preds - min_val) / (max_val - min_val + 1e-8)                    
                     preds_uint8 = preds_normalized.mul(255).byte().cpu().numpy()
 
+                    # H W format -> 128 * 128
                     for j, file_id in enumerate(batch_filenames):   
                         full_batch.append(ProcessedImage(uuid=uuid, file_id=file_id.item(), image=preds_uint8[j].tobytes()))
 
