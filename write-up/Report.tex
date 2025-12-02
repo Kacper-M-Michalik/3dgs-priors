@@ -19,55 +19,100 @@
 \maketitle
 
 \section*{Information}
-Authors: TEST
+Authors: Kacper Michalik, Radhika Iyer, Alex loh
 \newline
-Group Number: TEST
+Group Number: TODO
 
 \section{Chapter 1: Introduction and Motivation}
 \subsection{Section 1.1: Introduction to the problem}
 [Provide a thorough introduction to the problem and why it is important. Briefly explain what general techniques there are and how your project fits.]
+\newline
 
 \noindent
-RCONSTRUCTING 3D MODELS FROM IMAGES IS ACHANLEGNING TASK THAT REQUIRES LARGES NUMBER OF REFERNCE/INPTU IMAGES AND INTENSE PROCESSING
-TYPICALLY DONE WITH ENRF OR OTHER
-MODERN ADVANCEMENTS FOCUS ON REDUCING INPOUT PHOTO NUMBER ND PROCESSIGN COMPELXITY
-SPECIFICALLY, Developments in 3D Gaussian Splatting methods allow for 3D scene reconstruction using single or few RGB images. 
+Improving 3D data acquisition, reconstruction and rendering methods is an ongoing, long-standing and highly demanded problem in computer vision. 
+Increasing demand for efficient 3D reconstruction in applications such as augmented/virtual reality, autonomous devices 
+(for purposes of navigation or perception in examples such as robotics or self-driving cars) or digital artistry (geometry acquisition for models in VFX, games or other digital products) 
+has skyrocketed demand for research and improvements in this area.
 
-While faster than other scene reconstruction techniques and requiring only a "one-shot" pass, these approaches often suffer from challenges such as layout/scale drift, over-smooth geometry and hallucinations in occluded regions. 
+\noindent
+Historically 3D reconstruction has been a challenging task that requires large number of reference images and even larger amounts of compute.
+Efficiency and accuracy improvements from advancements in computer hardware and machine-learning methods have made 3D reconstruction applicable
+for a wider variety of tasks and hardware platforms; continuing this trend, one area of focus is made on
+further reducing the number of input images required for reconstruction, thereby improving computational efficiency and reducing data acquisition hardware requirements,
+this had lead to interest in the issue of novel view synthesis.
 
-This project focuses on one recent method, SplatterImage \cite{splatterImage}, as a baseline. 
-By storing 3D Gaussians in an image, it reduces reconstruction to learning an image-to-image neural network, allowing the use of a 2D U-Net to form the representation. 
-Each pixel stores the parameters for a corresponding 3D Gaussian, allowing for reconstruction in a single feed-forward pass. This reduces the need for large amounts of compute.
+\noindent
+Namely, in 2020 Neural Radiance Fields\cite{nerf} (NeRF's) became a method for low-input 3D reconstruction, capable of good quality 
+novel view synthesis, by predicting a density and radiance volume, which can then be ray-traced to render novel views.
+In 2023, 3D Gaussian Splatting\cite{3dgs} (3DGS) became an alternative method, offering major improvements in computational performance, instead predicting
+a point cloud of gaussians containing parameters such as mean position, colour, rotation or size, where the gaussians are then rasterized to render novel views.
+Developments in 3D Gaussian Splatting methods have allowed for 3D scene reconstruction using single or few RGB images.
+While faster than other scene reconstruction techniques and requiring only a "one-shot" pass, 
+these approaches often suffer from challenges such as layout/scale drift, over-smooth geometry and hallucinations in occluded regions. TODO: CITE
+\newline
 
-Despite its speed, SplatterImage does have some issues that have been noted in related works, 
-particularly in reconstructing structures unseen in the input view, including for views significantly different from the source. 
-This project aims to address this by proposing a lightweight augmentation to the model, by integrating explicit geometry priors 
-(such as planes, normals, visibility cues, depth, segmentation, edge maps) with minimal architectural changes.
-
-EXPAND/REWORD ABOVE
+\noindent
+This project focuses on one recent method, Splatter Image\cite{splatterImage}, as a baseline. 
+Splatter Image allows single or few RGB image 3DGS reconstruction. Achieved by predicting 3D Gaussians as pixels in a multichannel image; this representation reduces reconstruction to 
+learning an image-to-image neural network, allowing the use of a 2D U-Net to form the representation.
+Each pixel stores the parameters for a corresponding 3D Gaussian, allowing for reconstruction in a single feed-forward pass. This overall architecture allows for a compute-efficient model. 
+Despite its speed, Splatter Image does have some issues that have been noted in related works,
+particularly in reconstructing structures unseen in the input view, including for views significantly different from the source. TODO: CITE
+This project aims to address this by first researching inferable explicit geometry priors (such as planes, normals, visibility cues, depth, segmentation or edge maps) 
+which can be dynamically produced for input images by existing specialized models, then proposing a lightweight augmentation for Splatter Image, with minimal architectural changes, allowing
+predicted priors to be fed alongside the RGB images, allowing the priors to guide reconstruction in a more accurate manner,
+compared to when the network has to learn these geometric features itself.
 
 \subsection{Section 1.2: Background and related work}
 [Include a few very relevant related works and how your work relates to those, expanding on the previous section. We do not expect you to cover all previous works.]
+\newline
 
-Needs elaboration and rewording
+ADD DIAGRAMS OF PHTOGRAMETRRYT GAUSSAIN SPLAT AND NERF
+\newline
 
-Over the years, other representations for single-view 3D reconstruction have been used. Traditional methods typically use explicit 3D representations such as point clouds \cite{pointCloud} or meshes \cite{mesh}. Implicit representations like NeRF \cite{nerf} have also been used, but are slow to render. 
+\noindent
+///FIX THIS
+Historically, 3D reconstruction has been performed by using photogrammetry to generate a point cloud or mesh
+Traditional methods typically use explicit 3D representations such as point clouds \cite{pointCloud} or meshes \cite{mesh}.
+Historically, *** SfM and MVS were used, these require large amounts of images, lots of processing and require detailed knowldge of camera locations, making it unwieldy for general and in-the-field use (for exampel ahve to setup image studio game dev)
+///FIX THIS
 
-discuss triplane?
+In 2020 novel view synthesis was revolutionized by the introduction of Neural Radiance Fields\cite{nerf}. In NeRF an underlying continuous volumetric scene function,
+represented using a deep learning model, is optimized using a sparse set of input images with known camera poses; the input to the function/model
+is a single continuous 5D coordinate (spatial location and viewing direction) and the output is the volume density and view-dependent emitted radiance at that location.
+Novel views are synthesized by querying 5D coordinates along camera rays for some new camera pose, and output colours and densities are rendered into an image.
+NeRF achieved state-of-the-art results and became the gold standard for novel view synthesis.
 
-The triplane representation was proposed to efficiently and expressively represent 3D volumes \cite{triplane}, as a compromise between rendering speed and memory consumption. They were shown to scale to large datasets like Objaverse \cite{objaversexl}\cite{objaverse}, but at the cost of hundreds of GPUs for multiple days \cite{triplanebasedmodel}.
+In 2023 the field was again revolutionized by 3D Gaussian Splatting, 
+EXPLAIN
+CHEAP TO Computes
+EFFECTIVE
+\newline
 
-discuss 3dgs
+\noindent
+Since the introduction of 3DGS a number of deep learning architectures and processing pipelines based on the method have been developed to find the most accurate and efficient implementation for high quality novel view synthesis.
+Examples include F3D-Gaus TODO CITE, Gauss VideoDreamer TODO CITE, TGS TODO CITE and Splatter Image\cite{splatterImage}.
 
-3D Gaussian splatting \cite{3dgs} was proposed to offer real-time radiance field rendering by introducing a 3D Gaussian scene representation, speeding up scene optimization and novel view synthesis while maintaining a high quality.
+\noindent
+F3D-Gaus
 
-discuss splatterimage
+\noindent
+Gauss VideoDreamer
 
-Splatter Image \cite{splatterImage} then applies Gaussian Splatting to monocular reconstrution by using a set of 3D Gaussians as the 3D representation. It predicts a 3D Gaussian for each of the input image pixels and uses a 2D image as the container of the 3D Gaussians, storing the parameters of one Gaussian per pixel. This reduces the reconstruction problem to learning an image-to-image neural network, allowing the reconstructor to be implemented utilizing only efficient 2D operators. The use of Gaussian Splatting in this approach increases rendering and space efficiency, which benefits inference and training. Our work continues to expand on this method through investigating different geometry priors and integrating them into the current model as appropriate.
+\noindent
+The triplane representation was proposed to efficiently and expressively represent 3D volumes \cite{triplane}, as a compromise between rendering speed and memory consumption. 
+They were shown to scale to large datasets like Objaverse \cite{objaversexl}\cite{objaverse}, but at the cost of hundreds of GPUs for multiple days \cite{triplanebasedmodel}.
+
+\noindent
+Another recent method is Splatter Image \cite{splatterImage} then applies Gaussian Splatting to monocular reconstrution by using a set of 3D Gaussians as the 3D representation. 
+It predicts a 3D Gaussian for each of the input image pixels and uses a 2D image as the container of the 3D Gaussians, storing the parameters of one Gaussian per pixel. 
+This reduces the reconstruction problem to learning an image-to-image neural network, allowing the reconstructor to be implemented utilizing only efficient 2D operators. 
+The use of Gaussian Splatting in this approach increases rendering and space efficiency, which benefits inference and training. 
+Our work continues to expand on this method through investigating different geometry priors and integrating them into the current model as appropriate.
 
 \subsection{Section 1.3: Overview of the idea}
 [Provide an overview stating why the idea of the project makes sense and what the main motivation is.]
-splatteriamge suffers from hallucination and problems simply due to lack of data
+SplatterImage suffers from hallucination and problems due to lack of data
 feeding models additional data improves reconstruction 
 with modern compute and ml advancements there now exist many good quality pretrained geometry related models
 for example generating depth, normal maps, segmentation
@@ -79,9 +124,6 @@ we propose performing ablation study to see which priors are most effective/sign
 \subsection{Section 2.1: Baseline algorithm}
 [Explain the baseline architecture you used to build your algorithm on. You may reproduce figures from the original papers.]
 
-explain 3dshg output
-explain spaltteriamge architecture with diagram
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=10cm]{images/splatter_image_diagram.png}
@@ -89,6 +131,10 @@ explain spaltteriamge architecture with diagram
     \label{fig:splatter_img_diagram}
 \end{figure}
 
+ADD FIGURE OF USONGNET, DESCRIBE ARCH IN MORE DETATIL< TALK ABOUT HOW CROSS ATTENTION SUED FOR MULTI IMAGE
+\newline
+
+\noindent
 Splatter Image uses a standard image-to-image neural network architecture to predict a Gaussian for each pixel of the input image I, generating the output image M as the Splatter Image. Learning to predict the Splatter Image can be done on a single GPU using at most 20GB of memory at training time for most single-view reconstruction experiments (except for Objaverse, where 2 GPUs were used and 26GB of memory was used on each). Most of this neural network architecture is identical to the SongUNet of \cite{songunet}, but the last layer is replaced with a $1 \times 1$ convolutional layer with $12 + k_c$ output channels, where $k_c \in \{3, 12\}$ depending on the colour model. The output tensor codes for parameters that are then transformed to opacity, offset, depth, scale, rotation and colour respectively. These parameters are then activated by non-linear functions to obtain the Gaussian paramters, such as the opacity and depth. The Gaussian Splatting implementation of \cite{3dgs} is used for rasterization to generate $360^\circ$ views of the original input image.
 
 \subsection{Section 2.2: Algorithm improvements}
