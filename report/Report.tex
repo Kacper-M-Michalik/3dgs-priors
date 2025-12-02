@@ -50,7 +50,7 @@ Instead of an implicit function, 3DGS optimizes a set of 3D Gaussians, defined b
 which can be efficiently rasterized to generate novel views.
 Developments in 3D Gaussian Splatting methods have allowed for 3D scene reconstruction using few or even single RGB images.
 While faster than other scene reconstruction techniques and requiring only a "one-shot" pass, 
-these approaches often suffer from challenges such as layout/scale drift, over-smooth geometry and hallucinations in occluded regions. TODO: CITE
+these approaches often suffer from challenges such as layout/scale drift, over-smooth geometry and hallucinations in occluded regions \cite{tang2024hisplathierarchical3dgaussian} (NOTE TODO: for now this only talks mostly about over-smooth geometry and kind of hallucinations, still looking for a layout/scale drift one). 
 \newline
 
 \noindent
@@ -59,7 +59,46 @@ Splatter Image allows single or few RGB image 3DGS reconstruction. Achieved by p
 learning an image-to-image neural network, allowing the use of a 2D U-Net to form the representation.
 Each pixel stores the parameters for a corresponding 3D Gaussian, allowing for reconstruction in a single feed-forward pass. This overall architecture allows for a compute-efficient model. 
 Despite its speed, Splatter Image does have some issues that have been noted in related works,
-particularly in reconstructing structures unseen in the input view, including for views significantly different from the source. TODO: CITE
+particularly in reconstructing structures unseen in the input view, including for views significantly different from the source. 
+One issue that may be causing this problem is that the prediction of 3D Gaussians in Splatter Image is based on input image features alone, which do not have sufficient conditional information for Gaussian splatting to represent structures that are not visible in the input view \cite{shen2024pixelworth3dgaussians}. As shown in figure \ref{fig:splatter_image_problems}, for the chair input image in \ref{fig:chair_input}, Splatter Image has trouble generating the occluded chair leg as shown in \ref{fig:chair_splatter_1} and \ref{fig:chair_splatter_2}.
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}{0.19\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/chair_input.png}
+        \caption{Input image}
+        \label{fig:chair_input}
+    \end{subfigure}
+    \begin{subfigure}{0.19\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/chair_truth_1.png}
+        \caption{Ground truth}
+        \label{fig:chair_truth_1}
+    \end{subfigure}
+    \begin{subfigure}{0.19\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/chair_splatter_1.png}
+        \caption{Splatter Image output}
+        \label{fig:chair_splatter_1}
+    \end{subfigure}
+    \begin{subfigure}{0.19\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/chair_truth_2.png}
+        \caption{Ground truth}
+        \label{fig:chair_truth_2}
+    \end{subfigure}
+    \begin{subfigure}{0.19\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/chair_splatter_2.png}
+        \caption{Splatter Image output}
+        \label{fig:chair_splatter_2}
+    \end{subfigure}
+
+    \caption{Splatter Image outputs compared with ground truth taken from \cite{shen2024pixelworth3dgaussians}}
+    \label{fig:splatter_image_problems}
+\end{figure}
 This project aims to address this by first researching inferable geometry priors (such as planes, normals, visibility cues, depth, segmentation or edge maps) 
 which can be dynamically produced for input images by existing specialized models, then proposing a lightweight augmentation for Splatter Image, allowing
 predicted priors to be fed alongside the RGB images, allowing them to guide reconstruction in a more accurate manner,
@@ -99,7 +138,7 @@ EFFECTIVE
 
 \noindent
 Since the introduction of 3DGS a number of deep learning architectures and processing pipelines based on the method have been developed to find the most accurate and efficient implementation for high quality novel view synthesis.
-Examples include F3D-Gaus TODO CITE, Gauss VideoDreamer TODO CITE, TGS TODO CITE and Splatter Image\cite{splatterImage}.
+Examples include F3D-Gaus\cite{f3dgaus}, Gauss VideoDreamer\cite{hao2025gaussvideodreamer3dscenegeneration}, TGS TODO CITE and Splatter Image\cite{splatterImage}.
 
 \noindent
 F3D-Gaus
@@ -137,6 +176,13 @@ we propose performing ablation study to see which priors are most effective/sign
     \includegraphics[width=10cm]{images/splatter_image_diagram.png}
     \caption{Overview of SplatterImage taken from \cite{splatterImage}}
     \label{fig:splatter_img_diagram}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=10cm]{images/u-net.png}
+    \caption{U-net architecture taken from \cite{unet} that Song U-Net\cite{songunet} is based off. Each blue box corresponds to a multi-channel feature map, with the number of channels denoted on top of each box. The x-y size is provided at the lower left edge of the box. White boxes represent copied feature maps. The arrows denote the different operations.}
+    \label{fig:u-net_diagram}
 \end{figure}
 
 ADD FIGURE OF USONGNET, DESCRIBE ARCH IN MORE DETATIL< TALK ABOUT HOW CROSS ATTENTION SUED FOR MULTI IMAGE
