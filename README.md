@@ -39,3 +39,11 @@ To train modified models locally:
 
 The notebook performs relevant set up for Splatter Image followed by training/fine-tuning, the last cells can be run to upload the resulting weights to HuggingFace.
 Due to hardware demands, it is recommended to run the notebook on a service such as Google Colab, the existing models on HuggingFace were trained overnight using the A100 runtime on Google Colab Pro+.
+
+## Evaluation
+DESCRIBE HOW TO EVAL, WHERE RESUTLS FOUND
+
+## Results
+DESCRIBE HOW TO USE GENERATE STATS
+
+ALSO NOTE TO CHANGE DATASET LOADER DIR
