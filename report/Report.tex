@@ -5,6 +5,8 @@
 \usepackage{natbib}
 \usepackage{hyperref}
 \usepackage{subcaption}
+\usepackage{booktabs} 
+\usepackage{multirow} 
 
 \title
 {
@@ -340,6 +342,51 @@ To quantitatively evaluate SOD models, we noted that the ShapeNet images used (t
 
 We tested three SOD architectures: rembg (based on the U-2-Net architecture) \cite{Gatis_rembg_2025}, InSPyReNet \cite{kim2022inspyrenet}, and BiRefNet \cite{zheng2024birefnet}. 
 We evaluated performance using Mean Absolute Error (MAE), Intersection over Union (IoU), and $F_{\beta}$-Measure.
+
+Note that the ShapeNet images used are split into `Easy' and `Hard' as categories, as before. 
+\begin{table}[htbp]
+    \centering
+    \caption{Comparison of Salient Object Detection models on ShapeNet renders. $\uparrow$ indicates higher is better, $\downarrow$ indicates lower is better.}
+    \label{tab:sod_results}
+    \begin{tabular}{llccc}
+        \toprule
+        \textbf{Difficulty} & \textbf{Model} & \textbf{IoU} $\uparrow$ & \textbf{$F_{\beta}$} $\uparrow$ & \textbf{MAE} $\downarrow$ \\
+        \midrule
+        \multirow{3}{*}{Easy} 
+         & rembg (U-2-Net) & \textbf{0.986} & 0.991 & \textbf{0.004} \\
+         & InSPyReNet      & 0.983 & \textbf{0.996} & \textbf{0.004} \\
+         & BiRefNet        & 0.966 & 0.979 & 0.006 \\
+        \midrule
+        \multirow{3}{*}{Hard} 
+         & rembg (U-2-Net) & \textbf{0.980} & 0.988 & \textbf{0.005} \\
+         & InSPyReNet      & 0.966 & \textbf{0.991} & 0.006 \\
+         & BiRefNet        & 0.952 & 0.973 & 0.007 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+Figure \ref{fig:fbeta_boxplot} illustrates the distribution of $F_{\beta}$ scores across both ``Easy'' and ``Hard'' datasets. \texttt{InSPyReNet} has the tightest interquartile range, particularly on the Easy set.  \texttt{rembg} demonstrates similar stability but with a slightly broader spread on the `Hard ' dataset. \texttt{BiRefNet} is competitive (note the scale of the y-axis, with all achieving scores greater than 0.95), but comparatively shows a lower median score and higher variance, suggesting it is more sensitive to specific geometries. 
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/SOD_Fbeta.png}
+    \caption{Distribution of $F_{\beta}$ scores for each model across the two difficulty levels.}
+    \label{fig:fbeta_boxplot}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/SODPrecisionRecall.png}
+    \caption{Precision vs. Recall trade-off}
+    \label{fig:prec_recall}
+\end{figure}
+
+
+The scatter plot in Figure \ref{fig:prec_recall} shows how the models operate with different aims; . \texttt{InSPyReNet} (in orange) clusters tightly towards the top of the high-performance region (top right), suggesting a priority of precision (often very close to $1.0$). In practice, this may mean eliminating some background noise, but this may mean missing parts of the object. \texttt{rembg} (blue) also has  high recall and precision, and it could also be used as a robust general-purpose model for segmentation (that does not clip parts of the object of interest). 
+
+
+To identify the most frequent ``winner," we counted the number of images where each model achieved the highest $F_{\beta}$ score. \texttt{InSPyReNet} achieved the highest score on the majority (28 vs \texttt{rembg}'s 8). 
 
 
 \subsubsection{Prior Model Integration}
