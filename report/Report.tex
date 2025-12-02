@@ -404,6 +404,13 @@ MODEL CHANGES
 added layer parameters
 on creation if congfig, inject lora and perform weight graft
 
+\textbf{Manual LoRA Integration: TO BE REVISED as necessary}
+To adapt the Splatter Image architecture for fine-tuning on the ShapeNet-SRN Cars dataset with depth and normal priors, we integrated Low-Rank Adaptation (LoRA). (CITE) 
+
+Standard libraries such as Hugging Face's PEFT (CITE) provide out-of-the-box LoRA integration, we found them incompatible with the weight-grafting mechanism required by the SplatterImage pipeline. Splatter Image relies on grafting weights from pre-trained checkpoints where input channel dimensions change (e.g., when adding depth or normal map channels). This leads to shape mismatches during initialisation steps (such as for PEFT's LoRA layers) since the pre-trained weights cannot be directly loaded into layers with modified input dimensions. (CHECK THIS)
+
+We added LoRA manually within the \texttt{GaussianPredictor} and \texttt{train\_network} modules, using code from Microsoft's \texttt{loralib} (CITE). We modified the underlying \texttt{Linear} and \texttt{Conv2d} layers of the U-Net architecture to include a \texttt{LoRALayer} mixin. This allows the freezing of pre-trained base weights while injecting trainable rank-decomposition matrices ($A$ and $B$) directly into the layer definition. 
+
 \subsubsection{Training and Evaluation Changes}
 new priors stacked into input
 eval/train on ready dataset have minimal changes
