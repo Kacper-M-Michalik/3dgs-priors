@@ -19,9 +19,9 @@
 \maketitle
 
 \section*{Information}
-Authors: Kacper Michalik, Radhika Iyer, Alex loh
+Authors: Kacper Michalik, Radhika Iyer, Alex Loh
 \newline
-Group Number: TODO
+Group Number: 7
 
 \section{Chapter 1: Introduction and Motivation}
 \subsection{Section 1.1: Introduction to the problem}
@@ -29,24 +29,24 @@ Group Number: TODO
 \newline
 
 \noindent
-Improving 3D data acquisition, reconstruction and rendering methods is an ongoing, long-standing and highly demanded problem in computer vision. 
-Increasing demand for efficient 3D reconstruction in applications such as augmented/virtual reality, autonomous devices 
-(for purposes of navigation or perception in examples such as robotics or self-driving cars) or digital artistry (geometry acquisition for models in VFX, games or other digital products) 
-has skyrocketed demand for research and improvements in this area.
+The advancement of 3D data acquisition, reconstruction, and rendering methods remains a fundamental and persistent open problem in computer vision.
+Efficient, high-quality 3D reconstruction is increasingly critical for applications ranging from augmented reality (AR/VR), autonomous devices 
+(for example in perception or navigation in robotics or self-driving cars) to digital artistry 
+(geometry acquisition for models in VFX, games or other digital products), driving significant research interest in this domain.
 
 \noindent
 Historically 3D reconstruction has been a challenging task that requires large number of reference images and even larger amounts of compute.
-Efficiency and accuracy improvements from advancements in computer hardware and machine-learning methods have made 3D reconstruction applicable
-for a wider variety of tasks and hardware platforms; continuing this trend, one area of focus is made on
-further reducing the number of input images required for reconstruction, thereby improving computational efficiency and reducing data acquisition hardware requirements,
-this had lead to interest in the issue of novel view synthesis.
-
-\noindent
-Namely, in 2020 Neural Radiance Fields\cite{nerf} (NeRF's) became a method for low-input 3D reconstruction, capable of good quality 
-novel view synthesis, by predicting a density and radiance volume, which can then be ray-traced to render novel views.
-In 2023, 3D Gaussian Splatting\cite{3dgs} (3DGS) became an alternative method, offering major improvements in computational performance, instead predicting
-a point cloud of gaussians containing parameters such as mean position, colour, rotation or size, where the gaussians are then rasterized to render novel views.
-Developments in 3D Gaussian Splatting methods have allowed for 3D scene reconstruction using single or few RGB images.
+Advancements in computer hardware and machine-learning methods have significantly improved the efficiency and accuracy 
+of 3D reconstruction, extending its applicability for a wider variety of tasks and hardware platforms; continuing this trend, 
+one area of focus is made on further reducing the number of input images required for reconstruction, 
+thereby improving computational efficiency and reducing data acquisition hardware requirements,
+this has lead to interest in the issue of novel view synthesis.
+Namely, in 2020 Neural Radiance Fields\cite{nerf} (NeRF) introduced a revolutionary method for high quality novel view synthesis.
+This is done by learning a continuous volumetric density and radiance function, which can then be ray-marched from new camera poses, enabling novel views to be synthesized.
+In 2023, 3D Gaussian Splatting\cite{3dgs} (3DGS) introduced an alternative method, offering major improvements in computational performance.
+Instead of an implicit function, 3DGS optimizes a set of 3D Gaussians, defined by parameters such as position, colour, opacity, rotation and scale, 
+which can be efficiently rasterized to generate novel views.
+Developments in 3D Gaussian Splatting methods have allowed for 3D scene reconstruction using few or even single RGB images.
 While faster than other scene reconstruction techniques and requiring only a "one-shot" pass, 
 these approaches often suffer from challenges such as layout/scale drift, over-smooth geometry and hallucinations in occluded regions. TODO: CITE
 \newline
@@ -58,10 +58,10 @@ learning an image-to-image neural network, allowing the use of a 2D U-Net to for
 Each pixel stores the parameters for a corresponding 3D Gaussian, allowing for reconstruction in a single feed-forward pass. This overall architecture allows for a compute-efficient model. 
 Despite its speed, Splatter Image does have some issues that have been noted in related works,
 particularly in reconstructing structures unseen in the input view, including for views significantly different from the source. TODO: CITE
-This project aims to address this by first researching inferable explicit geometry priors (such as planes, normals, visibility cues, depth, segmentation or edge maps) 
-which can be dynamically produced for input images by existing specialized models, then proposing a lightweight augmentation for Splatter Image, with minimal architectural changes, allowing
-predicted priors to be fed alongside the RGB images, allowing the priors to guide reconstruction in a more accurate manner,
-compared to when the network has to learn these geometric features itself.
+This project aims to address this by first researching inferable geometry priors (such as planes, normals, visibility cues, depth, segmentation or edge maps) 
+which can be dynamically produced for input images by existing specialized models, then proposing a lightweight augmentation for Splatter Image, allowing
+predicted priors to be fed alongside the RGB images, allowing them to guide reconstruction in a more accurate manner,
+compared to when the neural network has to learn these geometric features itself.
 
 \subsection{Section 1.2: Background and related work}
 [Include a few very relevant related works and how your work relates to those, expanding on the previous section. We do not expect you to cover all previous works.]
@@ -71,11 +71,17 @@ ADD DIAGRAMS OF PHTOGRAMETRRYT GAUSSAIN SPLAT AND NERF
 \newline
 
 \noindent
-///FIX THIS
-Historically, 3D reconstruction has been performed by using photogrammetry to generate a point cloud or mesh
-Traditional methods typically use explicit 3D representations such as point clouds \cite{pointCloud} or meshes \cite{mesh}.
-Historically, *** SfM and MVS were used, these require large amounts of images, lots of processing and require detailed knowldge of camera locations, making it unwieldy for general and in-the-field use (for exampel ahve to setup image studio game dev)
-///FIX THIS
+Traditionally, 3D reconstruction has been performed by multi-stage photogrammetry pipelines, relying on explicit geometric
+representations such meshes or point clouds. The industry-standard workflow begins with Structure from Motion (SfM), 
+which matches sparse feature points across many overlapping images to estimate camera parameters and generate a sparse point cloud.
+This is typically followed by Multi-View Stereo (MVS) algorithms to compute dense depth maps, which are combined to
+generate a standard 3D mesh using techniques like Delaunay triangulation or Moving Least Squares with Marching Cubes.
+TODO: CITE
+
+While effective for static, diffuse environments, these methods struggled significantly with surfaces such as 
+transparent windows or reflective metals—because they relied on strict photometric consistency and lack a mechanism to model view-dependent radiance.
+ALSO REQUIRE hese require large amounts of images, lots of processing and require detailed knowldge of camera locations,
+ making it unwieldy for general and in-the-field use (for exampel ahve to setup image studio game dev)
 
 In 2020 novel view synthesis was revolutionized by the introduction of Neural Radiance Fields\cite{nerf}. In NeRF an underlying continuous volumetric scene function,
 represented using a deep learning model, is optimized using a sparse set of input images with known camera poses; the input to the function/model
@@ -146,6 +152,9 @@ explain addition of LORA matrices due to compute limitations/allowign working of
 
 \subsection{Section 2.3: Implementation details}
 [Explain how you implemented the improvements. You may include code snippets with the corresponding explanations.]
+
+All code associated with the project can be found in the fopllowing repsoitories:
+
 
 \subsubsection{Normal Map Exploration}
 
@@ -411,15 +420,23 @@ An extension of this dataset is implemented in \cite{xu2019disn}, which presents
 \subsection{Section 4.2: Discussion of limitations}
 [Explain the limitations of your technique. You may want to refer to previous sections or show figures on the limitations.]
 
-halluciantion in hidden areas still a problem
-data, lot of data and compute needed
+halluciantion in hidden areas still a problem, as at end of the day you dont know what there, only doign best guess basd on alrge datasets
+lot of data cnd comptue needed to perofrm accurate reweults
+we lacked compute to generate and test more models priors
 
 \subsection{Section 4.3: Future directions}
 [State a few future directions for research and development. These typically follow from the discussion on limitations.]
 
+generating and testing mroe priors, trying longer training times, largert datasets
+more priors aoriented to hidden areas, could bring up planes again,
+
 \subsection{Section 4.4: Project Contribution}
 "You may find the template for the project report here. We do not enforce any page limits but please make sure to address each section appropriately as explained in the document. In particular, please pay special attention to clarifying the contribution of each group member."
 Should we clarify here or throughout document?
+
+Radhika - List priors, Lora integration, trainign setup, writeup
+Kacper - Splatter Image Architectural changes, dataset loading, training setup, dataset generation/orchestration based on prior reserach from others, write-up
+Alex - List priors, (splatter image initial bug fixes?), graphing/results code?, writeup
 
 \bibliographystyle{unsrt}
 \bibliography{citations}
