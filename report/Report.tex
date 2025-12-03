@@ -656,33 +656,110 @@ Implementation details can be found in \textbf{Section 2.4: Data pipelines}.
 \subsubsection{Model Changes}
 
 \noindent
-added runtime layer calcl based on cfg
+The first change to the model was to have the top-level \verb|GaussianSplatPredictor| class
+dynamically calculate the number of input channels required based on the training configuration, 
+this information was then passed to the underlying Convolutional layers and UNet blocks during initialisation.
 
-CODE BLOCK
+\begin{lstlisting}[language=Python, caption=Channel calculation code]
+ 
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=New model initialisation code]
+
+\end{lstlisting}
+
+added film layer for text input
+\newline
 
 \noindent
-if usign old weights to start from, we perform a graft which returns a new model,
-although this is implemented otuside of the model:
-
-CODE BLOCK
+One of our desired features was to allow a model with new priors to be fine-tuned using existing weights, namely those from the
+pretrained Splatter Image models. This was achieved by grafting the old weights of a pretrained model onto a newly generated
+GaussianSplatPredictor. This grafting mechanism was implemented externally to the model, as such its implementation details are covered in
+\textbf{Section 2.3.6: Training and Evaluation Changes}.
 \newline
 
 \noindent
 \textbf{Manual LoRA Integration: TO BE REVISED as necessary}
 \\To adapt the Splatter Image architecture for fine-tuning on the ShapeNet-SRN Cars dataset (with depth and normal priors), we integrated Low-Rank Adaptation (LoRA) \cite{HuLoRA} into the GaussianPreidictor module of the Splatter Image. LoRA adds low-rank trainable matrices into frozen, pretrained layers. This preserves the base model, while further finetuning it to the new data. 
 
-Existing libraries such as Hugging Face's PEFT \cite{peft} provide out-of-the-box LoRA integration, we found them incompatible with the weight-grafting mechanism required by the SplatterImage pipeline. Splatter Image relies on grafting weights from pre-trained checkpoints where input channel dimensions change (e.g., when adding depth or normal map channels). This leads to shape mismatches during initialisation steps (such as for PEFT's LoRA layers) since the pre-trained weights cannot be directly loaded into layers with modified input dimensions. 
-
-We added LoRA manually within the \texttt{GaussianPredictor} and \texttt{train\_network} modules, using code from Microsoft's \texttt{loralib} \cite{hu2022lora}. We modified the underlying \texttt{Linear} and \texttt{Conv2d} layers of the U-Net architecture to include a \texttt{LoRALayer} mixin. This allows the freezing of pre-trained base weights while injecting the LoRA matrices ($A$ and $B$) directly into the forward pass. As mentioned earlier, this preserves the frozen pretrained weights from the original 3-channel RGB model, but is compatible with the new channels. 
+\noindent
+Standard libraries such as Hugging Face's PEFT (CITE) provide out-of-the-box LoRA integration, we found them incompatible with the weight-grafting mechanism required by the SplatterImage pipeline. Splatter Image relies on grafting weights from pre-trained checkpoints where input channel dimensions change (e.g., when adding depth or normal map channels). This leads to shape mismatches during initialisation steps (such as for PEFT's LoRA layers) since the pre-trained weights cannot be directly loaded into layers with modified input dimensions. (CHECK THIS) We added LoRA manually within the \texttt{GaussianPredictor} and \texttt{train\_network} modules, using code from Microsoft's \texttt{loralib} (CITE). We modified the underlying \texttt{Linear} and \texttt{Conv2d} layers of the U-Net architecture to include a \texttt{LoRALayer} mixin. This allows the freezing of pre-trained base weights while injecting trainable rank-decomposition matrices ($A$ and $B$) directly into the layer definition. 
 
 \subsubsection{Training and Evaluation Changes}
-The existing Splatter Image training and evaluation scripts needed minimal changes, thanks to how we integrated our priors into the project.
-The first change to 
-First congis are vierfied to be correct
+The existing Splatter Image evaluation script needed minimal changes, thanks to how we integrated our priors into the project.
+The training script initially needed minimal changes, but then was split into two versions, one with minimal changes for standard training,
+and one with additional changes required for LoRA support. 
+\newline
+
+\noindent
+For evaluation code, changes include adding support for loading our pretrained models available on HuggingFace.
+\begin{lstlisting}[language=Python, caption=New model loading code]
+# Load pretrained model from HuggingFace if no local model specified
+if args.experiment_path is None:        
+    # Eval run on the our new dataset with priors
+    if dataset_name in ["cars_priors"]:
+        cfg_path = hf_hub_download(repo_id="MVP-Group-Project/splatter-image-priors", 
+                                filename="model-depth-normal/config.yaml")
+        model_path = hf_hub_download(repo_id="MVP-Group-Project/splatter-image-priors",
+                            filename="model-depth-normal/model_best.pth")
+    
+    # Eval run on previous Splatter Image datasets
+    else:            
+        cfg_path = hf_hub_download(repo_id="szymanowiczs/splatter-image-v1", 
+                                filename="config_{}.yaml".format(dataset_name))
+        if dataset_name in ["gso", "objaverse"]:
+            model_name = "latest"
+        else:
+            model_name = dataset_name
+        model_path = hf_hub_download(repo_id="szymanowiczs/splatter-image-v1", 
+                            filename="model_{}.pth".format(model_name))
+    
+else:
+    cfg_path = os.path.join(experiment_path, ".hydra", "config.yaml")
+    model_path = os.path.join(experiment_path, "model_latest.pth")
+
+# load cfg
+training_cfg = OmegaConf.load(cfg_path)   
+\end{lstlisting}
+
+\noindent
+Input preparation also was changed, namely priors are concatenated (if enabled) as additional channels to the input RGB images,
+before being fed into the network. Assertions are also performed to verify that priors are indeed available for the currently
+active dataset.
+
 dataset loaded as suual, as we provide a Dataset class as standard in proejct
 datasrt laodear returen dictionary with images, poses, treansforms, we extend dict with priors key/value apirs
 new priors looked up and stacked into input
-eval/train on ready dataset have minimal changes
+
+\begin{lstlisting}[language=Python, caption=Network input preparation code]
+# Concatenate selected priors
+input_images = data["gt_images"][:, :model_cfg.data.input_images, ...]
+if "use_pred_depth" in model_cfg.data and model_cfg.data.use_pred_depth:
+    assert model_cfg.data.category == "cars_priors", "Dataset does not have predicated maps!"
+    input_images = torch.cat([input_images,
+                    data["pred_depths"][:, :model_cfg.data.input_images, ...]],
+                    dim=2)
+if "use_pred_normal" in model_cfg.data and model_cfg.data.use_pred_normal:
+    assert model_cfg.data.category == "cars_priors", "Dataset does not have predicated maps!"
+    input_images = torch.cat([input_images,
+                    data["pred_normals"][:, :model_cfg.data.input_images, ...]],
+                    dim=2)
+
+# Get camera to center depth
+if model_cfg.data.origin_distances:
+    input_images = torch.cat([input_images,
+                    data["origin_distances"][:, :model_cfg.data.input_images, ...]],
+                    dim=2)
+\end{lstlisting}
+
+\noindent
+For the training code, .
+
+ADDED HF LAODING, PERFORMS GRAFT
+
+ADDED CONATENATION< DATASET LAODING REMAINS THE SAME
+
+For the LoRA specific version, additional changes
 
 \subsection{Data pipelines}
 [Explain your data format, how you consume the data in your algorithms, and data augmentation.]
