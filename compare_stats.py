@@ -35,5 +35,8 @@ for (metric_name, combined_values) in [("PSNR", combined_psnrs), ("SSIM", combin
     ax.set_xticks(np.arange(1, 5), labels=[ "None", "Depth Only", "Normal Only", "Both" ])
     ax.set_xlim(0.25, 4 + 0.75)
     ax.set_ylabel(metric_name)
+    for (i, vs) in enumerate(combined_values):
+        mean = np.mean(vs)
+        plt.text(1.05 + i, mean + 0.01, str(round(mean, 3)), fontsize = 12)
     ax.set_title(f"Distribution of {metric_name} Scores")
     plt.savefig(f"stats/Comparison_{metric_name.lower()}_distribution.png")

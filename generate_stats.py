@@ -35,6 +35,9 @@ if __name__ == "__main__":
             ax.set_xticks([1], labels=[""])
             ax.set_ylabel(metric_name)
             ax.set_title(f"Distribution of {metric_name} Scores")
+            for (i, vs) in enumerate(all_values):
+                mean = np.mean(vs)
+                plt.text(1.05 + i, mean + 0.01, str(round(mean, 3)), fontsize = 12)
             plt.savefig(f"stats/{filename}_{metric_name.lower()}_distribution.png")
             mean = np.mean(all_values)
             std = np.std(all_values)
