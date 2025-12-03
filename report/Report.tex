@@ -11,6 +11,7 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{titlesec}
+\usepackage[section]{placeins}
 
 \titleformat{\section}
   {\normalfont\Large\bfseries} % Text formatting (Bold, Large)
@@ -531,7 +532,7 @@ F_{\beta} = \frac{(1 + \beta^2)\,\text{Precision} \cdot \text{Recall}}
 It is commonly used is salient object detection to assess the quality of binary masks produced. When $\beta = 1$, precision and recall are equally weighted. Greater values of $\beta$ prioritise recall, while lower ones prioritise precision. We set $\beta^2$ to 0.3, following conventional practice in SOD literature, to emphasise precision over recall \cite{achantaFbeta}, \cite{chengFbeta}, \cite{borjiFbeta}.   When identifying a single salient object, false positives (background pixels incorrectly classified as foreground)  are often considered worse than small false negative sections along the boundary of the object. 
 
 Note that the ShapeNet images used are split into `Easy' and `Hard' as categories, as before. 
-\begin{table}[htbp]
+\begin{table}[H]
     \centering
     \caption{Comparison of Salient Object Detection models on ShapeNet renders. $\uparrow$ indicates higher is better, $\downarrow$ indicates lower is better.}
     \label{tab:sod_results}
@@ -713,7 +714,10 @@ GaussianSplatPredictor. This grafting mechanism was implemented externally to th
 \\To adapt the Splatter Image architecture for fine-tuning on the ShapeNet-SRN Cars dataset (with depth and normal priors), we integrated Low-Rank Adaptation (LoRA) \cite{HuLoRA} into the GaussianPreidictor module of the Splatter Image. LoRA adds low-rank trainable matrices into frozen, pretrained layers. This preserves the base model, while further finetuning it to the new data. 
 
 \noindent
-Standard libraries such as Hugging Face's PEFT (CITE) provide out-of-the-box LoRA integration, we found them incompatible with the weight-grafting mechanism required by the SplatterImage pipeline. Splatter Image relies on grafting weights from pre-trained checkpoints where input channel dimensions change (e.g., when adding depth or normal map channels). This leads to shape mismatches during initialisation steps (such as for PEFT's LoRA layers) since the pre-trained weights cannot be directly loaded into layers with modified input dimensions. (CHECK THIS) We added LoRA manually within the \texttt{GaussianPredictor} and \texttt{train\_network} modules, using code from Microsoft's \texttt{loralib} (CITE). We modified the underlying \texttt{Linear} and \texttt{Conv2d} layers of the U-Net architecture to include a \texttt{LoRALayer} mixin. This allows the freezing of pre-trained base weights while injecting trainable rank-decomposition matrices ($A$ and $B$) directly into the layer definition. 
+Existing libraries such as Hugging Face's PEFT \cite{peft} provide out-of-the-box LoRA integration, we found them incompatible with the weight-grafting mechanism required by the SplatterImage pipeline. Splatter Image relies on grafting weights from pre-trained checkpoints where input channel dimensions change (e.g., when adding depth or normal map channels). This leads to shape mismatches during initialisation steps (such as for PEFT's LoRA layers) since the pre-trained weights cannot be directly loaded into layers with modified input dimensions. 
+
+\noindent
+We added LoRA manually within the \texttt{GaussianPredictor} and \texttt{train\_network} modules, using code from Microsoft's \texttt{loralib} \cite{hu2022lora}. We modified the underlying \texttt{Linear} and \texttt{Conv2d} layers of the U-Net architecture to include a \texttt{LoRALayer} mixin. This allows the freezing of pre-trained base weights while injecting the LoRA matrices ($A$ and $B$) directly into the forward pass. As mentioned earlier, this preserves the frozen pretrained weights from the original 3-channel RGB model, but is compatible with the new channels. 
 
 \subsubsection{Training and Evaluation Changes}
 The existing Splatter Image evaluation script needed minimal changes, thanks to how we integrated our priors into the project.
@@ -883,6 +887,38 @@ An extension of this dataset is implemented in \cite{xu2019disn}, which presents
 \subsection{[Optional] Quantitative results}
 [A table and associated explanations for quantitative results.]
 
+\subsubsection{LoRA experiment results}
+To evaluate whether Low-Rank Adaptation (as described in \textbf{Section 2.3.5: Model Changes}) is effective, we performed a set of finetuning experiments. LoRA behaviour can be adjusted through three hyperparameters:
+\begin{itemize}
+    \item Rank ($r$): The rank of the low-rank matrices $A$ and $B$. Higher ranks increase the number of parameters and the capacity of the adaptation, but also increase computational cost
+    \item Alpha ($\alpha$): A scaling factor applied to the LoRA update during the forward pass. The update is scaled relative to the weights that have been frozen from the pretrained model.
+    \item Dropout ($p$): The dropout probability applied to the LoRA layers during training. This randomly disables activations, which aims to prevent overfitting. 
+
+\end{itemize}
+
+We tested multiple configurations by varying these hyperparameters, while keeping all other components. We measured the performance using PSNR, SSIM and LPIPS. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/stats-results/lora_experiments_psnr_distribution.png}
+    \caption{PSNR distribution for different LoRA configurations}
+    \label{fig:lora_psnr}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/stats-results/lora_experiments_ssim_distribution.png}
+    \caption{SSIM distribution for different LoRA configurations}
+    \label{fig:lora_ssim}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/stats-results/lora_experiments_lpips_distribution.png}
+    \caption{LPIPS distribution for different LoRA configurations}
+    \label{fig:lora_lpips}
+\end{figure}
+
 \subsection{[Optional] Comparison to state-of-the-art}
 [Qualitative and/ or quantitative comparisons to one or more recent works, especially the baseline work.]
 
@@ -917,7 +953,7 @@ Section 2.4: Kacper
 Section 2.5: Kacper
 Section 2.6: Kacper
 Section 3.1: FILL IN
-Section 3.2: FILL IN
+Section 3.2: Radhika
 Section 3.3: FILL IN
 Section 3.4: FILL IN
 Section 3.5: FILL IN
@@ -943,6 +979,7 @@ HF dataset orchestorator: Kacper
 
 Testing dataloader: Kacper
 Testing model: Kacper
+Testing LoRA configurations: Radhika 
 
 Results processing/graphing code: Alex
 Image collection, citation collection and verification: Alex
