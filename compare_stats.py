@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-filenames = ["both_scores", "depth_only_scores", "normals_only_scores"]
+filenames = ["reference_scores", "depth_only_scores", "normals_only_scores", "both_scores"]
 
 combined_psnrs = []
 combined_ssims = []
@@ -31,9 +31,9 @@ if not os.path.exists("stats"):
 
 for (metric_name, combined_values) in [("PSNR", combined_psnrs), ("SSIM", combined_ssims), ("LPIPS", combined_lpips)]:
     fig, ax = plt.subplots()
-    plt.violinplot(combined_values, showmeans=True)
-    ax.set_xticks(np.arange(1, 4), labels=[ "Both", "Depth Only", "Normal Only" ])
-    ax.set_xlim(0.25, 3 + 0.75)
+    violin = plt.violinplot(combined_values, showmeans=True)
+    ax.set_xticks(np.arange(1, 5), labels=[ "None", "Depth Only", "Normal Only", "Both" ])
+    ax.set_xlim(0.25, 4 + 0.75)
     ax.set_ylabel(metric_name)
     ax.set_title(f"Distribution of {metric_name} Scores")
     plt.savefig(f"stats/Comparison_{metric_name.lower()}_distribution.png")
