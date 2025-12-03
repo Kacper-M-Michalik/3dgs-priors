@@ -297,6 +297,17 @@ this method is consdiered state-of-the-art for high-performance conditional gene
 
 explain addition of LORA matrices due to compute limitations/allowign working of exisitng model
 
+\subsubsection{Low-Rank Adaptation (LoRA)}
+To address the computational constraints of fine-tuning the full U-Net architecture, we considered Low-Rank Adaptation (LoRA) \cite{HuLoRA}. LoRA freezes the pre-trained model weights and injects trainable rank decomposition matrices into layers within the architecture. 
+
+We utilize three key hyperparameters to control this adaptation:
+\begin{itemize}
+    \item Rank ($r$): The rank of the low-rank matrices $A$ and $B$. Higher ranks increase the number of parameters and the capacity of the adaptation, but also increase computational cost
+    \item Alpha ($\alpha$): A scaling factor applied to the LoRA update during the forward pass. The update is scaled relative to the weights that have been frozen from the pretrained model.
+    \item Dropout ($p$): The dropout probability applied to the LoRA layers during training. This randomly disables activations, which aims to prevent overfitting. 
+
+\end{itemize}
+
 \subsection{Implementation details}
 [Explain how you implemented the improvements. You may include code snippets with the corresponding explanations.]
 \newline
@@ -710,8 +721,8 @@ GaussianSplatPredictor. This grafting mechanism was implemented externally to th
 \newline
 
 \noindent
-\textbf{Manual LoRA Integration: TO BE REVISED as necessary}
-\\To adapt the Splatter Image architecture for fine-tuning on the ShapeNet-SRN Cars dataset (with depth and normal priors), we integrated Low-Rank Adaptation (LoRA) \cite{HuLoRA} into the GaussianPreidictor module of the Splatter Image. LoRA adds low-rank trainable matrices into frozen, pretrained layers. This preserves the base model, while further finetuning it to the new data. 
+\subsubsection{Manual LoRA Integration}
+To adapt the Splatter Image architecture for fine-tuning on the ShapeNet-SRN Cars dataset (with depth and normal priors), we added Low-Rank Adaptation (LoRA) \cite{HuLoRA} into the GaussianPreidictor module of the Splatter Image. LoRA adds low-rank trainable matrices into frozen, pretrained layers. This preserves the base model, while further finetuning it to the new data. 
 
 \noindent
 Existing libraries such as Hugging Face's PEFT \cite{peft} provide out-of-the-box LoRA integration, we found them incompatible with the weight-grafting mechanism required by the SplatterImage pipeline. Splatter Image relies on grafting weights from pre-trained checkpoints where input channel dimensions change (e.g., when adding depth or normal map channels). This leads to shape mismatches during initialisation steps (such as for PEFT's LoRA layers) since the pre-trained weights cannot be directly loaded into layers with modified input dimensions. 
@@ -888,13 +899,7 @@ An extension of this dataset is implemented in \cite{xu2019disn}, which presents
 [A table and associated explanations for quantitative results.]
 
 \subsubsection{LoRA experiment results}
-To evaluate whether Low-Rank Adaptation (as described in \textbf{Section 2.3.5: Model Changes}) is effective, we performed a set of finetuning experiments. LoRA behaviour can be adjusted through three hyperparameters:
-\begin{itemize}
-    \item Rank ($r$): The rank of the low-rank matrices $A$ and $B$. Higher ranks increase the number of parameters and the capacity of the adaptation, but also increase computational cost
-    \item Alpha ($\alpha$): A scaling factor applied to the LoRA update during the forward pass. The update is scaled relative to the weights that have been frozen from the pretrained model.
-    \item Dropout ($p$): The dropout probability applied to the LoRA layers during training. This randomly disables activations, which aims to prevent overfitting. 
-
-\end{itemize}
+To evaluate whether Low-Rank Adaptation (as described in \textbf{Section 2.3.5: Model Changes}) is effective, we performed a set of finetuning experiments. LoRA behaviour can be adjusted through three hyperparameters: (LINK BACK TO THE SUBSECTIONS IN SECTION 2 HERE)
 
 We tested multiple configurations by varying these hyperparameters, while keeping all other components. We measured the performance using PSNR, SSIM and LPIPS. 
 
