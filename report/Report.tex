@@ -661,11 +661,41 @@ dynamically calculate the number of input channels required based on the trainin
 this information was then passed to the underlying Convolutional layers and UNet blocks during initialisation.
 
 \begin{lstlisting}[language=Python, caption=Channel calculation code]
- 
+def calc_channels(cfg):    
+    # Base RGB channels
+    in_channels = 3
+
+    # Older configs may not have relvant options, select() returns None if the option is missing
+    if OmegaConf.select(cfg, "data.use_pred_depth") is True:
+        in_channels += 1
+    if OmegaConf.select(cfg, "data.use_pred_normal") is True:
+        in_channels += 3
+
+    return in_channels
 \end{lstlisting}
 
 \begin{lstlisting}[language=Python, caption=New model initialisation code]
+# Calculate number of input channels        
+self.in_channels = calc_channels(cfg)
 
+# Initialise correct model depending on if Gaussian mean offsets are to be calculated
+if cfg.model.network_with_offset:
+    split_dimensions, scale_inits, bias_inits = self.get_splits_and_inits(True, cfg)
+    self.network_with_offset = networkCallBack(cfg, 
+                                cfg.model.name,
+                                self.in_channels,
+                                split_dimensions,
+                                scale = scale_inits,
+                                bias = bias_inits)
+    assert not cfg.model.network_without_offset, "Can only have one network"
+if cfg.model.network_without_offset:
+    split_dimensions, scale_inits, bias_inits = self.get_splits_and_inits(False, cfg)
+    self.network_wo_offset = networkCallBack(cfg, 
+                                cfg.model.name,
+                                split_dimensions,
+                                scale = scale_inits,
+                                bias = bias_inits)
+    assert not cfg.model.network_with_offset, "Can only have one network"
 \end{lstlisting}
 
 added film layer for text input
@@ -692,7 +722,8 @@ and one with additional changes required for LoRA support.
 \newline
 
 \noindent
-For evaluation code, changes include adding support for loading our pretrained models available on HuggingFace.
+For evaluation code, the first change was adding support for loading our pretrained models available on HuggingFace.
+
 \begin{lstlisting}[language=Python, caption=New model loading code]
 # Load pretrained model from HuggingFace if no local model specified
 if args.experiment_path is None:        
@@ -723,13 +754,14 @@ training_cfg = OmegaConf.load(cfg_path)
 \end{lstlisting}
 
 \noindent
-Input preparation also was changed, namely priors are concatenated (if enabled) as additional channels to the input RGB images,
-before being fed into the network. Assertions are also performed to verify that priors are indeed available for the currently
+Input preparation was also changed, namely priors are concatenated (if enabled) as additional channels to the input RGB images,
+before being fed into the network. Splatter Image uses a DataLoader to receives batches of RGB images to perform infrfence on. 
+The DataLoader does not directly return a tensor of images, but a dictionary containing relevant batch data, namely XXX XXX XX. 
+This allowed our priors to be introduced into the preparation code easily, by simply providing them a key/value pairs in 
+the dictionary provided by the DataLoader, in the form of tensors matching the RGB image batch. The priors can be accessed 
+by KERY AND then concatenated with RGB images in a specific order as to generate the input tensors for the model to 
+perform inference on. Assertions are also performed to verify that priors are indeed available for the currently
 active dataset.
-
-dataset loaded as suual, as we provide a Dataset class as standard in proejct
-datasrt laodear returen dictionary with images, poses, treansforms, we extend dict with priors key/value apirs
-new priors looked up and stacked into input
 
 \begin{lstlisting}[language=Python, caption=Network input preparation code]
 # Concatenate selected priors
