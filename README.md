@@ -10,6 +10,8 @@ Code and notes related to research and generation of appropriate geometry priors
 <br>
 A fork of Splatter Image with the appropriate modifications can be found in the ```/splatter-image``` submodule/folder. 
 <br>
+Testing code can be found in ```/testing```.
+<br>
 Notes and latex for the final report can be found in the ```/report``` folder.
 
 ## Datasets
@@ -33,15 +35,58 @@ Ready weights for models trained on ```SRN Cars``` can be found on HuggingFace a
 To train modified models locally:
 
 1. Download the ```training.ipynb`` notebook
-2. Fill in the relevant arguments in the top cell (can be left at default)
-3. Run the first 3 cells manually (args, repo clone and requirements installation cells), as the requirement installation will require restart of the session/notebook to allow use of the new packages
+2. Fill in the relevant arguments in the args cell (3rd cell from top - can be left at default)
+3. Run the first 2 cells manually (repo clone and requirements installation cells), as the requirement installation will require restart of the session/notebook to allow use of the new packages
 4. Run all remaining cells
+
+NOTE: The training cell requires further user input to select logging options due to Splatter Image's use of wandb.
 
 The notebook performs relevant set up for Splatter Image followed by training/fine-tuning, the last cells can be run to upload the resulting weights to HuggingFace.
 Due to hardware demands, it is recommended to run the notebook on a service such as Google Colab, the existing models on HuggingFace were trained overnight using the A100 runtime on Google Colab Pro+.
 
 ## Evaluation
-DESCRIBE HOW TO EVAL, WHERE RESUTLS FOUND
+Evaluation can be run on the standard Splatter Image datasets alongside the new ```cars_priors``` dataset option. 
+If you are running evaluation on the standard datasets, you will have to manually download the datasets and then update ```/splatter-image/splatter_datasets/dataset_factory.py``` with the correct paths.
+Running evaluation on ```cars_priors``` performs automatic download of the dataset, so no extra steps are necessary for this dataset. 
+
+Evaluation can be run with:
+```
+python eval.py $dataset_name
+```
+`$dataset_name` is the name of the dataset. Options are:
+- `gso` (Google Scanned Objects), 
+- `objaverse` (Objaverse-LVIS), 
+- `nmr` (multi-category ShapeNet), 
+- `hydrants` (CO3D hydrants), 
+- `teddybears` (CO3D teddybears), 
+- `cars` (ShapeNet cars), 
+- `cars_priors` (ShapeNet cars with predicted priors)
+- `chairs` (ShapeNet chairs).
+
+The code will automatically download the relevant model for the requested dataset.
+
+You can also train your own models and evaluate them with: 
+```
+python eval.py $dataset_name --experiment_path $experiment_path
+```
+`$experiment_path` should hold a `model_latest.pth` file and a `.hydra` folder with `config.yaml` inside it.
+
+To evaluate on the validation split, use the option `--split val`.
+
+To save renders of the objects with the camera moving in a loop, run evaluation with the option `--split vis`. With this option the quantitative scores are not returned since ground truth images are not available in all datasets.
+
+You can set how many objects to save renders for, using the option `--save_vis`.
+
+You can set where to save the renders, using the option `--out_folder`.
+
+You can set where to save the resulting evaluation ```scores.txt```, using the option `--score_path`.
+
+## Testing
+A variety of testing notebooks can be found in the ```/testing``` folder.
+
+The ```dataloader.ipynb``` notebook tests whether the new ```srn_priors.py``` dataset loader returns RGB images correctly, by comparing the same image being loaded by the previous ```srn.py``` loader and the new loader.
+
+The ```model.ipynb``` notebook tests model grafting; after a successful graft it also tests whether the model produces the same inference results as before the graft (which is expected), by comparing the inference results of the post-graft and pre-graft models.
 
 ## Results
 DESCRIBE HOW TO USE GENERATE STATS
