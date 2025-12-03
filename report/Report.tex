@@ -8,9 +8,15 @@
 \usepackage{booktabs} 
 \usepackage{multirow} 
 \usepackage{amsmath}
-
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{titlesec}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries} % Text formatting (Bold, Large)
+  {}                           % <--- THE LABEL: Left empty to hide the number
+  {0pt}                        % Space between number and title (set to 0)
+  {}                           % Code before title
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -66,7 +72,7 @@ Group Number: 7
 Supervisor: Ahmet Canberk Baykal
 
 \section{Chapter 1: Introduction and Motivation}
-\subsection{Section 1.1: Introduction to the problem}
+\subsection{Introduction to the problem}
 [Provide a thorough introduction to the problem and why it is important. Briefly explain what general techniques there are and how your project fits.]
 \newline
 
@@ -149,7 +155,7 @@ which can be dynamically produced for input images by existing specialized model
 predicted priors to be fed alongside the RGB images, allowing them to guide reconstruction in a more accurate manner
 compared to current case, where the neural network needs to learn these geometric features itself.
 
-\subsection{Section 1.2: Background and related work}
+\subsection{Background and related work}
 [Include a few very relevant related works and how your work relates to those, expanding on the previous section. We do not expect you to cover all previous works.]
 \newline
 
@@ -224,7 +230,7 @@ This reduces the reconstruction problem to learning an image-to-image neural net
 The use of Gaussian Splatting in this approach increases rendering and space efficiency, which benefits inference and training. 
 Our work continues to expand on this method through investigating different geometry priors and integrating them into the current model as appropriate.
 
-\subsection{Section 1.3: Overview of the idea}
+\subsection{Overview of the idea}
 [Provide an overview stating why the idea of the project makes sense and what the main motivation is.]
 
 whilst providing excellent quality recsontruction from popint of vie wof refernec iamge, the actual 3d reocusntrion and resulting novel views
@@ -238,7 +244,7 @@ priors, allowing priors to guide reconsutrcution, improvingt recosntructio quali
 we also propose performing ablation study to see which priors are most effective/significant in changing the reconstruction quality
 
 \section{Chapter 2: Method}
-\subsection{Section 2.1: Baseline algorithm}
+\subsection{Baseline algorithm}
 [Explain the baseline architecture you used to build your algorithm on. You may reproduce figures from the original papers.]
 
 \begin{figure}[H]
@@ -270,7 +276,7 @@ The Gaussian Splatting implementation of \cite{3dgs} is used for rasterization t
 TALKA BOUT ARCH MORE, CROSS ATTN FILM, Each blue box corresponds to a multi-channel feature map, with the number of channels denoted on top of each box. The x-y size is provided at the lower left edge of the box. White boxes represent copied feature maps. The arrows denote the different operations.
 
 
-\subsection{Section 2.2: Algorithm improvements}
+\subsection{Algorithm improvements}
 [Explain what you implemented to improve over the baseline. You may include figures to explain the idea and logic. Focus on the ideas and not the implementation.]
 
 explain insertion of additional layers
@@ -290,7 +296,7 @@ this method is consdiered state-of-the-art for high-performance conditional gene
 
 explain addition of LORA matrices due to compute limitations/allowign working of exisitng model
 
-\subsection{Section 2.3: Implementation details}
+\subsection{Implementation details}
 [Explain how you implemented the improvements. You may include code snippets with the corresponding explanations.]
 \newline
 
@@ -299,7 +305,7 @@ All code associated with the project can be found in the following repositories:
 \newline
 
 \noindent
-Top-level Repository: \url{https://github.com/Kacper-M-Michalik/3dgs-priors}
+3DGS-priors (Top level repository for the project): \url{https://github.com/Kacper-M-Michalik/3dgs-priors}
 \newline
 \noindent
 Splatter Image Fork: \url{https://github.com/Kacper-M-Michalik/splatter-image}
@@ -572,11 +578,11 @@ To identify the most frequent ``winner," we counted the number of images where e
 However, to contextualise these results, all three models achieved very high scores (with $F_{\beta} > 0.97$ and IOU $> 0.95$), largely as the ShapeNet images have a clear foreground object against a uniform background. This reduces the number of possible cases of background vs foreground confusion, which means the models differ meaningfully here on fine structures at the object boundary. In practice, these can include wing mirrors, antennae, etc. Therefore, the differences in the models come from how well they capture these fine details.
 
 \subsubsection{Selected Prior Integration}
-During model selection, basic notebooks would have been written to operate the relevant models. Once a model was selected,
-the relevant notebook would be adapted into a high-performance script capable of processing an entire input dataset,
-producing ready-processed priors for every RGB image. 
-Namely, inference code would be rewritten to ensure it operates on high performance hardware such as the GPU,
-and that all operations were performed in a batched manner.
+During model selection, basic notebooks were written to operate and evaluate the relevant models. 
+Once a model was selected, the corresponding notebook would be refactored into a high-performance 
+script designed to process full datasets, producing ready-processed priors for every RGB image within the given dataset. 
+Specifically, inference code would be rewritten to ensure it operates on high performance hardware such as the GPU,
+and that all operations were executed in a batched manner.
 
 \begin{lstlisting}[language=Python, caption=Batched processing of depths]
 with torch.no_grad():
@@ -613,7 +619,7 @@ with torch.no_grad():
 \noindent
 An example of a performant rewrite is that of the depth generation python script. 
 As shown in the excerpt, inference operates on batches supplied by a DataLoader, with all other operations also being executed 
-batchwise on the device (the GPU in our case); only once processing is complete is the batch moved back to regular (host) 
+batchwise on the device (the GPU in our case); only once the batch is fully processed is it moved back to regular (host) 
 memory, and the individual priors extracted with relevant metadata for use/saving.
 \noindent
 We also note that predicted depths are quantized to 8-bit unsigned integers, all predicted priors are quantized this way;
@@ -633,8 +639,8 @@ All prior generation scripts can be found in the \verb|/geometry-priors| folder 
 \newline
 
 \noindent
-As to improve training and evaluation performance, we chose to generate priors in advance for selected datasets, as such we developed
-a pipeline that runs these prior generation scripts and constructs a ready-to-use dataset. Details on the implementation of this can be found in 
+As to improve training and evaluation performance, we chose to generate priors in advance for selected datasets. As such we developed
+a pipeline that executes the prior generation scripts and constructs a ready-to-use dataset. Implementation details can be found in 
 \textbf{Section 2.4: Data pipelines}.
 
 \subsubsection{Model Changes}
@@ -650,13 +656,15 @@ Standard libraries such as Hugging Face's PEFT (CITE) provide out-of-the-box LoR
 We added LoRA manually within the \texttt{GaussianPredictor} and \texttt{train\_network} modules, using code from Microsoft's \texttt{loralib} (CITE). We modified the underlying \texttt{Linear} and \texttt{Conv2d} layers of the U-Net architecture to include a \texttt{LoRALayer} mixin. This allows the freezing of pre-trained base weights while injecting trainable rank-decomposition matrices ($A$ and $B$) directly into the layer definition. 
 
 \subsubsection{Training and Evaluation Changes}
+The existing Splatter Image training and evaluation scripts needed minimal changes, thanks to how we integrated our priors into the project.
+The first change to 
 First congis are vierfied to be correct
 dataset loaded as suual, as we provide a Dataset class as standard in proejct
 datasrt laodear returen dictionary with images, poses, treansforms, we extend dict with priors key/value apirs
 new priors looked up and stacked into input
 eval/train on ready dataset have minimal changes
 
-\subsection{Section 2.4: Data pipelines}
+\subsection{Data pipelines}
 [Explain your data format, how you consume the data in your algorithms, and data augmentation.]
 
 DIAGRAM: SRN FILE STRUCTURE -> ORCHESTRATOR -> PARALLEL MODELS -> PARQUET
@@ -705,7 +713,7 @@ WANDB SAVES WEIGHT OCCASNIONALLY
 WEIGHTS ARE FUSED AT SAVE
 THESE WEIGHTS ARE UPLOADED TO HF WITH THIS NAMING SCHEME:
 
-\subsection{Section 2.5: Training procedures}
+\subsection{Training procedures}
 [Explain which framework and optimizers you use, how you implemented the training logic.]
 
 THE ENTIRE MODEL IS PROGRAMMED USING TORCH
@@ -726,53 +734,89 @@ OtHER OPTIOSM
 THE AVAIABLE MODCEL WEIGHST ON HF WERE TRAINIG NNTOEBOOK RUSN ON CLOAB WITH A100
 ITERS: 60K
 
-\subsection{Section 2.6: Testing and validation procedures}
+\subsection{Testing and validation procedures}
 [Explain which framework you use, how you implemented the testing/ validation logic.]
 
 \section{Chapter 3: Experiments and Evaluation}
-\subsection{Section 3.1: Datasets}
+\subsection{Datasets}
 [Explain the datasets utilized: what they contain, why they are utilized, assumptions, limitations, possible extensions.]
 
 The standard benchmark for evaluating single-view 3D reconstruction is ShapeNet-SRN \cite{srn}, hence we used this to test and evaluate our main model implementation. For this dataset, we specifically use the "Car" class, which used the "car" class of ShapeNet v2 \cite{ShapeNet} with 2.5k 3D CAD model instances. The SRN dataset was generated by disabling transparencies and specularities and training on 50 observations of each instance at a resolution of $128 \times 128$ pixels, with camera poses being randomly generated on a sphere with the object at the origin. A limitation of this dataset is the lack of subject variety in the dataset as the model may end up overfitting to cars. A possible extension to address this limitation could be to include other classes in the ShapeNet-SRN database to make sure that the model can still generalise to other types of objects.
 
 An extension of this dataset is implemented in \cite{xu2019disn}, which presents a Deep Implicit Surface Network to generate a 3D mesh from a 2D image by predicting the underlying signed distance fields. In the paper, they generated a 2D dataset composed of renderings of the models in ShapeNet Core \cite{ShapeNet}. For each mesh model, the dataset provides 36 renderings with smaller variation and 36 views with larger variation (bigger yaw angle range and larger distance variation). The object is allowed to move away from the origin, which provides more degrees of freedom in terms of camera parameters, and the "roll" angle of the camera is ignored since it was deemed very rare in real-world scenarios. The images were rendered at a higher resolution of $224 \times 224$ pixels and were paired with a depth image, a normal map and an albedo image as shown in figure \ref{fig:ground_truth}. This dataset was mainly used as a ground truth to evaluate the generation of geometry priors (e.g. normal map and depth map). A limitation of this dataset would be its small size since only 72 samples are available for us to use, such that the performance of geometry prior generation may not be evaluated correctly. However, in the same GitHub repository, the script to generate these images from the ShapeNet Core dataset is provided, so a possible extension given more time could be to include more images by running the script on other objects in the ShapeNet Core dataset.
 
-\subsection{Section 3.2: Training and testing results}
+\subsection{Training and testing results}
 [Explain the training and testing results with graphs and elaborating on why they make sense, what could be improved.]
 
-\subsection{Section 3.3: Qualitative results}
+\subsection{Qualitative results}
 [Show in figures and explain visual results. Include different interesting cases covering different aspects/ limitations/ dataset diversity. If not converged, explain what we can expect once converged. Include any other didactic examples here.]
 
-\subsection{[Optional] Section 3.4: Quantitative results}
+\subsection{[Optional] Quantitative results}
 [A table and associated explanations for quantitative results.]
 
-\subsection{[Optional] Section 3.5: Comparison to state-of-the-art}
+\subsection{[Optional] Comparison to state-of-the-art}
 [Qualitative and/ or quantitative comparisons to one or more recent works, especially the baseline work.]
 
 \section{Chapter 4: Conclusions and Future Directions}
-\subsection{Section 4.1: Conclusions}
+\subsection{Conclusions}
 [Summarize what the project was about and the main conclusions.]
 
-\subsection{Section 4.2: Discussion of limitations}
+\subsection{Discussion of limitations}
 [Explain the limitations of your technique. You may want to refer to previous sections or show figures on the limitations.]
 
 halluciantion in hidden areas still a problem, as at end of the day you dont know what there, only doign best guess basd on alrge datasets
 lot of data cnd comptue needed to perofrm accurate reweults
 we lacked compute to generate and test more models priors
 
-\subsection{Section 4.3: Future directions}
+\subsection{Future directions}
 [State a few future directions for research and development. These typically follow from the discussion on limitations.]
 
 generating and testing mroe priors, trying longer training times, largert datasets
 more priors aoriented to hidden areas, could bring up planes again,
 
-\subsection{Section 4.4: Project Contribution}
+\subsection{Project Contributions}
 "You may find the template for the project report here. We do not enforce any page limits but please make sure to address each section appropriately as explained in the document. In particular, please pay special attention to clarifying the contribution of each group member."
 Should we clarify here or throughout document?
 
-Radhika - List priors, Lora integration, trainign setup, writeup
-Kacper - Splatter Image Architectural changes, dataset loading, training setup, dataset generation/orchestration based on prior reserach from others, write-up
-Alex - List priors, (splatter image initial bug fixes?), graphing/results code?, writeup
+Section 1.1: Kacper and Alex
+Section 1.2: Kacper
+Section 1.3: Kacper
+Section 2.1: Kacper and Radhika and Alex
+Section 2.2: Kacper
+Section 2.3: Kacper and Radhika and Alex
+Section 2.4: Kacper
+Section 2.5: Kacper
+Section 2.6: Kacper
+Section 3.1: FILL IN
+Section 3.2: FILL IN
+Section 3.3: FILL IN
+Section 3.4: FILL IN
+Section 3.5: FILL IN
+Section 4.1: FILL IN
+Section 4.2: FILL IN
+Section 4.3: FILL IN
+
+Depths exploration: Radhika
+Segmentation exploration: Radhika
+Normals exploration: Alex
+Planes exploration: Alex
+
+Splatter Image setup and bugfixes: Radhika and Alex
+Splatter Image architectural modification (Grafting, Channel changes, FiLM, Cross-Attention): Kacper
+Splatter Image LoRA integration: Radhika
+Splatter Image Training Modification: Kacper
+Splatter Image Eval Modification: Radhika and Kacper
+generate depths: Kacper
+generate normals: Kacper
+generate segmentation: Radhika
+Splatter Image cars priors dataloader: Kacper
+HF dataset orchestorator: Kacper
+
+Testing dataloader: Kacper
+Testing model: Kacper
+
+Results processing/graphing code: Alex
+Image collection, citation collection and verification: Alex
 
 \bibliographystyle{unsrt}
 \bibliography{citations}
