@@ -111,24 +111,36 @@ compared to when the neural network has to learn these geometric features itself
 ADD DIAGRAMS OF PHTOGRAMETRRYT GAUSSAIN SPLAT AND NERF
 \newline
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{images/photogrammetry.png}
+    \caption{An example of 3D reconstruction with many overlapping images from \cite{photogrammetry}}
+\end{figure}
+
 \noindent
 Traditionally, 3D reconstruction has been performed by multi-stage photogrammetry pipelines, relying on explicit geometric
 representations such meshes or point clouds. The industry-standard workflow begins with Structure from Motion (SfM), 
 which matches sparse feature points across many overlapping images to estimate camera parameters and generate a sparse point cloud.
 This is typically followed by Multi-View Stereo (MVS) algorithms to compute dense depth maps, which are combined to
-generate a standard 3D mesh using techniques like Delaunay triangulation or Moving Least Squares with Marching Cubes.
-TODO: CITE
+generate a standard 3D mesh using techniques like Delaunay triangulation\cite{delaunayTriangulation} or Moving Least Squares with Marching Cubes\cite{marchingCubes}.
 
 While effective for static, diffuse environments, these methods struggled significantly with surfaces such as 
 transparent windows or reflective metals—because they relied on strict photometric consistency and lack a mechanism to model view-dependent radiance.
 ALSO REQUIRE hese require large amounts of images, lots of processing and require detailed knowldge of camera locations,
  making it unwieldy for general and in-the-field use (for exampel ahve to setup image studio game dev)
 
-In 2020 novel view synthesis was revolutionized by the introduction of Neural Radiance Fields\cite{nerf}. In NeRF an underlying continuous volumetric scene function,
+In 2020, novel view synthesis was revolutionized by the introduction of Neural Radiance Fields\cite{nerf}. In NeRF an underlying continuous volumetric scene function,
 represented using a deep learning model, is optimized using a sparse set of input images with known camera poses; the input to the function/model
 is a single continuous 5D coordinate (spatial location and viewing direction) and the output is the volume density and view-dependent emitted radiance at that location.
 Novel views are synthesized by querying 5D coordinates along camera rays for some new camera pose, and output colours and densities are rendered into an image.
 NeRF achieved state-of-the-art results and became the gold standard for novel view synthesis.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{images/gaussian_splatting.png}
+    \caption{A diagram of 3D Gaussian Splatting from \cite{3dgs}}
+    \label{fig:splatting_diagram}
+\end{figure}
 
 In 2023 the field was again revolutionized by 3D Gaussian Splatting, 
 EXPLAIN
