@@ -9,6 +9,42 @@
 \usepackage{multirow} 
 \usepackage{amsmath}
 
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{1, 1, 1}
+\definecolor{moonstoneblue}{rgb}{0.45, 0.66, 0.76}
+
+\lstdefinestyle{markdown-style}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,    
+    breakatwhitespace=false,         
+    breaklines=true,                  
+    keepspaces=true,                 
+    numbers=left,
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,    
+    frame=single,
+    rulecolor=\color{moonstoneblue},
+    framerule=1.5pt,            
+    captionpos=b,  
+    aboveskip=1.5em,
+    belowskip=1.5em
+}
+
+\lstset{
+    style=markdown-style
+}
 
 \title
 {
@@ -205,8 +241,6 @@ we also propose performing ablation study to see which priors are most effective
 \subsection{Section 2.1: Baseline algorithm}
 [Explain the baseline architecture you used to build your algorithm on. You may reproduce figures from the original papers.]
 
-
-
 \begin{figure}[H]
     \centering
     \begin{minipage}{.5\textwidth}
@@ -241,6 +275,19 @@ TALKA BOUT ARCH MORE, CROSS ATTN FILM, Each blue box corresponds to a multi-chan
 
 explain insertion of additional layers
 explain addition of transofrmer/FiLM layers to allow multimodal input from segmentation tokens 
+
+FiLM layers learn by training a separate, small neural network called a FiLM generator.
+This is a new, small network (like an MLP or RNN), segmentation embedding is then fed into the FiLM generator
+The generator outputs a gamma (scale) and beta (shift) 
+The gamma and beta values are applied to intercepted alyer using the FiLM equation: y = gamma * x + beta
+This modulated feature map is passed to the next layer of the U-Net.
+Exisitng U-Blocks support Film for camera embeddings, we modidy U-net blocks to have additional film layer for segemtnation tokens
+
+Add new cross-attention modules inside the U-Net's blocks (in the bottleneck and decoder).
+The U-Net's image features act as the Query (Q). The multimodal input embeddings act as the Key (K) 
+and Value (V). More expressive than FiLM as it allows for fine-grained spatial conditioning (per-pixel).,
+this method is consdiered state-of-the-art for high-performance conditional generation.
+
 explain addition of LORA matrices due to compute limitations/allowign working of exisitng model
 
 \subsection{Section 2.3: Implementation details}
@@ -524,15 +571,71 @@ To identify the most frequent ``winner," we counted the number of images where e
 
 However, to contextualise these results, all three models achieved very high scores (with $F_{\beta} > 0.97$ and IOU $> 0.95$), largely as the ShapeNet images have a clear foreground object against a uniform background. This reduces the number of possible cases of background vs foreground confusion, which means the models differ meaningfully here on fine structures at the object boundary. In practice, these can include wing mirrors, antennae, etc. Therefore, the differences in the models come from how well they capture these fine details.
 
-\subsubsection{Prior Model Integration}
-TWO MODEL SCRIPTS, PREGENERATED FOR TRAINING/EVAL/VAL
-FINAL MODAL ORCHESTRATOR PATTERN
-PER MODEL SCRIPT BACTEHD, SAVES TO IMAGE DUE TO SPACE LIMITATIONS
-GENERATE PARQUET PER PRIOR
-PARQUETS UPLOADED TO HF
+\subsubsection{Selected Prior Integration}
+During model selection, basic notebooks would have been written to operate the relevant models. Once a model was selected,
+the relevant notebook would be adapted into a high-performance script capable of processing an entire input dataset,
+producing ready-processed priors for every RGB image. 
+Namely, inference code would be rewritten to ensure it operates on high performance hardware such as the GPU,
+and that all operations were performed in a batched manner.
 
-ON THE FLY VERSION?
-ANOTEHR OCRHSESTOROR, IMAGES ADDED AND FED INTO MODEL TO ALLOW NOVEL IMAGES
+\begin{lstlisting}[language=Python, caption=Batched processing of depths]
+with torch.no_grad():
+    for batch_imgs, batch_filenames in loader:      
+        # Prediction, B C H W format              
+        batch_imgs = batch_imgs.to(device)            
+        preds = model(batch_imgs)
+
+        # Batched downsize
+        preds = torch.nn.functional.interpolate(
+            preds.unsqueeze(1),
+            size=target_size,
+            mode="bicubic",
+            align_corners=False
+        ).squeeze(1)
+
+        # Batched 0 to 1 normalization
+        batch_flat = preds.flatten(start_dim=1)
+        min_val, max_val = torch.aminmax(batch_flat, dim=1, keepdim=True)
+        min_val = min_val.view(preds.size(0), 1, 1)
+        max_val = max_val.view(preds.size(0), 1, 1)
+        preds_normalized = (preds - min_val) / (max_val - min_val + 1e-8)                    
+        preds_uint8 = preds_normalized.mul(255).byte().cpu().numpy()
+
+        # H W format -> 128 * 128
+        for j, file_id in enumerate(batch_filenames):   
+            full_batch.append(ProcessedImage(
+                uuid=uuid,                             
+                file_id=file_id.item(),
+                image=preds_uint8[j].tobytes()
+            ))
+\end{lstlisting}
+
+\noindent
+An example of a performant rewrite is that of the depth generation python script. 
+As shown in the excerpt, inference operates on batches supplied by a DataLoader, with all other operations also being executed 
+batchwise on the device (the GPU in our case); only once processing is complete is the batch moved back to regular (host) 
+memory, and the individual priors extracted with relevant metadata for use/saving.
+\noindent
+We also note that predicted depths are quantized to 8-bit unsigned integers, all predicted priors are quantized this way;
+for example normals are quantized from 3 * 32-bit floats to 3 * 8-bit unsigned integers; this is due to compute and storage limitations.
+Datasets such as SRN cars contain XXXXXXXXXXXXXXX images, each being 128 * 128 pixels, storing priors such as depths and normals
+as 32-bit floats for each image would result in: XXXXXXXXXXX
+\newline
+
+\noindent
+Prior generation scripts were succesfully implemented for:
+\begin{itemize}
+    \item Depth
+    \item Surface Normals
+    \item Segmentation
+\end{itemize}
+All prior generation scripts can be found in the \verb|/geometry-priors| folder within the 3DGS-priors repository.
+\newline
+
+\noindent
+As to improve training and evaluation performance, we chose to generate priors in advance for selected datasets, as such we developed
+a pipeline that runs these prior generation scripts and constructs a ready-to-use dataset. Details on the implementation of this can be found in 
+\textbf{Section 2.4: Data pipelines}.
 
 \subsubsection{Model Changes}
 MODEL CHANGES
@@ -547,37 +650,81 @@ Standard libraries such as Hugging Face's PEFT (CITE) provide out-of-the-box LoR
 We added LoRA manually within the \texttt{GaussianPredictor} and \texttt{train\_network} modules, using code from Microsoft's \texttt{loralib} (CITE). We modified the underlying \texttt{Linear} and \texttt{Conv2d} layers of the U-Net architecture to include a \texttt{LoRALayer} mixin. This allows the freezing of pre-trained base weights while injecting trainable rank-decomposition matrices ($A$ and $B$) directly into the layer definition. 
 
 \subsubsection{Training and Evaluation Changes}
-new priors stacked into input
+First congis are vierfied to be correct
+dataset loaded as suual, as we provide a Dataset class as standard in proejct
+datasrt laodear returen dictionary with images, poses, treansforms, we extend dict with priors key/value apirs
+new priors looked up and stacked into input
 eval/train on ready dataset have minimal changes
-added new dataloader code
-novel evaluator?
 
 \subsection{Section 2.4: Data pipelines}
 [Explain your data format, how you consume the data in your algorithms, and data augmentation.]
 
-EXPLAIN SRN CARS format
-We took our input data from the ShapeNet-SRN dataset from \cite{srn} at $128 \times 128$ resolution.
+DIAGRAM: SRN FILE STRUCTURE -> ORCHESTRATOR -> PARALLEL MODELS -> PARQUET
+DIAGRAM: PARQUET -> HUGGINGFACE STRUCTURE -> HUGGINGFACE
 
-EXPLAIN TRANSFORMATION TO PARQUET
-EXPLAIN STORE OF uint8s
-UPLOADED TO HF
+
+\noindent
+For training and evaluation performance reasons, we chose to generate priors in advance for selected datasets, as such we developed
+a pipeline, run by an orchestrator pattern notebook, that would set up a Virtual Machine for every model, then proceed to install the correct depednecies into each VM, using requiremtns files stored alongside the scripts in \verb|/geometry-priors|, and then
+execute the prior generation notebooks in order to geenrate a complete, ready-to-use dataset.
+CODE BLOCK - VM setup
+CODE BLOCK - REQUIREMTN LOADING
+The parquet files can also be processed into a file structure appropriate for upload to HuggingFace, where the pregenereated datset remains
+avaiable. 
+Models use the pregenerated datasets via a custom laoder we implemented, taht slots in into all of the exisitng training/evlaution code.
+
+TO SPEED UP TRAINIG AND EVUALTION, WE PREGENERATE THE PRIORS FOR ALL MODELS USING THE MODELS SELECTED AS PER OUR research
+DOING SO WE GENERATE A NEW DATASET
+
+FIRST THE USER DOWNLAODS AND SETS UP THE APPRIPORAITE DATASET AS PER SPLATTER IMAGE DOC
+RUNS GEENRTE DATASET NTOEBOOK WITH CORRECT ARGS, THIS WILL FOLLW ORDCHESTOR PTTERN DESCRIBED IN EARIELR SECTION
+MODELS OUTPUT PARQUET FIELS IN THE SET DESTIATION, WITH EXAMPLE ROWS:
+EXAMPLE RGBS
+EXAMPLE PSOES
+EXAMPLE INTRINS
+EXMAPLE DEPTHS
+EXAMPE NORMALS
+These can now be used however the user wants to, we add an additional processing step to transform aprquet files into
+file structure appropriate for uplaod to huggingface, matching the following config:
+
+YAML CONFIG
+
+A DIAGRAM OF HOW THIS WHOLE PEIPLEINE WORKS IS SEEN IN FIGURES
+
+Take a concretne example, we offer one ready pregenerated dataset on HF:
+We took our input data from the ShapeNet-SRN dataset from \cite{srn} at $128 \times 128$ resolution.
+transform pipeline standard, the depth, rgb, normal columns
+store images as uint8s in C H W format, this is as there is X images, do math, thus this manmy GB of data,
+we must un fortunately for compute reasons take this loss of accuracy.
 
 TRAINIGN LOADS HF DATASET
 LOAD HF PRETRAINED WEIGHTS
 PERFORMS WEIGHT GRAFT
 TRAINING OCCURS
-WEIGHTS FUSED UPLOADED TO HF
+WANDB SAVES WEIGHT OCCASNIONALLY
+WEIGHTS ARE FUSED AT SAVE
+THESE WEIGHTS ARE UPLOADED TO HF WITH THIS NAMING SCHEME:
 
 \subsection{Section 2.5: Training procedures}
 [Explain which framework and optimizers you use, how you implemented the training logic.]
 
-USE TORCH
-LIST LORA INSERTTION LIRBARY
-LIST BASELINE WEIGHT PARAMS
+THE ENTIRE MODEL IS PROGRAMMED USING TORCH
+WE USE PEFT OR WHATEVRE TO ADD LORA Layers
 
-WE WRITE TRAINIG NNTOEBOOK RUSN ON CLOAB WITH A100
-LSIT TRAINING PARAMS
-WEIGHTS FUSED AND UPLAODED TO HF
+OUR TRAINING IS SET BY CONFIG FROM WADB?
+
+SHWO CONFGI
+
+WHEN MODEL TRAINIGN OCCURS CONFIG OPTIOSN ARE VERFIEID TO BE COMPATIABLE
+OPTIONS INCLUIDE USING LORA vs NOT, WHICH PRIORS TO USE, AND WHETEHR YOU WNAT TO START THE MODEL WITH EXISITNG WEIGHTS (if so grafted)
+WEIGHTS FUSED AT SAVE
+
+TRAINGING IS RUN USING DEFAULT SPALTTER IAMGE APRAMSTERS, Namely:
+LIST OPTIMSIER
+OtHER OPTIOSM
+
+THE AVAIABLE MODCEL WEIGHST ON HF WERE TRAINIG NNTOEBOOK RUSN ON CLOAB WITH A100
+ITERS: 60K
 
 \subsection{Section 2.6: Testing and validation procedures}
 [Explain which framework you use, how you implemented the testing/ validation logic.]
