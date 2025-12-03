@@ -7,6 +7,8 @@
 \usepackage{subcaption}
 \usepackage{booktabs} 
 \usepackage{multirow} 
+\usepackage{amsmath}
+
 
 \title
 {
@@ -463,8 +465,17 @@ SOD models identify the most visually distinct object in a scene, which allows p
 
 To quantitatively evaluate SOD models, we noted that the ShapeNet images used (the same as in the normal and depth priors section) had transparent backgrounds, allowing using the alpha channel to be used as the `ground truth' for the object silhouette. 
 
-We tested three SOD architectures: rembg (based on the U-2-Net architecture) \cite{Gatis_rembg_2025}, InSPyReNet \cite{kim2022inspyrenet}, and BiRefNet \cite{zheng2024birefnet}. 
+We tested three SOD architectures: \texttt{rembg} (based on the U-2-Net architecture) \cite{Gatis_rembg_2025}, \texttt{InSPyReNet} \cite{kim2022inspyrenet}, and \texttt{BiRefNet} \cite{zheng2024birefnet}. 
 We evaluated performance using Mean Absolute Error (MAE), Intersection over Union (IoU), and $F_{\beta}$-Measure.
+
+$F_{\beta}$ is a weighted harmonic mean of precision and recall, defined as:
+\begin{equation}
+F_{\beta} = \frac{(1 + \beta^2)\,\text{Precision} \cdot \text{Recall}}
+                 {\beta^2 \cdot \text{Precision} + \text{Recall}}
+\end{equation}
+
+
+It is commonly used is salient object detection to assess the quality of binary masks produced. When $\beta = 1$, precision and recall are equally weighted. Greater values of $\beta$ prioritise recall, while lower ones prioritise precision. We set $\beta^2$ to 0.3, following conventional practice in SOD literature, to emphasise precision over recall \cite{achantaFbeta}, \cite{chengFbeta}, \cite{borjiFbeta}.   When identifying a single salient object, false positives (background pixels incorrectly classified as foreground)  are often considered worse than small false negative sections along the boundary of the object. 
 
 Note that the ShapeNet images used are split into `Easy' and `Hard' as categories, as before. 
 \begin{table}[htbp]
@@ -511,6 +522,7 @@ The scatter plot in Figure \ref{fig:prec_recall} shows how the models operate wi
 
 To identify the most frequent ``winner," we counted the number of images where each model achieved the highest $F_{\beta}$ score. \texttt{InSPyReNet} achieved the highest score on the majority (28 vs \texttt{rembg}'s 8). 
 
+However, to contextualise these results, all three models achieved very high scores (with $F_{\beta} > 0.97$ and IOU $> 0.95$), largely as the ShapeNet images have a clear foreground object against a uniform background. This reduces the number of possible cases of background vs foreground confusion, which means the models differ meaningfully here on fine structures at the object boundary. In practice, these can include wing mirrors, antennae, etc. Therefore, the differences in the models come from how well they capture these fine details.
 
 \subsubsection{Prior Model Integration}
 TWO MODEL SCRIPTS, PREGENERATED FOR TRAINING/EVAL/VAL
