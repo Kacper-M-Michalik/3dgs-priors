@@ -230,7 +230,8 @@ predict sets of Gaussians directly, with most recent developments allowing for 3
 \noindent
 Since the introduction of 3DGS, a number of deep learning architectures and processing pipelines based on the method have been developed 
 to find the most accurate and efficient implementation capable of producing high quality 3D Gaussian Splats.
-Recent examples include ExScene\cite{exscene}, Wonderland\cite{wonderland}, F3D-Gaus\cite{f3dgaus}, Gauss VideoDreamer\cite{hao2025gaussvideodreamer3dscenegeneration}, TGS\cite{tgs} and Splatter Image\cite{splatterImage}.
+Recent examples include ExScene\cite{exscene}, Wonderland\cite{wonderland}, F3D-Gaus\cite{f3dgaus}, Gauss
+VideoDreamer\cite{hao2025gaussvideodreamer3dscenegeneration}, TGS\cite{tgs} and Splatter Image\cite{splatterImage}.
 
 \noindent
 \begin{figure}[H]
@@ -265,39 +266,34 @@ While an official implementation of this is available at \href{https://github.co
 
 \subsection{Overview of the idea}
 [Provide an overview stating why the idea of the project makes sense and what the main motivation is.]
+\newline
 
-Splatter Images high computational performance and relative reconstruction quality makes it a highly desirable model for one-shot 
-3D reconstruction
+\noindent
+Splatter Image's high computational efficiency and good reconstruction quality make it a highly desirable model for one-shot 3D reconstruction.
+Nonetheless, the model's occasional problems such as layout/scale drift, over-smooth geometry and poor quality hallucinations in occluded regions,
+pose a serious problem in its usage and wider adoption. As stated in the introduction, we believe the cause of these reconstruction failures is twofold; first is inherent to Splatter
+Image's architecture, the models choice of 3D reconstruction as a 2D-to-2D image translation task limits its ability to learn geometric priors, as the
+model lacks an internal 3D representation to reason correctly about 3D structures. 
+Second is that single or few RGB images simply does not have sufficient conditional
+information for Splatter Image to infer adequate geometric information about 3D scenes such as object structures, especially those that are not 
+fully visible in the input view. Modern machine learning now offers highly specialized models capable of performing high-quality 
+monocular prediction of geometric features from RGB images. These models such as MiDaS and Depth Anything, are trained on vast datasets and have 
+tailored architectures to reason about relevant 3D information; as such they store much valuable latent geometric knowledge, which is valuable in 
+situations exactly like those where Splatter Image may struggle, namely when trying to accurately hallucinate occluded regions and trying to understand
+complex 3D surfaces and structures. Ready availability of these models allows us to exploit them to gain additional sources of high quality geometric 
+information that can be fed into Splatter Image, solving both of our supposed problems simultaneously:
+preventing the Splatter Image model from needing to implicitly learn geometric features, 
+whilst also providing rich 3D information required for high quality reconstruction.
+\newline
 
-the model still occasionally suffers from challenges such as layout/scale drift, over-smooth geometry and poor quality 
-hallucinations in occluded regions, particularly in reconstructing structures unseen in the input view, 
-including for views significantly different from the source. 
-
-We believe there are two reasons for this problem. The first is inherent to Splatter
-Images architecture, unlike methods that utilize explicit 3D feature volumes, Splatter Image’s choice of
-3D reconstruction as a 2D-to-2D image translation task limits its ability to learn geometric priors, as the
-model lacks an internal 3D representation to resolve issues like depth ambiguities. The second is that the
-3DGS prediction based on only single or few RGB image features alone does not have sufficient conditional
-information for Splatter Image to infer appropriate geometry information or structures that are not visible
-in the input view.
-
-this is fundamanetally due to the lack of inforamtion the model has from a single input image
-
-Currently there exists specialised, accureate models that can perorm on-shot prediction with hig haccuracy spefific geomtric features of images
-trainined on many examples so store lot of konwdleg about corectly halkucinating occluded reegions
-in a realsitic/more accuraet manner
-
-We propsoe exploting thse models to gain additional sources of inormation which could be fed into the model
-these priros solve both of our beleived problems, namely they provide
-provide large amounts of additional information, tackling issue no 2, and stop the model from nedign to learn hwo to infer these geometric
-features itself, which it is unsuitable/poor at, tackling issue no 1.
-We bleive as such these priors would guide recosntruction in a more accurate manner, impriving the recosntruction quality of the model, whislt
-requring minimal architectural changes to Splatter Image, as only have to change inpotu channel count and do minor modifications
-if we want to add multimodal data, generally preserving its performance, 
-
-we also propose performing ablation study to see which priors are most effective/significant in changing the reconstruction quality
-
-THJERBY TACKLING
+\noindent
+As such we believe these priors will effectively help guide Splatter Image in 3D reconstruction, resulting in superior reconstruction quality
+and strongly reducing the frequency of reconstruction failures. All achieved whilst preserving Splatter Image's key features
+such as its computational efficiency, as it requires minimal architectural changes to accept these new priors in its input; altogether making 
+Splatter Image a more competitive one-shot 3D reconstruction model. Furthermore, this project gives us an opportunity to perform an ablation study to 
+see which priors are most significant in resulting 3D reconstruction quality, this study may provide useful guidance for other projects;
+namely helping researchers/developers decide on model architectures that work with optimal sets of geometric priors; 
+or helping those that may be interested in creating similar adaptations/pipelines as us.
 
 \section{Chapter 2: Method}
 \subsection{Baseline algorithm}
@@ -1224,46 +1220,7 @@ The processing scripts generate \verb|parquet| format files containing the datas
 alongside relevant metadata, such as the image frame\_id or depicted model's UUID. Namely, the 5 parquet files currently generated are:
 \vspace{5pt}
 
-\noindent
-\begin{minipage}[t]{0.16\textwidth}
-    \textbf{srn\_cars\_intrins} \hrule \vspace{5pt}
-    \footnotesize\ttfamily
-    id : int \\
-    name : string \\
-    email : string
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.16\textwidth}
-    \textbf{srn\_cars\_poses} \hrule \vspace{5pt}
-    \footnotesize\ttfamily
-    oid : uuid \\
-    uid : int \\
-    amt : float
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.16\textwidth}
-    \textbf{srn\_cars\_rgbs} \hrule \vspace{5pt}
-    \footnotesize\ttfamily
-    sku : str \\
-    cost : float \\
-    qty : int
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.16\textwidth}
-    \textbf{srn\_cars\_depths} \hrule \vspace{5pt}
-    \footnotesize\ttfamily
-    ts : time \\
-    err : str \\
-    code : int
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.16\textwidth}
-    \textbf{srn\_cars\_normals} \hrule \vspace{5pt}
-    \footnotesize\ttfamily
-    ver : float \\
-    auth : str \\
-    hash : hex
-\end{minipage}
+ADD SCHEMAS
 
 \vspace{10pt}
 \noindent
@@ -1592,8 +1549,8 @@ ShapeNet time to get access etc, reasoning for using the variation dataset rathe
 \subsection{Future directions}
 [State a few future directions for research and development. These typically follow from the discussion on limitations.]
 
-generating and testing mroe priors (espoecially more priors aoriented to hidden areas, could bring up planes again)
-implementing and comapring cross-attention vs FiLM for multimodal data
+generating and testing more priors (especially more priors oriented to hidden areas, could bring up planes again)
+implementing and comparing cross-attention vs FiLM for multimodal data
 trying longer training times
 trying alternative datasets
 Trying alternatigve metrics for 3D reconstruction, like Chaumfeer distance, for exampel could sample
