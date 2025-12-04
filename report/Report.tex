@@ -850,7 +850,7 @@ All prior generation scripts can be found in the \verb|/geometry-priors| folder 
 
 \noindent
 As to improve training and evaluation performance, we chose to generate priors in advance for selected datasets. As such we developed
-a pipeline that executes the prior generation scripts and constructs a ready-to-use dataset, alongside a custom DataLoader that can read said dataset.
+a pipeline that executes the prior generation scripts and constructs a ready-to-use dataset, alongside a custom Torch Dataset class that can read said dataset.
 Implementation details can be found in \textbf{Section 2.4: Data pipelines}.
 
 \subsubsection{Model Changes}
@@ -965,8 +965,8 @@ training_cfg = OmegaConf.load(cfg_path)
 
 \noindent
 Input preparation was also changed, namely priors are concatenated (if enabled) as additional channels to the input RGB images,
-before being fed into the network. Splatter Image uses the PyTorch DataLoader alongside custom Dataset objects 
-to load batches of RGB images to perform inference on. The Dataset objects do not directly return a tensor of images, 
+before being fed into the network. Splatter Image uses the PyTorch DataLoader alongside custom Dataset classes 
+to load batches of RGB images to perform inference on. The Dataset classes do not directly return a tensor of images, 
 but a dictionary containing relevant batch data:
 
 \begin{lstlisting}[language=Python, caption=Excerpt of srn.py Dataset code]
@@ -985,8 +985,8 @@ return images_and_camera_poses
 \end{lstlisting}
 
 \noindent
-This allowed our priors to be introduced into the evaluation code with ease, by simply creating a new custom Dataset object
-\verb|srn_priors.py| that provides priors as new key/value pairs in the returned dictionary.
+This allowed our priors to be introduced into the evaluation code with ease, by simply creating a new custom Torch Dataset class
+in \verb|srn_priors.py| that provides priors as new key/value pairs in the returned dictionary.
 Priors were specifically returned as PyTorch tensors matching the RGB image batch. 
 The priors can then be accessed and concatenated with the RGB images in a specific order to generate the 
 final input tensor for Splatter Image to perform inference on. Assertions are also performed to verify that priors are 
@@ -1019,7 +1019,6 @@ The first change was to model loading, adding support for training using existin
 from the base Splatter Image project.        
 
 \begin{lstlisting}[language=Python, caption=New training setup code]
-...
 # Resume from HuggingFace pretrained weights, perform weight graft if now training with additional priors
 elif cfg.opt.pretrained_hf:
     category = cfg.data.category
@@ -1050,7 +1049,6 @@ elif cfg.opt.pretrained_hf:
     best_PSNR = checkpoint["best_PSNR"] 
     print('Loaded model from a pretrained Huggingface checkpoint')   
     OmegaConf.save(config=cfg, f=os.path.join(vis_dir, "config.yaml"))
-...
 \end{lstlisting}
 
 \noindent
@@ -1058,8 +1056,8 @@ The program first downloads the appropriate base splatter image configuration an
 The current training configuration is then checked to see if it uses any priors, with \verb|is_base_model| 
 returning true if no priors are to be used. In the case priors have been requested, the new gaussian\_predictor instance
 will have mismatched layer dimensions compared to the pretrained Splatter Image model, meaning the pretrained weights
-cannot be directly loaded into the gaussian\_predictor, in this case weights are copied manually into a state dictionary with
-correct dimensions, we refer to this process as grafting, and is achieved using the 
+cannot be directly loaded into gaussian\_predictor, in this case weights are copied manually into a state dictionary with
+layers of correct dimensions, we refer to this process as grafting, and is achieved using the 
 \verb|graft_weights_with_channel_expansion| function in \verb|prior_utils.py|.
 
 \begin{lstlisting}[language=Python, caption=Grafting code]
@@ -1118,7 +1116,7 @@ and gradually integrate the new channels, making them useful.
 \newline
 
 \noindent
-The second change was similar to that of the evaluation script, updating input preparation, the resulting updated
+The second change to training code was similar to that of the evaluation script, updating input preparation, the resulting updated
 code block is identical to that in \textbf{Listing 6}.
 \newline
 
@@ -1137,11 +1135,11 @@ DIAGRAM: PARQUET -> HUGGINGFACE STRUCTURE -> HUGGINGFACE
 \newline
 
 \noindent
-For training and evaluation performance reasons, we chose to generate priors in advance for selected datasets, as such we developed
-a pipeline, run by an orchestrator pattern notebook, 
-that would set up a Virtual Machine for every model, then proceed to install the correct 
-depednecies into each VM, using requiremtns files stored alongside the scripts in \verb|/geometry-priors|, and then
-execute the prior generation notebooks in order to geenrate a complete, ready-to-use dataset.
+For training and evaluation performance reasons, we chose to generate priors in advance for selected datasets. As such we developed a 
+pipeline that follows an orchestrator pattern; a central notebook initializes a Virtual Machine (VM) for each prior generation model,
+then installs the necessary dependencies into them, defined in the relevant \verb|PriorName_requirements.txt| files located in the \verb|/geometry-priors| folder. 
+Once the environment is configured, the orchestrator executes the prior generation scripts to produce a complete, 
+ready-to-use dataset.
 
 \begin{lstlisting}[language=Python, caption=VM setup]
 # Create venv for each prior model
@@ -1194,7 +1192,55 @@ file structure appropriate for uplaod to huggingface, matching the following con
 The parquet files can also be processed into a file structure appropriate for upload to HuggingFace, where the pregenereated datset remains
 avaiable. Models use the pregenerated datasets via a custom laoder we implemented, taht slots in into all of the exisitng training/evlaution code.
 
-YAML CONFIG
+\begin{lstlisting}[language=Python, caption=srn\_cars\_priors HuggingFace file structure config]
+---
+configs:
+- config_name: srn_cars_intrins
+  data_files:
+  - split: train
+    path: intrins/train/*.parquet
+  - split: test
+    path: intrins/test/*.parquet
+  - split: val
+    path: intrins/val/*.parquet
+
+- config_name: srn_cars_poses
+  data_files:
+  - split: train
+    path: poses/train/*.parquet
+  - split: test
+    path: poses/test/*.parquet
+  - split: val
+    path: poses/val/*.parquet
+  
+- config_name: srn_cars_rgbs
+  data_files:
+  - split: train
+    path: rgbs/train/*.parquet
+  - split: test
+    path: rgbs/test/*.parquet
+  - split: val
+    path: rgbs/val/*.parquet
+
+- config_name: srn_cars_depths
+  data_files:
+  - split: train
+    path: depths/train/*.parquet
+  - split: test
+    path: depths/test/*.parquet
+  - split: val
+    path: depths/val/*.parquet
+
+- config_name: srn_cars_normals
+  data_files:
+  - split: train
+    path: normals/train/*.parquet
+  - split: test
+    path: normals/test/*.parquet
+  - split: val
+    path: normals/val/*.parquet
+---
+\end{lstlisting}
 
 CODE BLOCK FOR HF UPLOAD
 
@@ -1432,9 +1478,7 @@ Section 4.2: FILL IN
 \newline
 Section 4.3: FILL IN
 \newline
-Image collection: Kacper and Radhika and Alex
-\newline
-Citation collection: Radhika and Alex
+Image and citation collection: Kacper and Radhika and Alex
 \newline
 
 \noindent
