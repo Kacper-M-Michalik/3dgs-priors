@@ -45,7 +45,7 @@ if __name__ == "__main__":
         # parametric
         synthetic_datasets = [np.random.normal(loc=np.mean(baseline_scores), scale=np.std(baseline_scores), size=len(baseline_scores)) for _ in range(300000)]
         synthetic_diffs = [np.mean(dataset) - baseline_mean for dataset in synthetic_datasets]
-        parametric_p_value = np.mean(np.where(synthetic_diffs >= observed_diff, 1, 0))
+        parametric_p_value = 2 * min(np.mean(np.where(synthetic_diffs >= observed_diff, 1, 0)), np.mean(np.where(synthetic_diffs <= observed_diff, 1, 0)))
         with open(f"stats/parametric_significance_{metric_name.lower()}_{filename}.txt", "w") as sig_file:
             sig_file.write(f"Observed Difference: {observed_diff:.7f}\n")
             sig_file.write(f"P-value: {parametric_p_value:.7f}\n")
@@ -65,7 +65,8 @@ if __name__ == "__main__":
             if new_diff >= observed_diff:
                 count += 1
         
-        p_value = count / n_resamples
+        one_sided_p_value = count / n_resamples
+        p_value = 2 * min(one_sided_p_value, 1 - one_sided_p_value)
 
         with open(f"stats/non_parametric_significance_{metric_name.lower()}_{filename}.txt", "w") as sig_file:
             sig_file.write(f"Observed Difference: {observed_diff:.7f}\n")
