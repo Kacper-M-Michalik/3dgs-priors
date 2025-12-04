@@ -320,23 +320,28 @@ THJERBY TACKLING
 \end{figure}
 
 \noindent
-
-XXXX FIX
-\newline
-
 Splatter Image uses a standard image-to-image neural network architecture to predict a Gaussian for each pixel of the input image I, 
-generating the output image M as the Splatter Image. Learning to predict the Splatter Image can be done on a single GPU using at most 
+generating the output image M as the Splatter Image. 
+For this it uses a U-Net as those have demonstrated excellent performance in image generation\cite{rombach2022highresolutionimagesynthesislatent}, and their ability to capture small image details helps to obtain higher-quality novel view reconstructions. 
+
+\noindent
+As shown in figure \ref{fig:u-net_diagram}, a U-Net model architecture consists of a contracting path (left side) and an expansive path (right side). 
+The contracting path aims to capture context and follows the typical architecture of a convolutional network, which consists of the repeated application of convolutions, each followed by an activation function and a max pooling operation for downsampling. 
+At each downsampling step we increase the number of feature channels. 
+Afterwards, each step in the expansive path consists of an upsampling of the feature map followed by a convolution that decreases the number of feature channels, enabling precise localization. 
+At the final layer a convolution is used to map each feature vector to the desired number of classes.
+
+\noindent
+For the U-Net used in Splatter Image, learning to predict the Splatter Image can be done on a single GPU using at most 
 20GB of memory at training time for most single-view reconstruction experiments (except for Objaverse, where 2 GPUs were used and 26GB 
 of memory was used on each). Most of this neural network architecture is identical to the SongUNet of \cite{songunet}, but the last layer
 is replaced with a $1 \times 1$ convolutional layer with $12 + k_c$ output channels, where $k_c \in \{3, 12\}$ depending on the colour model. 
 The output tensor codes for parameters that are then transformed to opacity, offset, depth, scale, rotation and colour respectively. 
-These parameters are then activated by non-linear functions to obtain the Gaussian parameters, such as the opacity and depth. 
-The Gaussian Splatting implementation of \cite{3dgs} is used for rasterization to generate $360^\circ$ views of the original input image.
-TALKA BOUT ARCH MORE, 
-Each blue box corresponds to a multi-channel feature map, with the number of channels denoted on top of each box. The x-y size is provided at the lower left edge of the box. White boxes represent copied feature maps. The arrows denote the different operations.
-\newline
+These parameters are then activated by non-linear functions to obtain the Gaussian parameters, such as the opacity and depth.
 
-XXX
+\noindent
+The Gaussian Splatting implementation of \cite{3dgs} is used for rasterization to generate $360^\circ$ views of the original input image from these parameters. As shown in figure \ref{fig:3dgs}, Gaussian splatting then optimizes and adaptively controls the density of this set of 3D Gaussians, using a fast tile-based renderer during optimization. The renderer allows $\alpha$-blending of anisotropic splats, respecting visibility order thanks to fast sorting. It also includes a fast backwards pass by tracking accumulated $\alpha$ values, without a limit on the number of Gaussians that can receive gradients. This helps to quickly generate new images of novel views.
+\newline
 
 \subsection{Algorithm improvements}
 [Explain what you implemented to improve over the baseline. You may include figures to explain the idea and logic. Focus on the ideas and not the implementation.]
