@@ -180,13 +180,13 @@ necessary additional information and preventing Splatter Image from having to le
         \centering
         \includegraphics[width=0.7\linewidth]{images/nerf.pdf}
         \caption{NeRF implicit function from \cite{nerf}}
-    \label{fig:splatter_img_diagram}
+    \label{fig:nerf}
     \end{minipage}%
     \begin{minipage}{.5\textwidth}
         \centering
-        \includegraphics[width=0.7\linewidth]{images/u-net.png}
+        \includegraphics[width=0.7\linewidth]{images/gaussian_splatting.png}
         \caption{3D Gaussian Splatting Process from \cite{3dgs}}
-        \label{fig:u-net_diagram}
+        \label{fig:3dgs}
     \end{minipage}
 \end{figure}
 
@@ -468,11 +468,10 @@ flatten the bear's features or causing poor quality hallucination; as such we de
 
 \noindent
 A much more favourable option were normal maps. Normal maps store surface normal data as RGB colour information, showing the 
-orietneation of a surface on a per-pixel level, we considered this to be an excellent prior as it supports both complex shapes
-such as teddy bears, but can equally well describe planar surface. Hence, we selected this prior as a prime candidate 
-that could improve the models 3D surface reconstruction and help guide accurate hallucination in occluded regions.
-For our ground truth we use \cite{xu2019disn} which provides a dataset of higher resolution images of ShapeNet models 
-from \cite{ShapeNet}, each RGB image is paired with a depth map, a normal map and an albedo map at \url{https://github.com/Xharlie/ShapenetRender_more_variation}. 
+orientation of a surface on a per-pixel level, we considered this to be an excellent prior as it supports both complex shapes
+such as teddy bears, but can equally well describe a planar surface. Hence, we selected this prior as a prime candidate 
+that could improve the models' 3D surface reconstruction and help guide accurate hallucination in occluded regions.
+We take our ground truth images from a dataset (\url{https://github.com/Xharlie/ShapenetRender_more_variation}) provided by \cite{xu2019disn} which contain higher resolution images of ShapeNet\cite{ShapeNet} models. Each RGB image of a ShapeNet model is paired with its corresponding depth map, normal map and albedo map as shown in figure \ref{fig:ground_truth}. 
 We feed these images into the normal map generation models and compare against the ground truth normal maps, using 
 Pixel Based Visual Information Fidelity as a metric to evaluate their performance.
 
@@ -484,7 +483,7 @@ Pixel Based Visual Information Fidelity as a metric to evaluate their performanc
 \end{figure}
 
 \noindent
-For the models we referenced \cite{Bae2021} which implements a network which estimates the per-pixel surface normal probability distribution and uses uncertainty-guided sampling to improve the quality of prediction of surface normals. The paper provided code at \url{ https://github.com/baegwangbin/surface_normal_uncertainty} that implemented this method on a network trained on ScanNet \cite{dai2017scannet}, with the ground truth and data split provided by FrameNet \cite{huang2019framenet}, and another trained on NYUv2 \cite{NYUv2}, with the ground truth and data split provided by GeoNet \cite{qi2018geonet} \cite{qi2020geonet++}. Both models take in the original image and dimensions of the image as input and return a corresponding normal map with the same dimensions as the given input dimensions.
+For normal map generation we used models from \cite{Bae2021} which implements a network which estimates the per-pixel surface normal probability distribution and uses uncertainty-guided sampling to improve the quality of prediction of surface normals. The paper provided code at \url{ https://github.com/baegwangbin/surface_normal_uncertainty} that implemented this method on a network trained on ScanNet \cite{dai2017scannet}, with the ground truth and data split provided by FrameNet \cite{huang2019framenet}, and another trained on NYUv2 \cite{NYUv2}, with the ground truth and data split provided by GeoNet \cite{qi2018geonet} \cite{qi2020geonet++}. Both models take in the original image and dimensions of the image as input and return a corresponding normal map with the same dimensions as the given input dimensions.
 
 \noindent
 We run both pretrained models on the dataset.
@@ -530,6 +529,7 @@ We then pass in input dimensions larger than the actual ones into the models, su
         \centering
         \includegraphics[width=\linewidth]{images/BN_resized.png}
         \caption{ScanNet output (448x448)}
+        \label{fig:highdefoutputresized}
     \end{subfigure}
     \begin{subfigure}{0.32\linewidth}
         \centering
@@ -542,7 +542,7 @@ We then pass in input dimensions larger than the actual ones into the models, su
 \end{figure}
 
 \noindent
-The normal map generated for images when given larger input dimensions seem to have more clearly defined edges and surface contouring. It is also important to note that the ground truth for NYUv2 is only defined for the centre crop of the image and the prediction is therefore not accurate outside the centre. This is shown in figures \ref{fig:gn1} and \ref{fig:gn2} where noise is generated around the borders of the normal maps.
+The normal map generated for images when given larger input dimensions seem to have more clearly defined edges and surface contouring as shown in figures \ref{fig:highdefoutputresized} and \ref{fig:gn2} as compared to figures \ref{fig:highdefoutput} and \ref{fig:gn1}. It is also important to note that the ground truth for NYUv2 is only defined for the centre crop of the image and the prediction is therefore not accurate outside the centre. This is shown in figures \ref{fig:gn1} and \ref{fig:gn2} where noise is generated around the borders of the normal maps.
 
 \noindent
 To compare our generated normal maps to the ground truth normal maps provided in \cite{xu2019disn}, we first mask out the background of the generated normal maps such that the difference in background colour does not contribute to the evaluation metrics for normal map generation.
@@ -582,7 +582,7 @@ We then use Pixel Based Visual Information Fidelity to compare the normal maps g
 \end{figure}
 
 \noindent
-From Figure \ref{fig:vifgraph} we see that the model trained on ScanNet generates normal maps that are closer to the ground truth compared to that trained on NYUv2 on average. Hence, in the final model we decided to use the model trained on ScanNet on the ShapeNet database in \cite{ShapeNet}.
+From Figure \ref{fig:vifgraph} we see that that normal map generation quality increases when passing in larger input arguments and that the model trained on ScanNet generates normal maps that are closer to the ground truth compared to that trained on NYUv2 on average. Hence, in the final model we decided to use the model trained on ScanNet on the ShapeNet database in \cite{ShapeNet}.
 
 \begin{figure}[H]
     \centering
@@ -1127,8 +1127,32 @@ An extension of this dataset is implemented in \cite{xu2019disn}, which presents
 For novel view synthesis evaluation, PSNR (Peak Signal-to-Noise Ratio), SSIM (Structural Similarity Index) and LPIPS (Learned Perceptual Image Patch Similarity) are standard metrics used to evaluate image quality from different perspectives\cite{zhang2025advancesfeedforward3dreconstruction}. 
 PSNR is calculated using the mean squared error and is commonly used to quantify reconstruction quality, such that a high PSNR suggests higher reconstruction quality. Meanwhile, SSIM depends on 3 metrics mimicking the human visual perception system: luminance, contrast and structure, where an SSIM score close to 1 indicates high similarity while a score closer to -1 indicates low similarity. Lastly, unlike pixel-wise metrics like PSNR and SSIM that assume pixel independence, LPIPS measures the perceptual similarity between images by comparing their features extracted from a deep neural network, where a low LPIPS score indicates that the compared images are perceptually similar to humans.
 
+To evaluate whether integrating different geometry priors into the model is effective, we performed a set of experiments testing different combinations of geometry priors. We measured the performance using PSNR, SSIM and LPIPS. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/stats-results/priors_psnr_distribution.png}
+    \caption{PSNR distribution for different combinations of added geometry priors}
+    \label{fig:priors_psnr}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/stats-results/priors_ssim_distribution.png}
+    \caption{SSIM distribution for different combinations of added geometry priors}
+    \label{fig:priors_ssim}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/stats-results/priors_lpips_distribution.png}
+    \caption{LPIPS distribution for different combinations of added geometry priors}
+    \label{fig:priors_lpips}
+\end{figure}
+
+Adding combinations of depth and normal priors to augment the model with geometry priors seems to make the model perform more consistently, as shown by the lower variance in all metrics as compared to the baseline in figures \ref{fig:priors_psnr}, \ref{fig:priors_ssim} and \ref{fig:priors_lpips}. All augmented models have a higher mean PSNR and SSIM from figures \ref{fig:priors_psnr} and \ref{fig:priors_ssim} respectively which suggests better image reconstruction quality, with the model adding both depth and normal priors performing the best. However, all augmented models have a higher LPIPS score than the baseline \ref{fig:priors_lpips}, suggesting that the difference between the ground truth and the images generated by the model perceived by humans are larger for augmented models than the baseline. We conclude that integrating these priors may not be beneficial in some cases, for example cases where successful image reconstruction is defined as being similar to the ground truth based on a human's perception.
+
 \subsubsection{LoRA experiment results}
-\label{section:lora_results}
 To evaluate whether Low-Rank Adaptation (as described in \textbf{Section 2.3.5: Model Changes}) is effective, we performed a set of finetuning experiments. LoRA behaviour can be adjusted through three hyperparameters: rank, alpha and dropout (as mentioned in section \ref{section:lora}).
 
 We tested multiple configurations by varying these hyperparameters, while keeping all other components. We measured the performance using PSNR, SSIM and LPIPS. 
@@ -1157,32 +1181,6 @@ We tested multiple configurations by varying these hyperparameters, while keepin
 From figures \ref{fig:lora_psnr}, \ref{fig:lora_ssim} and \ref{fig:lora_lpips}, we can see that all changed models now perform more consistently, as shown by the lower variance in all metrics as compared to the baseline. The PSNR metrics in figure \ref{fig:lora_psnr} and the SSIM metrics in figure \ref{fig:lora_ssim} also suggest better image reconstruction overall due to having higher mean PSNRs and SSIMs than the baseline, with the configuration $r=4, \alpha=1$ performing the best with the highest mean PSNR and SSIM. This configuration also has a lower mean LPIPS score than the baseline, further supporting our claim that this configuration is best for augmenting the model, while the other 2 configurations have higher mean LPIPS scores.
 
 (significance testing?? idk anymore)
-
-\subsubsection{FiLM experiment results}
-To evaluate whether integrating different geometry priors into the model with FiLM layers (as described in TODO cite section) is effective, we performed a set of experiments testing different combinations of geometry priors. We measured the performance using PSNR, SSIM and LPIPS. 
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{images/stats-results/film_psnr_distribution.png}
-    \caption{PSNR distribution for different combinations of added geometry priors with FiLM}
-    \label{fig:film_psnr}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{images/stats-results/film_ssim_distribution.png}
-    \caption{SSIM distribution for different combinations of added geometry priors with FiLM}
-    \label{fig:film_ssim}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{images/stats-results/film_lpips_distribution.png}
-    \caption{LPIPS distribution for different combinations of added geometry priors with FiLM}
-    \label{fig:film_lpips}
-\end{figure}
-
-Similar to the LoRA experiment results in \ref{section:lora_results}, using FiLM to augment the model with geometry priors makes the model perform more consistently, as shown by the lower variance in all metrics as compared to the baseline in figures \ref{fig:film_psnr}, \ref{fig:film_ssim} and \ref{fig:film_lpips}. All augmented models have a higher mean PSNR and SSIM from figures \ref{fig:film_psnr} and \ref{fig:film_ssim} respectively which suggests better image reconstruction quality, with the model adding both depth and normal priors performing the best. However, all augmented models have a higher LPIPS score than the baseline \ref{fig:film_lpips}, suggesting that the difference between the ground truth and the images generated by the model perceived by humans are larger for augmented models than the baseline. We conclude that integrating these priors with FiLM layers may not be beneficial in some cases, for example cases where successful image reconstruction is defined as being similar to the ground truth based on a human's perception.
 
 \subsection{[Optional] Comparison to state-of-the-art}
 [Qualitative and/ or quantitative comparisons to one or more recent works, especially the baseline work.]
