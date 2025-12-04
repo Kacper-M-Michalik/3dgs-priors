@@ -13,6 +13,7 @@
 \usepackage{titlesec}
 \usepackage[section]{placeins}
 \usepackage{amssymb}
+\usepackage{float}
 
 
 \titleformat{\section}
@@ -525,8 +526,32 @@ This inclined us to take the quantitative results produced by comparing MDE mode
 \item $\mathbf{\delta}$ at $\mathbf{1.25}$ ($\delta_{1.25}$): Represents the percentage of predicted pixels $p$ that satisfy the condition $\max(\frac{p}{p^{gt}}, \frac{p^{gt}}{p}) < 1.25$, which takes into account close pixel-wise agreement.
 \end{enumerate}
 
-The following table (LINK to label) summarises the mean metrics across the MiDaS models tested. 
- 
+The following table summarises the metrics across the MiDaS models tested. 
+\begin{table}[H]
+\centering
+\caption{Comparison of MiDaS models on set of easy and hard images.}
+\label{tab:depth_metrics}
+\resizebox{0.7\columnwidth}{!}{%
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+\textbf{Difficulty} & \textbf{Model} & \textbf{AbsRel} $\downarrow$ & \textbf{RMSE} $\downarrow$ & \textbf{SI-RMSE} $\downarrow$ & \textbf{$\delta < 1.25$} $\uparrow$ \\ \midrule
+Easy & DPT\_Hybrid & $0.089 \pm 0.12$ & $20.38 \pm 19.39$ & 0.123 & 0.909 \\
+Easy & DPT\_Large & $0.091 \pm 0.12$ & $20.56 \pm 19.74$ & 0.124 & 0.909 \\
+Easy & MiDaS\_small & $0.096 \pm 0.13$ & $21.54 \pm 20.44$ & 0.129 & 0.918 \\
+\midrule
+Hard & DPT\_Hybrid & $0.101 \pm 0.15$ & $19.65 \pm 17.99$ & 0.128 & 0.907 \\
+Hard & DPT\_Large & $0.170 \pm 0.41$ & $22.40 \pm 22.12$ & 0.151 & 0.906 \\
+Hard & MiDaS\_small & $0.190 \pm 0.45$ & $24.45 \pm 23.56$ & 0.164 & 0.900 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+The quantitative degradation of \texttt{DPT\_Large} on the Hard set contradicts visual inspection. This discrepancy can be attributed to the quality of the available Ground Truth (GT) depth maps (as discussed earlier). \texttt{DPT\_Large} is what is used in the final depth prior generation, as described in \textbf{2.3.4
+Selected Prior Integration}.
+
+INSERT EXAMPLE IMAGE HERE OF DEPTH MAP PRODUCED 
+
 \subsubsection{Segmentation and Salient Object Detection Exploration}
 
 Separating pixels belonging to the foreground object, through a segmentation mask or, as will be detailed below, using a salient object detection (SOD) model, can be another prior. This involves producing a binary mask that separates an object from its background. 
