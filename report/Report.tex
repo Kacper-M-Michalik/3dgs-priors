@@ -302,6 +302,7 @@ explain addition of LORA matrices due to compute limitations/allowign working of
 
 
 \subsubsection{Low-Rank Adaptation (LoRA)}
+\label{section:lora}
 To address the computational constraints of fine-tuning the full U-Net architecture, we integrated Low-Rank Adaptation (LoRA) \cite{HuLoRA} directly into our GaussianPredictor. While our implementation shares a similar class structure to the official \texttt{loralib} library \cite{hu2022lora} (utilizing mixins to wrap \texttt{Linear} and \texttt{Conv2d} layers), we manually adapted the forward pass to support the specific channel dimensions of the Splatter Image architecture (further detail is in \textbf{Section X: Manual LoRA Integration}).
 
 \noindent
@@ -929,8 +930,12 @@ An extension of this dataset is implemented in \cite{xu2019disn}, which presents
 \subsection{[Optional] Quantitative results}
 [A table and associated explanations for quantitative results.]
 
+For novel view synthesis evaluation, PSNR (Peak Signal-to-Noise Ratio), SSIM (Structural Similarity Index) and LPIPS (Learned Perceptual Image Patch Similarity) are standard metrics used to evaluate image quality from different perspectives\cite{zhang2025advancesfeedforward3dreconstruction}. 
+PSNR is calculated using the mean squared error and is commonly used to quantify reconstruction quality, such that a high PSNR suggests higher reconstruction quality. Meanwhile, SSIM depends on 3 metrics mimicking the human visual perception system: luminance, contrast and structure, where an SSIM score close to 1 indicates high similarity while a score closer to -1 indicates low similarity. Lastly, unlike pixel-wise metrics like PSNR and SSIM that assume pixel independence, LPIPS measures the perceptual similarity between images by comparing their features extracted from a deep neural network, where a low LPIPS score indicates that the compared images are perceptually similar to humans.
+
 \subsubsection{LoRA experiment results}
-To evaluate whether Low-Rank Adaptation (as described in \textbf{Section 2.3.5: Model Changes}) is effective, we performed a set of finetuning experiments. LoRA behaviour can be adjusted through three hyperparameters: (LINK BACK TO THE SUBSECTIONS IN SECTION 2 HERE)
+\label{section:lora_results}
+To evaluate whether Low-Rank Adaptation (as described in \textbf{Section 2.3.5: Model Changes}) is effective, we performed a set of finetuning experiments. LoRA behaviour can be adjusted through three hyperparameters: rank, alpha and dropout (as mentioned in section \ref{section:lora}).
 
 We tested multiple configurations by varying these hyperparameters, while keeping all other components. We measured the performance using PSNR, SSIM and LPIPS. 
 
@@ -954,6 +959,36 @@ We tested multiple configurations by varying these hyperparameters, while keepin
     \caption{LPIPS distribution for different LoRA configurations}
     \label{fig:lora_lpips}
 \end{figure}
+
+From figures \ref{fig:lora_psnr}, \ref{fig:lora_ssim} and \ref{fig:lora_lpips}, we can see that all changed models now perform more consistently, as shown by the lower variance in all metrics as compared to the baseline. The PSNR metrics in figure \ref{fig:lora_psnr} and the SSIM metrics in figure \ref{fig:lora_ssim} also suggest better image reconstruction overall due to having higher mean PSNRs and SSIMs than the baseline, with the configuration $r=4, \alpha=1$ performing the best with the highest mean PSNR and SSIM. This configuration also has a lower mean LPIPS score than the baseline, further supporting our claim that this configuration is best for augmenting the model, while the other 2 configurations have higher mean LPIPS scores.
+
+(significance testing?? idk anymore)
+
+\subsubsection{FiLM experiment results}
+To evaluate whether integrating different geometry priors into the model with FiLM layers (as described in TODO cite section) is effective, we performed a set of experiments testing different combinations of geometry priors. We measured the performance using PSNR, SSIM and LPIPS. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/stats-results/film_psnr_distribution.png}
+    \caption{PSNR distribution for different combinations of added geometry priors with FiLM}
+    \label{fig:film_psnr}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/stats-results/film_ssim_distribution.png}
+    \caption{SSIM distribution for different combinations of added geometry priors with FiLM}
+    \label{fig:film_ssim}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/stats-results/film_lpips_distribution.png}
+    \caption{LPIPS distribution for different combinations of added geometry priors with FiLM}
+    \label{fig:film_lpips}
+\end{figure}
+
+Similar to the LoRA experiment results in \ref{section:lora_results}, using FiLM to augment the model with geometry priors makes the model perform more consistently, as shown by the lower variance in all metrics as compared to the baseline in figures \ref{fig:film_psnr}, \ref{fig:film_ssim} and \ref{fig:film_lpips}. All augmented models have a higher mean PSNR and SSIM from figures \ref{fig:film_psnr} and \ref{fig:film_ssim} respectively which suggests better image reconstruction quality, with the model adding both depth and normal priors performing the best. However, all augmented models have a higher LPIPS score than the baseline \ref{fig:film_lpips}, suggesting that the difference between the ground truth and the images generated by the model perceived by humans are larger for augmented models than the baseline. We conclude that integrating these priors with FiLM layers may not be beneficial in some cases, for example cases where successful image reconstruction is defined as being similar to the ground truth based on a human's perception.
 
 \subsection{[Optional] Comparison to state-of-the-art}
 [Qualitative and/ or quantitative comparisons to one or more recent works, especially the baseline work.]
@@ -992,10 +1027,10 @@ Section 2.3: Kacper and Radhika and Alex
 Section 2.4: Kacper
 Section 2.5: Kacper and Radhika
 Section 2.6: Kacper
-Section 3.1: FILL IN
+Section 3.1: Alex
 Section 3.2: Radhika
 Section 3.3: FILL IN
-Section 3.4: FILL IN
+Section 3.4: Radhika and Alex
 Section 3.5: FILL IN
 Section 4.1: FILL IN
 Section 4.2: FILL IN
