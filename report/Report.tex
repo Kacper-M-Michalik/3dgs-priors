@@ -1454,6 +1454,27 @@ An extension of this dataset is implemented in \cite{xu2019disn}, which presents
 \subsection{Qualitative results}
 [Show in figures and explain visual results. Include different interesting cases covering different aspects/ limitations/ dataset diversity. If not converged, explain what we can expect once converged. Include any other didactic examples here.]
 
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.35\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/lora_example246_gt.png} 
+        \caption{Ground Truth}
+        \label{fig:gt_sample}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.35\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/lora_example246_produced.png} 
+        \caption{LoRA Prediction)}
+        \label{fig:lora_sample}
+    \end{subfigure}
+    
+    \caption{Comparison of novel view case. (a) Ground truth rendering of the target view. (b) Reconstruction by a LoRA-adapted model.}
+    \label{fig:lora_qualitative_comparison}
+\end{figure}
+
+One example of evaluation output can be seen in \ref{fig:lora_qualitative_comparison}, where LoRA adapters were trained with a rank of 2, $\alpha$ of 2 (both low compared to standards) and dropout of 0.05. The LoRA-adapted model is able to reconstruct the car from a novel view while preserving details such as headlights, despite the low parameter overhead.
+
 \subsection{[Optional] Quantitative results}
 [A table and associated explanations for quantitative results.]
 
@@ -1593,7 +1614,7 @@ Section 3.1: Alex
 \newline
 Section 3.2: Radhika
 \newline
-Section 3.3: FILL IN
+Section 3.3: Radhika
 \newline
 Section 3.4: Radhika and Alex
 \newline
@@ -1618,6 +1639,8 @@ Recording: Kacper and Radhika and Alex
 \textbf{Technical Contributions:}
 \newline
 Depths exploration: Radhika
+\newline
+Edge operators exploration: Radhika
 \newline
 Segmentation exploration: Radhika
 \newline
@@ -1651,7 +1674,7 @@ Graphing code: Alex
 \newline
 Testing custom Dataset: Kacper
 \newline
-Testing evaluation: Kacper
+Testing evaluation: Kacper and Radhika
 \newline
 Testing prior configurations: Kacper
 \newline
