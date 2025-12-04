@@ -1,3 +1,5 @@
+# Code that plots the distributions of PSNR, SSIM, and LPIPS scores from all the scores text files in the filenames list in the same graph for comparison.
+
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -7,6 +9,7 @@ combined_psnrs = []
 combined_ssims = []
 combined_lpips = []
 
+# read all scores from the files
 for filename in filenames:
     all_psnr = []
     all_ssim = []
@@ -29,6 +32,7 @@ for filename in filenames:
 if not os.path.exists("stats"):
     os.makedirs("stats")
 
+# plot violinplot to compare all files for PSNR, SSIM, LPIPS
 for (metric_name, combined_values) in [("PSNR", combined_psnrs), ("SSIM", combined_ssims), ("LPIPS", combined_lpips)]:
     fig, ax = plt.subplots()
     violin = plt.violinplot(combined_values, showmeans=True)

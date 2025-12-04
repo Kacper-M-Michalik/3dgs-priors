@@ -1,3 +1,5 @@
+# Generate statistics and violin plots for PSNR, SSIM, and LPIPS scores from a given scores file by running python generate_stats.py <filename>
+
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,6 +32,7 @@ if __name__ == "__main__":
 
     with open(f"stats/{filename}_stats.txt", "w") as stats_file:
         for (metric_name, all_values) in [("PSNR", all_psnr), ("SSIM", all_ssim), ("LPIPS", all_lpips)]:
+            # plot graph
             fig, ax = plt.subplots()
             plt.violinplot(all_values, showmeans=True)
             ax.set_xticks([1], labels=[""])
@@ -39,6 +42,7 @@ if __name__ == "__main__":
                 mean = np.mean(vs)
                 plt.text(1.05 + i, mean + 0.01, str(round(mean, 3)), fontsize = 12)
             plt.savefig(f"stats/{filename}_{metric_name.lower()}_distribution.png")
+            # write stats into text file
             mean = np.mean(all_values)
             std = np.std(all_values)
             stats_file.write(f"{metric_name}: Mean = {mean:.7f}, Std = {std:.7f}\n")

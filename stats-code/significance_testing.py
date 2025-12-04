@@ -1,3 +1,6 @@
+# Carries out a two-sided significance test (with both parametric and non-parametric sampling) between two sets of scores provided in two text files.
+# Run with python significance_testing.py <baseline_scores_file> <comparison_scores_file>
+
 import argparse
 import numpy as np
 import os
