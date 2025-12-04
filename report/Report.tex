@@ -210,7 +210,7 @@ is optimized using a set of input images with known camera poses; the input to t
 is a single continuous 5D coordinate (spatial location and viewing direction) and the output is the volume density and view-dependent emitted radiance at that location.
 Novel views are synthesized by querying 5D coordinates along camera rays for some new camera pose (ray-marching), and output colours and densities are rendered
 into an image. NeRF allowed for higher quality 3D reconstruction, eventually using sparser image sets (PixelNeRF, RegNeRF), compared to traditional photogrammetry methods,
-achieving state-of-the-art results and becoming the gold standard for novel view synthesis. TODO: CITE
+achieving state-of-the-art results and becoming the gold standard for novel view synthesis\cite{zhang2025advancesfeedforward3dreconstruction}.
 
 \noindent
 In 2023 a further breakthrough in the field was achieved by the introduction of 3D Gaussian Splatting, offering a computationally high-performance alternative to NeRF.
@@ -226,23 +226,29 @@ Finally, for rendering, the Gaussians are rasterized using a custom tile-based r
 real-time, allowing for real-time novel view synthesis. 
 While the original method relies on per-scene optimization to generate 3D Gaussian Splats, recent works have begun using deep learning methods to 
 predict sets of Gaussians directly, with most recent developments allowing for 3D scene reconstruction using few or even single RGB images.
-\newline
-
-ADD IAMGES OF F3D GAUS, GAUSS VIDEODREAMER, TGS, SPLATTERIMAGE
-\newline
 
 \noindent
 Since the introduction of 3DGS, a number of deep learning architectures and processing pipelines based on the method have been developed 
 to find the most accurate and efficient implementation capable of producing high quality 3D Gaussian Splats.
-Recent examples include ExScene, Wonderland, F3D-Gaus\cite{f3dgaus}, Gauss VideoDreamer\cite{hao2025gaussvideodreamer3dscenegeneration}, TGS and Splatter Image\cite{splatterImage}.
+Recent examples include ExScene\cite{exscene}, Wonderland\cite{wonderland}, F3D-Gaus\cite{f3dgaus}, Gauss VideoDreamer\cite{hao2025gaussvideodreamer3dscenegeneration}, TGS\cite{tgs} and Splatter Image\cite{splatterImage}.
 
 \noindent
-F3D-Gaus
-TODO
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{images/f3d-gaus.png}
+    \caption{F3D-Gaus Framework from \cite{f3dgaus}}
+    \label{fig:f3dgaus}
+\end{figure}
+F3D-Gaus was proposed to help pixel-aligned Gaussian Splatting generate plausible novel viewpoints by introducing a cycle-aggregative strategy. As shown in figure \ref{fig:f3dgaus}, given a single RGB image $I_0$ and depth map $D_0$, the model directly feeds them forward to output the pixel-aligned Gaussian Splatting representation $GS_0$. The model then renders the image $\tilde{I_1}$ and depth map $\tilde{D_1}$ for the novel view, and then outputs its corresponding Gaussian Splatting representation $GS_1$. $GS_0$ and $GS_1$ are then aggregated to produce images for supervision. By enforcing this cycle consistency through aggregation, the model naturally learns through this self-supervised approach to extrapolate across views by fusing multiple representations, enhancing 3D coherence during inference. This helps to ensure that 3D representations from novel viewpoints are both aligned with and complementary to those from the original viewpoint. After complementary aggregation, F3D-Gaus then applies a video in-painting model\cite{propainter} to the rendered images and depth maps to correct inconsistencies in geometry and texture caused by large viewpoint shifts, resulting in more reliable and visually consistent outputs.
 
 \noindent
-Gauss VideoDreamer
-TODO
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{images/gauss_video_dreamer.png}
+    \caption{GaussVideoDreamer Framework from \cite{hao2025gaussvideodreamer3dscenegeneration}}
+    \label{fig:gauss_video_dreamer}
+\end{figure}
+GaussVideoDreamer first initializes a video and inconsistency-aware Gaussian Splats from an input image.
 
 \noindent
 The triplane representation was proposed to efficiently and expressively represent 3D volumes \cite{triplane}, as a compromise between rendering speed and memory consumption. 
