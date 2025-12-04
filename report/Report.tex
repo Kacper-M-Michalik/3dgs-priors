@@ -248,7 +248,7 @@ F3D-Gaus was proposed to help pixel-aligned Gaussian Splatting generate plausibl
     \caption{GaussVideoDreamer Framework from \cite{hao2025gaussvideodreamer3dscenegeneration}}
     \label{fig:gauss_video_dreamer}
 \end{figure}
-GaussVideoDreamer first initializes a video and inconsistency-aware Gaussian Splats from an input image.
+From the input image, GaussVideoDreamer first initializes a coarse video sequence depicting occluded regions of the input image under smooth novel view trajectories and inconsistency-aware Gaussian Splats. After that, at periodic optimization intervals, the model renders all viewpoint images and their corresponding inconsistency prediction masks from the Gaussian Splats. The masks and rendered images then guide a video diffusion model to perform progressive inpainting to refine the video sequence, which then in turn optimizes the Gaussian splatting representation and gradually generates better novel view images. However, the generation quality of GaussVideoDreamer is mainly limited by the video diffusion prior (AnimateDiff\cite{animatediff}), which was adapted from an image diffusion model lacking dedicated video inpainting training. As such, when generating videos it may result in frame inconsistencies in longer sequences, progressive colour shifts and high-frequency detail degradation, which reduces novel view reconstruction quality. 
 
 \noindent
 The triplane representation was proposed to efficiently and expressively represent 3D volumes \cite{triplane}, as a compromise between rendering speed and memory consumption. 
