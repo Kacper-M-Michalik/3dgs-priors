@@ -167,6 +167,7 @@ ADD DIAGRAMS OF PHTOGRAMETRRYT GAUSSAIN SPLAT AND NERF
     \centering
     \includegraphics[width=15cm]{images/photogrammetry.png}
     \caption{An example of 3D reconstruction with many overlapping images from \cite{photogrammetry}}
+    \label{fig:photogrammetry}
 \end{figure}
 
 \noindent
@@ -174,12 +175,12 @@ Traditionally, 3D reconstruction has been performed by multi-stage photogrammetr
 representations such as meshes or point clouds. The industry-standard workflow begins with Structure from Motion (SfM), 
 which matches sparse feature points across many overlapping images to estimate camera parameters and generate a sparse point cloud.
 This is typically followed by Multi-View Stereo (MVS) algorithms to compute dense depth maps, which are combined to
-generate a standard 3D mesh using techniques like Delaunay triangulation or Moving Least Squares with Marching Cubes. TODO: CITE 
+generate a standard 3D mesh using techniques like Delaunay triangulation\cite{delaunayTriangulation} or Moving Least Squares with Marching Cubes\cite{marchingCubes}.
 While effective for static, diffuse environments, these methods struggle significantly with surfaces such as 
 transparent windows or reflective metals, this as they rely on strict photometric consistency and lack a mechanism to deal with view-dependent radiance.
 Additionally, these methods require large numbers of high-resolution images with substantial overlap to achieve high-quality reconstruction.
 This heavy data acquisition requirement means the methods create a computational bottleneck, requiring hours of processing time on high-end hardware, and
-are impractical in the first place without complex image acquisition setups, such as in Figure TODO: LINK.
+are impractical in the first place without complex image acquisition setups, such as in Figure \ref{fig:photogrammetry}.
 
 \noindent
 A paradigm shift occurred in 2020 with the introduction of Neural Radiance Fields\cite{nerf}. NeRF moves away from explicit geometry representations 
@@ -192,7 +193,7 @@ achieving state-of-the-art results and becoming the gold standard for novel view
 
 \noindent
 In 2023 the field was further revolutionized by 3D Gaussian Splatting, offering a computationally high-performance alternative to NeRF.
-3DGS offers a new explicit geometry representation, modelling a scene as a collection of parameterized 3D Gaussians. TODO: CITE
+3DGS offers a new explicit geometry representation, modelling a scene as a collection of parameterized 3D Gaussians\cite{3dgs}.
 Unlike NeRF, 3D Gaussian Splatting does not rely on a neural network to generate a scene. Instead, in the original paper, reconstruction 
 is achieved by first initializing a set of Gaussians, either randomly or from a sparse point cloud (typically from Structure from Motion), where
 each Gaussian is defined by a set of parameters: position (mean), covariance (scale and rotation), opacity, and colour 
@@ -212,7 +213,7 @@ ADD IAMGES OF F3D GAUS, GAUSS VIDEODREAMER, TGS, SPLATTERIMAGE
 \noindent
 Since the introduction of 3DGS, a number of deep learning architectures and processing pipelines based on the method have been developed 
 to find the most accurate and efficient implementation capable of producing high quality 3D Gaussian Splats.
-Recent examples include ExScene, Wonderland, F3D-Gaus, Gauss VideoDreamer, TGS and Splatter Image.\cite{splatterImage}
+Recent examples include ExScene, Wonderland, F3D-Gaus\cite{f3dgaus}, Gauss VideoDreamer\cite{hao2025gaussvideodreamer3dscenegeneration}, TGS and Splatter Image\cite{splatterImage}.
 
 \noindent
 F3D-Gaus
