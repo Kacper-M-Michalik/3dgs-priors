@@ -184,7 +184,7 @@ necessary additional information and preventing Splatter Image from having to le
     \end{minipage}%
     \begin{minipage}{.5\textwidth}
         \centering
-        \includegraphics[width=0.7\linewidth]{images/gaussian_splatting.png}
+        \includegraphics[width=1\linewidth]{images/gaussian_splatting.png}
         \caption{3D Gaussian Splatting Process from \cite{3dgs}}
         \label{fig:3dgs}
     \end{minipage}
@@ -490,8 +490,6 @@ Pixel Based Visual Information Fidelity as a metric to evaluate their performanc
 
 \noindent
 For normal map generation we used models from \cite{Bae2021} which implements a network which estimates the per-pixel surface normal probability distribution and uses uncertainty-guided sampling to improve the quality of prediction of surface normals. The paper provided code at \url{ https://github.com/baegwangbin/surface_normal_uncertainty} that implemented this method on a network trained on ScanNet \cite{dai2017scannet}, with the ground truth and data split provided by FrameNet \cite{huang2019framenet}, and another trained on NYUv2 \cite{NYUv2}, with the ground truth and data split provided by GeoNet \cite{qi2018geonet} \cite{qi2020geonet++}. Both models take in the original image and dimensions of the image as input and return a corresponding normal map with the same dimensions as the given input dimensions.
-
-\noindent
 We run both pretrained models on the dataset.
 
 \begin{figure}[H]
@@ -674,6 +672,7 @@ The quantitative degradation of \texttt{DPT\_Large} on the Hard set contradicts 
     \label{fig:depth_poor_gt_res}
 \end{figure}
 
+\noindent
 Although \texttt{DPT\_Hybrid} appears to align more closely with the GT depth map, \texttt{DPT\_Large} is what is used in the final depth prior generation (as described in \textbf{2.3.4 Selected Prior Integration}). One reason is that the model produces depth maps with cleaner edges along the object boundaries (unlike \texttt{DPT\_Hybrid}), which can be seen to have closer sections of the object blend into the foreground pixels. 
 
 \begin{figure}[H]
@@ -769,7 +768,7 @@ Figure \ref{fig:fbeta_boxplot} illustrates the distribution of $F_{\beta}$ score
 \end{figure}
 
 \noindent
-The scatter plot in Figure \ref{fig:prec_recall} shows how the models operate with different aims; . \texttt{InSPyReNet} (in orange) clusters tightly towards the top of the high-performance region (top right), suggesting a priority of precision (often very close to $1.0$). In practice, this may mean eliminating some background noise, but this may mean missing parts of the object. \texttt{rembg} (blue) also has  high recall and precision, and it could also be used as a robust general-purpose model for segmentation (that does not clip parts of the object of interest). 
+The scatter plot in Figure \ref{fig:prec_recall} shows how the models operate with different aims; \texttt{InSPyReNet} (in orange) clusters tightly towards the top of the high-performance region (top right), suggesting a priority of precision (often very close to $1.0$). In practice, this may mean eliminating some background noise, but this may mean missing parts of the object. \texttt{rembg} (blue) also has  high recall and precision, and it could also be used as a robust general-purpose model for segmentation (that does not clip parts of the object of interest). 
 
 \noindent
 To identify the most frequent ``winner," we counted the number of images where each model achieved the highest $F_{\beta}$ score. \texttt{InSPyReNet} achieved the highest score on the majority (28 vs \texttt{rembg}'s 8). 
@@ -910,7 +909,7 @@ implement the cross-attention mechanism for multimodal data input into the model
 \noindent
 One of our desired features was to allow a model with new priors to be fine-tuned using existing weights, namely those from the
 pretrained Splatter Image models. This was achieved by grafting the old weights of a pretrained model onto a new instance of a GaussianSplatPredictor. This grafting mechanism was implemented externally to the model, as such its implementation details are covered in
-\textbf{Section 2.3.6: Training and Evaluation Changes}.
+\textbf{Section 2.3.7: Training and Evaluation Changes}.
 
 \subsubsection{Manual LoRA Integration}
 To adapt Splatter Image for fine-tuning on the ShapeNet-SRN Cars dataset (with depth and normal priors), we added Low-Rank Adaptation (LoRA) \cite{HuLoRA} into the GaussianPredictor module of Splatter Image.
@@ -1015,13 +1014,108 @@ if model_cfg.data.origin_distances:
 \end{lstlisting}
 
 \noindent
-For the training code, for the base non-LoRA training script, two changes had to be made.
-The first change was to model loading, to add support for training from existing HuggingFace models from the 
-base Splatter Image project.
+For the training code, two changes had to be made.
+The first change was to model loading, adding support for training using existing HuggingFace model weights 
+from the base Splatter Image project.        
 
-CODEBLOCK
+\begin{lstlisting}[language=Python, caption=New training setup code]
+...
+# Resume from HuggingFace pretrained weights, perform weight graft if now training with additional priors
+elif cfg.opt.pretrained_hf:
+    category = cfg.data.category
+    if category == "cars_priors":
+        category = "cars"
 
-ADDED HF LAODING, PERFORMS GRAFT
+    model_name = category
+    if cfg.data.category in ["gso", "objaverse"]:
+        model_name = "latest"
+
+    cfg_path = hf_hub_download(repo_id="szymanowiczs/splatter-image-v1", filename="config_{}.yaml".format(category))            
+    model_path = hf_hub_download(repo_id="szymanowiczs/splatter-image-v1", filename="model_{}.pth".format(model_name))
+    old_cfg = OmegaConf.load(cfg_path)   
+    assert is_base_model(old_cfg)
+    
+    checkpoint = torch.load(model_path, map_location=device, weights_only=False)
+
+    # Check if new model uses priors
+    if is_base_model(cfg):      
+        try:
+            gaussian_predictor.load_state_dict(checkpoint["model_state_dict"])
+        except RuntimeError:
+            gaussian_predictor.load_state_dict(checkpoint["model_state_dict"], strict=False)
+    else:                       
+        gaussian_predictor = graft_weights_with_channel_expansion(checkpoint["model_state_dict"], gaussian_predictor, old_cfg, cfg)
+        print("Grafting performed successfully")
+            
+    best_PSNR = checkpoint["best_PSNR"] 
+    print('Loaded model from a pretrained Huggingface checkpoint')   
+    OmegaConf.save(config=cfg, f=os.path.join(vis_dir, "config.yaml"))
+...
+\end{lstlisting}
+
+\noindent
+The program first downloads the appropriate base splatter image configuration and model files. 
+The current training configuration is then checked to see if it uses any priors, with \verb|is_base_model| 
+returning true if no priors are to be used. In the case priors have been requested, the new gaussian\_predictor instance
+will have mismatched layer dimensions compared to the pretrained Splatter Image model, meaning the pretrained weights
+cannot be directly loaded into the gaussian\_predictor, in this case weights are copied manually into a state dictionary with
+correct dimensions, we refer to this process as grafting, and is achieved using the 
+\verb|graft_weights_with_channel_expansion| function in \verb|prior_utils.py|.
+
+\begin{lstlisting}[language=Python, caption=Grafting code]
+def graft_weights_with_channel_expansion(old_state_dict, new_model, old_cfg, new_cfg):
+    new_state_dict = new_model.state_dict()
+
+    # Iterate over all layers
+    for name, new_param in new_state_dict.items():
+        if name not in old_state_dict:
+            # New LoRA parameters not in base model checkpoint. Skip to avoid KeyError.
+            if "lora_" in name:
+                continue
+            print("Failed to find layer {} in HuggingFace model state_dict".format(name))
+            raise Exception("Mismatched source model for graft")
+
+        old_param = old_state_dict[name]
+
+        # Directly copy tensors if matching in size (handles most layers)
+        if (new_param.shape == old_param.shape):
+            new_state_dict[name] = old_param.clone()
+            continue
+
+        # In theory we should only reach here for Conv2D layers, as such only need to handle weights, and these should only have extra channels in shape[1]
+        if ('weight' in name):
+            # Dimension check for Conv2D weights
+            if new_param.dim() == 4 and old_param.dim() == 4:
+                assert new_param.shape[0] == old_param.shape[0], "Grafting only supported for adding channels, not changing resolution"
+                assert new_param.shape[1] > old_param.shape[1], "Cannot truncate channels during graft, can only add channels"
+
+                new_weights = new_param.clone()
+                new_weights[:, :old_param.shape[1], :, :] = old_param
+                new_weights[:, old_param.shape[1]:, :, :] = 0.0
+
+                new_state_dict[name] = new_weights
+            else:
+                 print(f"Warning: Skipping graft for {name} due to dimension mismatch")
+        else:
+            raise Exception("Failed layer graft")
+            
+    new_model.load_state_dict(new_state_dict)
+    return new_model
+\end{lstlisting}
+
+\noindent
+Grafting works by iterating over the newly configured model's state dictionary, looking up the equivalent layers in the 
+pretrained model's state dictionary. If equivalent layers match in shape, that means no changes have been made and the
+tensor from the pretrained model's layer is copied directly into the new state dictionary. If there is a mismatch in shape however, we
+create a new tensor matching the new model layer's shape and manually copy the values from the pretrained layer into the 
+appropriate lower dimensions of the tensor, then zero-initialize all remaining elements in the tensor. 
+By zero-initializing the newly added parameters, the expanded layer remains mathematically equivalent to the original.
+This ensures the new model's output is identical to that of the pretrained one, despite the change in architecture.
+The newly configured model is reloaded with the newly generated state dictionary and finally the ready model is returned.
+This grafting mechanism works despite the behaviour of the newly configured model remaining the same, as back-propagation 
+will compute non-zero gradients for the new inputs channels, allowing the model to update the zero-initialized parameters 
+and gradually integrate the new channels, making them useful.
+\newline
 
 \noindent
 The second change was similar to that of the evaluation script, updating input preparation, the resulting updated
@@ -1030,26 +1124,63 @@ code block is identical to that in \textbf{Listing 6}.
 
 \noindent
 For the LoRA-specific training script, within the modified \texttt{GaussianPredictor}, \texttt{requires\_grad=False} is explicitly set for all pre-trained backbone weights (see \texttt{gaussian\_predictor\_lora.py}), leaving only the low-rank matrices $A$ and $B$ as trainable. This ensures that optimizer updates are restricted to the adapter layers, with instances defined as \texttt{LoRALayer}.
+\newline
 
 CODE BLOCK
 
 \subsection{Data pipelines}
 [Explain your data format, how you consume the data in your algorithms, and data augmentation.]
+\newline
 
 DIAGRAM: SRN FILE STRUCTURE -> ORCHESTRATOR -> PARALLEL MODELS -> PARQUET
 DIAGRAM: PARQUET -> HUGGINGFACE STRUCTURE -> HUGGINGFACE
+\newline
 
 \noindent
 For training and evaluation performance reasons, we chose to generate priors in advance for selected datasets, as such we developed
 a pipeline, run by an orchestrator pattern notebook, 
-
 that would set up a Virtual Machine for every model, then proceed to install the correct 
 depednecies into each VM, using requiremtns files stored alongside the scripts in \verb|/geometry-priors|, and then
 execute the prior generation notebooks in order to geenrate a complete, ready-to-use dataset.
 
-CODE BLOCK - VM setup
-CODE BLOCK - REQUIREMTN LOADING
-CODE BLOCK - CALL MODELS
+\begin{lstlisting}[language=Python, caption=VM setup]
+# Create venv for each prior model
+!python3 -m venv /content/models/depth --without-pip
+!python3 -m venv /content/models/normal --without-pip
+
+# Have to manually install pip to correctly build venvs on colab
+!curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+!/content/models/depth/bin/python3 get-pip.py
+!/content/models/normal/bin/python3 get-pip.py
+
+# Verify venv's work
+!/content/models/depth/bin/pip --version
+!/content/models/normal/bin/pip --version
+
+!ls -l /content/models/
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=Package setup]
+# Setup models
+
+# Depth
+!/content/models/depth/bin/pip install -r /content/3dgs-priors/geometry-priors/depth_requirements.txt
+
+# Normals
+!git clone https://github.com/baegwangbin/surface_normal_uncertainty.git /content/3dgs-priors/geometry-priors/surface_normal_uncertainty/
+!mkdir /content/3dgs-priors/geometry-priors/surface_normal_uncertainty/checkpoints/
+!gdown 1lOgY9sbMRW73qNdJze9bPkM2cmfA8Re- -O /content/3dgs-priors/geometry-priors/surface_normal_uncertainty/checkpoints/scannet.pt
+!/content/models/normal/bin/pip install -r /content/3dgs-priors/geometry-priors/normal_requirements.txt
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=Dataset and prior generation script execution]
+# Launch models to process dataset
+!/content/models/normal/bin/python /content/3dgs-priors/geometry-priors/generate_normal.py --in_folder="{in_folder}" --out_folder="{out_folder}" --save_iter=250
+
+!/content/models/depth/bin/python /content/3dgs-priors/geometry-priors/generate_depth.py --in_folder="{in_folder}" --out_folder="{out_folder}" --save_iter=250
+
+!python /content/3dgs-priors/geometry-priors/generate_base.py --in_folder="{in_folder}" --out_folder="{out_folder}" --save_iter=500
+\end{lstlisting}
 
 The processign scripts geenerate PARQUET FIELS IN THE SET DESTIATION, WITH EXAMPLE ROWS:
 EXAMPLE RGBS
@@ -1263,9 +1394,6 @@ Trying alternatigve metrics for 3D reconstruction, like Chaumfeer distance, for 
 off bunch of points of SRN cars meshes to genrate point cloud, then treat gaussians as point cloud and do comaprison
 
 \subsection{Project Contributions}
-"You may find the template for the project report here. We do not enforce any page limits but please make sure to address each section appropriately as explained in the document. In particular, please pay special attention to clarifying the contribution of each group member."
-Should we clarify here or throughout document?
-\newline
 
 \noindent
 \textbf{Report Writing Contributions:}
@@ -1310,6 +1438,14 @@ Citation collection: Radhika and Alex
 \newline
 
 \noindent
+\textbf{Presentation Contributions:}
+\newline
+Slides: Alex
+\newline
+Recording: Kacper and Radhika and Alex
+\newline
+
+\noindent
 \textbf{Technical Contributions:}
 \newline
 Depths exploration: Radhika
@@ -1346,12 +1482,11 @@ Graphing code: Alex
 \newline
 Testing custom Dataset: Kacper
 \newline
-Testing model: Kacper
+Testing evaluation: Kacper
+\newline
+Testing prior configurations: Kacper
 \newline
 Testing LoRA configurations: Radhika 
-
-
-
 
 \bibliographystyle{unsrt}
 \bibliography{citations}
