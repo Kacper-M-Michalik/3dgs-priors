@@ -240,6 +240,8 @@ VideoDreamer\cite{hao2025gaussvideodreamer3dscenegeneration}, TGS\cite{tgs} and 
     \caption{F3D-Gaus Framework from \cite{f3dgaus}}
     \label{fig:f3dgaus}
 \end{figure}
+
+\noindent
 F3D-Gaus was proposed to help pixel-aligned Gaussian Splatting generate plausible novel viewpoints by introducing a cycle-aggregative strategy. As shown in figure \ref{fig:f3dgaus}, given a single RGB image $I_0$ and depth map $D_0$, the model directly feeds them forward to output the pixel-aligned Gaussian Splatting representation $GS_0$. The model then renders the image $\tilde{I_1}$ and depth map $\tilde{D_1}$ for the novel view, and then outputs its corresponding Gaussian Splatting representation $GS_1$. $GS_0$ and $GS_1$ are then aggregated to produce images for supervision. By enforcing this cycle consistency through aggregation, the model naturally learns through this self-supervised approach to extrapolate across views by fusing multiple representations, enhancing 3D coherence during inference. This helps to ensure that 3D representations from novel viewpoints are both aligned with and complementary to those from the original viewpoint. After complementary aggregation, F3D-Gaus then applies a video in-painting model\cite{propainter} to the rendered images and depth maps to correct inconsistencies in geometry and texture caused by large viewpoint shifts, resulting in more reliable and visually consistent outputs. 
 While the source code and a pretrained model is available, the model would require 13 days of an A100 GPU to train if any updates were made, so we deemed this unsuitable to work on.
 
@@ -250,6 +252,8 @@ While the source code and a pretrained model is available, the model would requi
     \caption{GaussVideoDreamer Framework from \cite{hao2025gaussvideodreamer3dscenegeneration}}
     \label{fig:gauss_video_dreamer}
 \end{figure}
+
+\noindent
 From the input image, GaussVideoDreamer first initializes a coarse video sequence depicting occluded regions of the input image under smooth novel view trajectories and inconsistency-aware Gaussian Splats. After that, at periodic optimization intervals, the model renders all viewpoint images and their corresponding inconsistency prediction masks from the Gaussian Splats. The masks and rendered images then guide a video diffusion model to perform progressive inpainting to refine the video sequence, which then in turn optimizes the Gaussian splatting representation and gradually generates better novel view images. However, the generation quality of GaussVideoDreamer is mainly limited by the video diffusion prior (AnimateDiff\cite{animatediff}), which was adapted from an image diffusion model lacking dedicated video inpainting training. As such, when generating videos it may result in frame inconsistencies in longer sequences, progressive colour shifts and high-frequency detail degradation, which reduces novel view reconstruction quality. 
 There was also no publicly available implementation of this method. In addition, since a proprietary evaluation dataset of 20 generated single-view images with corresponding text prompts was used in the paper, it would be difficult to compare it with other implementations.
 Therefore, we also decided not to explore this method.
@@ -261,7 +265,9 @@ Therefore, we also decided not to explore this method.
     \caption{TGS Framework from \cite{tgs}}
     \label{fig:tgs}
 \end{figure}
-In a triplane representation\cite{triplane}, explicit features of the image are aligned along three axis-aligned orthogonal feature planes. We can then query any 3D position by projecting it onto the three feature planes, retrieving the corresponding feature vector via bilinear interpolation and aggregating the three feature vectors via summation. An additional lightweight decoder network interprets the aggregated 3D features as colour and density. This representation is fast and scales efficiently with resolution by keeping the decoder small and shifting the bulk of the expressive power into the explicit features. TGS\cite{tgs} uses this representation in Triplane-Gaussian, a new hybrid representation. As shown in figure \ref{fig:tgs}, TGS first encodes the input image into a set of latent feature tokens, which are then passed into a point cloud decoder and a triplane decoder . A point cloud and a triplane can be de-tokenized from the output of these decoders. After the point cloud decoder, TGS adapts a point upsampling module to densify the point cloud and utilizes a geometry-aware encoding to project point cloud features into the initial positional embedding of triplane latent. Lastly, 3D Gaussians are decoded by the point cloud, the triplane features and the image features for novel view rendering through Gaussian splatting.
+
+\noindent
+In a triplane representation\cite{triplane}, explicit features of the image are aligned along three axis-aligned orthogonal feature planes. We can then query any 3D position by projecting it onto the three feature planes, retrieving the corresponding feature vector via bilinear interpolation and aggregating the three feature vectors via summation. An additional lightweight decoder network interprets the aggregated 3D features as colour and density. This representation is fast and scales efficiently with resolution by keeping the decoder small and shifting the bulk of the expressive power into the explicit features. TGS\cite{tgs} uses this representation in Triplane-Gaussian, a new hybrid representation. As shown in figure \ref{fig:tgs}, TGS first encodes the input image into a set of latent feature tokens, which are then passed into a point cloud decoder and a triplane decoder. A point cloud and a triplane can be de-tokenized from the output of these decoders. After the point cloud decoder, TGS adapts a point upsampling module to densify the point cloud and utilizes a geometry-aware encoding to project point cloud features into the initial positional embedding of triplane latent. Lastly, 3D Gaussians are decoded by the point cloud, the triplane features and the image features for novel view rendering through Gaussian splatting.
 While an official implementation of this is available at \href{https://github.com/VAST-AI-Research/TriplaneGaussian}{https://github.com/VAST-AI-Research/TriplaneGaussian} and a pretrained model is also available, the model is only trained on the Objaverse-LVIS dataset and the training time and compute needed to adapt this implementation also made it unsuitable for our project.
 
 \subsection{Overview of the idea}
@@ -386,16 +392,25 @@ unchanged. As such this strategy of inserting FiLM layers into Splatter Image is
 \newline
 
 \noindent
-An alternative to FiLM is also considered, namely cross-attention. 
-FIXXX
-\newline
-Cross-attention modules can be used as slot-in replacements 
-for FiLM layers inside the U-Net's blocks (in the bottleneck and decoder).
-The U-Net's image features act as the Query (Q). The multimodal input embeddings act as the Key (K) 
-and Value (V). More expressive than FiLM as it allows for fine-grained spatial conditioning (per-pixel).,
-this method is consdiered state-of-the-art for high-performance conditional generation.
-FIXXX
 
+
+Anotehr method for multi modal input is cross attention.
+In cross attention we add crossss attention layers to model.
+Cross attentio nworks by taking pixels in iamge, flattening them to list, 
+this list is then projected using a lienar layer or matmul to matchign dimensions
+with mutlimodal data shape (say list if vector embeddings), Q.
+Multim odal data laso projected to K. Projected to V.
+Dot product of every pixel agaisnt every q performed, nramlsied acroos
+row or column? Softwmax
+
+Cross aattention formula to calc documentclass
+
+list of updaetd pixels reshaped back to image
+More expressive than FiLM as it allows for per-pixel spatial conditioning.,
+this method is consdiered state-of-the-art for high-performance conditional generation.
+computaionlly intensive though, and only useful on larger multimodal data 
+(so not 1 embedding), for example list of tokens geenrated from segmentaion, or larwge list of
+generated plane equations
 \subsubsection{Low-Rank Adaptation (LoRA)}
 \label{section:lora}
 To address the computational constraints of training the full U-Net architecture, we integrated Low-Rank Adaptation (LoRA) \cite{HuLoRA}
