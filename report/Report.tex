@@ -259,15 +259,6 @@ From the input image, GaussVideoDreamer first initializes a coarse video sequenc
 \end{figure}
 In a triplane representation\cite{triplane}, explicit features of the image are aligned along three axis-aligned orthogonal feature planes. We can then query any 3D position by projecting it onto the three feature planes, retrieving the corresponding feature vector via bilinear interpolation and aggregating the three feature vectors via summation. An additional lightweight decoder network interprets the aggregated 3D features as colour and density. This representation is fast and scales efficiently with resolution by keeping the decoder small and shifting the bulk of the expressive power into the explicit features. TGS\cite{tgs} uses this representation in Triplane-Gaussian, a new hybrid representation. As shown in figure \ref{fig:tgs}, TGS first encodes the input image into a set of latent feature tokens, which are then passed into a point cloud decoder and a triplane decoder . A point cloud and a triplane can be de-tokenized from the output of these decoders. After the point cloud decoder, TGS adapts a point upsampling module to densify the point cloud and utilizes a geometry-aware encoding to project point cloud features into the initial positional embedding of triplane latent. Lastly, 3D Gaussians are decoded by the point cloud, the triplane features and the image features for novel view rendering through Gaussian splatting.
 
-
-\noindent
-Another recent method is Splatter Image \cite{splatterImage} then applies Gaussian Splatting to monocular reconstruction by using a set of 3D Gaussians as the 3D representation. 
-It predicts a 3D Gaussian for each of the input image pixels and uses a 2D image as the container of the 3D Gaussians, storing the parameters of one Gaussian per pixel. 
-This reduces the reconstruction problem to learning an image-to-image neural network, allowing the reconstructor to be implemented utilizing only efficient 2D operators. 
-The use of Gaussian Splatting in this approach increases rendering and space efficiency, which benefits inference and training. 
-Our work continues to expand on this method through investigating different geometry priors and integrating them into the current model as appropriate.
-TODO
-
 \subsection{Overview of the idea}
 [Provide an overview stating why the idea of the project makes sense and what the main motivation is.]
 
@@ -1518,7 +1509,7 @@ As mentioned in last supervisor meeting: explicit loss function/rendering loss: 
 \newline
 Section 1.1: Kacper and Alex
 \newline
-Section 1.2: Kacper
+Section 1.2: Kacper and Alex
 \newline
 Section 1.3: Kacper
 \newline
