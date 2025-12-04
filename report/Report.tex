@@ -590,7 +590,12 @@ Depth maps store the distance of a surface from the camera per-pixel. These dist
 \noindent
 Produced depth maps were compared against the ``ground truths'' produced by \url{https://github.com/Xharlie/ShapenetRender_more_variation}, as was done in the normal priors exploration. An example of the depth map produced by them is visible in Figure  \ref{fig:ground_truth}. However, it is important to note that these depth map ``ground truths'' were not always perfect, as can be seen in the following example: 
 
-- (INSERT) Image needed here of poor ground truth. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.35\textwidth]{images/Depth_PoorGT1.png}
+    \caption{Example of poor depth ground truth data}
+    \label{fig:depth_poor_gt}
+\end{figure}
 
 \noindent
 This inclined us to take the quantitative results produced by comparing MDE models tested against these ground truths with a pinch of salt. For each produced depth map, the following metrics were used to compare against the ground truths. 
@@ -625,10 +630,23 @@ Hard & MiDaS\_small & $0.190 \pm 0.45$ & $24.45 \pm 23.56$ & 0.164 & 0.900 \\
 \end{table}
 
 \noindent
-The quantitative degradation of \texttt{DPT\_Large} on the Hard set contradicts visual inspection. This discrepancy can be attributed to the quality of the available Ground Truth (GT) depth maps (as discussed earlier). \texttt{DPT\_Large} is what is used in the final depth prior generation, as described in \textbf{2.3.4
-Selected Prior Integration}.
+The quantitative degradation of \texttt{DPT\_Large} on the Hard set contradicts visual inspection. This discrepancy can be attributed to the quality of the available Ground Truth (GT) depth maps (as discussed earlier). 
 
-INSERT EXAMPLE IMAGE HERE OF DEPTH MAP PRODUCED 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{images/Depth_PoorGT2Res.png}
+    \caption{Depth Maps produced by MiDaS models on image with poor GT depth map.}
+    \label{fig:depth_poor_gt_res}
+\end{figure}
+
+Although \texttt{DPT\_Hybrid} appears to align more closely with the GT depth map, \texttt{DPT\_Large} is what is used in the final depth prior generation (as described in \textbf{2.3.4 Selected Prior Integration}). One reason is that the model produces depth maps with cleaner edges along the object boundaries (unlike \texttt{DPT\_Hybrid}), which can be seen to have closer sections of the object blend into the foreground pixels. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/DepthExampleResult.png}
+    \caption{Depth Maps produced by the MiDaS models}
+    \label{fig:depth_example}
+\end{figure}
 
 \subsubsection{Segmentation and Salient Object Detection Exploration}
 
