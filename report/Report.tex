@@ -12,6 +12,8 @@
 \usepackage{xcolor}
 \usepackage{titlesec}
 \usepackage[section]{placeins}
+\usepackage{amssymb}
+
 
 \titleformat{\section}
   {\normalfont\Large\bfseries} % Text formatting (Bold, Large)
@@ -298,16 +300,39 @@ this method is consdiered state-of-the-art for high-performance conditional gene
 
 explain addition of LORA matrices due to compute limitations/allowign working of exisitng model
 
-\subsubsection{Low-Rank Adaptation (LoRA)}
-To address the computational constraints of fine-tuning the full U-Net architecture, we considered Low-Rank Adaptation (LoRA) \cite{HuLoRA}. LoRA freezes the pre-trained model weights and injects trainable rank decomposition matrices into layers within the architecture. 
 
-We utilize three key hyperparameters to control this adaptation:
+\subsubsection{Low-Rank Adaptation (LoRA)}
+To address the computational constraints of fine-tuning the full U-Net architecture, we integrated Low-Rank Adaptation (LoRA) \cite{HuLoRA} directly into our GaussianPredictor. While our implementation shares a similar class structure to the official \texttt{loralib} library \cite{hu2022lora} (utilizing mixins to wrap \texttt{Linear} and \texttt{Conv2d} layers), we manually adapted the forward pass to support the specific channel dimensions of the Splatter Image architecture (further detail is in \textbf{Section X: Manual LoRA Integration}).
+
+\noindent
+Adapters are small modules placed after the frozen modules we wish to adapt, such as linear and convolutional layers. The adapter accepts the same input dimension as the original layer and produces the same output dimension. This allows the output from the adapter to be summed element-wise with the frozen layer's output.
+
+\noindent
+Instead of learning a new large weight matrix for these adapters, the weight update is decomposed into two smaller low-rank matrices. For a weight matrix $W \in \mathbb{R}^{d_{out} \times d_{in}}$, the update is defined as $W + \Delta W$, where $\Delta W$ is factored into:
+\begin{equation*}
+    A \in \mathbb{R}^{r \times d_{in}} \quad \text{and} \quad B \in \mathbb{R}^{d_{out} \times r}
+\end{equation*}
+Here, we see that $r \ll \min(d_{in}, d_{out})$, where $r$ is the rank hyperparameter (detailed below). During training, only the parameters of $A$ and $B$ are updated, while the original weights $W$ remain frozen.
+
+\noindent
+For \texttt{Conv2d} layers, we treat the kernel $W \in \mathbb{R}^{C_{out} \times C_{in} \times k \times k}$ as a flattened matrix of shape $C_{out} \times (C_{in} \cdot k \cdot k)$. The flattened representation is decomposed into $B$ and $A$, allowing us to apply LoRA to the full spatial kernel. By including the spatial dimensions ($k \times k$) in the decomposition, the adapter can learn spatial feature refinements, rather than being limited to channel-wise linear projections. This approach follows the implementation found in \texttt{loralib} \cite{hu2022lora}.
+
+During the forward pass, the input $x$ is processed by both the frozen weights $W$ and the LoRA branch:
+\begin{equation}
+    h = Wx + \frac{\alpha}{r} BAx
+\end{equation}
+where $\frac{\alpha}{r}$ is a scaling factor \cite{hu2022lora}. This scaling normalises the updates across different rank choices, reducing the need to re-tune the learning rate when $r$ changes.
+
+We utilise three hyperparameters to control this adaptation:
 \begin{itemize}
     \item Rank ($r$): The rank of the low-rank matrices $A$ and $B$. Higher ranks increase the number of parameters and the capacity of the adaptation, but also increase computational cost
     \item Alpha ($\alpha$): A scaling factor applied to the LoRA update during the forward pass. The update is scaled relative to the weights that have been frozen from the pretrained model.
     \item Dropout ($p$): The dropout probability applied to the LoRA layers during training. This randomly disables activations, which aims to prevent overfitting. 
 
 \end{itemize}
+
+\noindent
+Following \cite{hu2022lora}, $A$ uses Kaiming uniform intialisation, and $B$ is initialised to zero. This ensures that $\Delta W = 0$ at the start of training, which preserves the  behavior of the pre-trained model initially. 
 
 \subsection{Implementation details}
 [Explain how you implemented the improvements. You may include code snippets with the corresponding explanations.]
@@ -944,6 +969,8 @@ we lacked compute to generate and test more models priors
 
 generating and testing mroe priors, trying longer training times, largert datasets
 more priors aoriented to hidden areas, could bring up planes again,
+
+
 
 \subsection{Project Contributions}
 "You may find the template for the project report here. We do not enforce any page limits but please make sure to address each section appropriately as explained in the document. In particular, please pay special attention to clarifying the contribution of each group member."
