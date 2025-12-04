@@ -92,21 +92,20 @@ Advancements in computer hardware and machine-learning methods have significantl
 of 3D reconstruction, extending its applicability for a wider variety of tasks and hardware platforms; continuing this trend, 
 one area of focus is made on further reducing the number of input images required whilst maintaining high quality reconstruction, 
 thereby improving computational efficiency and reducing data acquisition hardware requirements.
-Namely, in 2020 Neural Radiance Fields\cite{nerf} (NeRF) introduced a revolutionary method for 3D reconstruction
+Namely, in 2020 Neural Radiance Fields (NeRF) \cite{nerf} introduced a revolutionary method for 3D reconstruction
 capable of high quality novel view synthesis. This is done by learning a continuous volumetric density and radiance function,
 typically using a deep learning model, which can then be queried by a ray-march for some new camera pose, enabling novel views to be synthesized.
-In 2023, 3D Gaussian Splatting\cite{3dgs} (3DGS) introduced an alternative method, offering major improvements in computational performance.
+In 2023, 3D Gaussian Splatting (3DGS) \cite{3dgs} introduced an alternative method, offering major improvements in computational performance.
 Instead of an implicit function, 3DGS introduces a new explicit representation, that of a set of 3D Gaussians (called a Gaussian splat), Gaussians are volumes defined by parameters 
 such as position, colour, opacity, rotation and scale, which can be efficiently rasterized to generate novel views. Reconstruction is typically achieved by
 optimizing the set of Gaussians to produce novel view with minimized loss, alternatively deep learning methods can be used to directly
 predict the Gaussian splat. Developments in 3D Gaussian Splatting methods have allowed for 3D scene reconstruction using few or even single RGB images.
 While faster than other scene reconstruction techniques and requiring only a "one-shot" pass, these approaches often suffer from challenges
-such as layout/scale drift, over-smooth geometry and hallucinations in occluded regions \cite{tang2024hisplathierarchical3dgaussian} 
-(NOTE TODO: for now this only talks mostly about over-smooth geometry and kind of hallucinations, still looking for a layout/scale drift one). 
+such as layout/scale drift, over-smooth geometry and hallucinations in occluded regions \cite{tang2024hisplathierarchical3dgaussian}.
 \newline
 
 \noindent
-This project focuses on one recent method, Splatter Image\cite{splatterImage}, as a baseline. 
+This project focuses on one recent method, Splatter Image \cite{splatterImage}, as a baseline. 
 Splatter Image allows single or few RGB image 3DGS reconstruction. Achieved by predicting 3D Gaussians as pixels in a multichannel image; 
 this representation reduces reconstruction to learning an image-to-image neural network, allowing the use of a 2D U-Net to form the representation.
 Each pixel stores the parameters for a corresponding 3D Gaussian, allowing for reconstruction in a single feed-forward pass. 
@@ -118,7 +117,7 @@ choice of 3D reconstruction as a 2D-to-2D image translation task limits its abil
 as the model lacks an internal 3D representation to resolve issues like depth ambiguities.
 The second is that the 3DGS prediction based on only single or few RGB image features alone does
 not have sufficient conditional information for Splatter Image to infer appropriate geometry information or
-structures that are not visible in the input view\cite{shen2024pixelworth3dgaussians};
+structures that are not visible in the input view \cite{shen2024pixelworth3dgaussians};
 shown in figure \ref{fig:splatter_image_problems}, Splatter Image has trouble generating the occluded chair leg 
 in \ref{fig:chair_splatter_1} and \ref{fig:chair_splatter_2}.
 
@@ -140,7 +139,7 @@ in \ref{fig:chair_splatter_1} and \ref{fig:chair_splatter_2}.
     \begin{subfigure}{0.19\linewidth}
         \centering
         \includegraphics[width=\linewidth]{images/chair_splatter_1.png}
-        \caption{Splatter Image output}
+        \caption{Prediction}
         \label{fig:chair_splatter_1}
     \end{subfigure}
     \begin{subfigure}{0.19\linewidth}
@@ -152,7 +151,7 @@ in \ref{fig:chair_splatter_1} and \ref{fig:chair_splatter_2}.
     \begin{subfigure}{0.19\linewidth}
         \centering
         \includegraphics[width=\linewidth]{images/chair_splatter_2.png}
-        \caption{Splatter Image output}
+        \caption{Prediction}
         \label{fig:chair_splatter_2}
     \end{subfigure}
 
@@ -326,29 +325,43 @@ The output tensor codes for parameters that are then transformed to opacity, off
 These parameters are then activated by non-linear functions to obtain the Gaussian paramters, such as the opacity and depth. 
 The Gaussian Splatting implementation of \cite{3dgs} is used for rasterization to generate $360^\circ$ views of the original input image.
 
-TALKA BOUT ARCH MORE, CROSS ATTN FILM, Each blue box corresponds to a multi-channel feature map, with the number of channels denoted on top of each box. The x-y size is provided at the lower left edge of the box. White boxes represent copied feature maps. The arrows denote the different operations.
+TALKA BOUT ARCH MORE, 
+Each blue box corresponds to a multi-channel feature map, with the number of channels denoted on top of each box. The x-y size is provided at the lower left edge of the box. White boxes represent copied feature maps. The arrows denote the different operations.
 
 
 \subsection{Algorithm improvements}
 [Explain what you implemented to improve over the baseline. You may include figures to explain the idea and logic. Focus on the ideas and not the implementation.]
+\newline
 
-explain insertion of additional layers
-explain addition of transofrmer/FiLM layers to allow multimodal input from segmentation tokens 
+\noindent
+Our first modification is to allow the Splatter Image model to dynamically calculate and intialise 
+the neccessary number of input laeyrs based on the supplied model configuration. This will allow
+it to create models that use the desired combination of additional priors. 
+\newline
 
+\noindent
+The second addition is of FiLM layers to support multimodal input.
+CERTAIN PRIORS ARE NOT MAPS, SAY Planes or SEGEMTNAION TEXT TOKESN
+THESE CAN BE SUBMITTED TO THE MODEL VIA METHDOS LIKE BROADCASTIGN WHERE YOU CAST THE same
+VALUE FOR EACH PXIERL AND ADD A CHANNEl, THIS LIMITED BY NUM<BER OF KNOWN Layers
+AND IS HIGHYL INEFFICIENT TOHUGH
+ALTERNATIVE METHOD TO SUPPLY MULTIMODAL DATA IS TO MODULE LAYERS/CHANNELS BEWTEEN the U-NET/coNVolitonal blocks
+in the model, via the use of FiLM layers.
+EXPLAIN FILM
 FiLM layers learn by training a separate, small neural network called a FiLM generator.
 This is a new, small network (like an MLP or RNN), segmentation embedding is then fed into the FiLM generator
 The generator outputs a gamma (scale) and beta (shift) 
 The gamma and beta values are applied to intercepted alyer using the FiLM equation: y = gamma * x + beta
 This modulated feature map is passed to the next layer of the U-Net.
 Exisitng U-Blocks support Film for camera embeddings, we modidy U-net blocks to have additional film layer for segemtnation tokens
+\newline
 
-Add new cross-attention modules inside the U-Net's blocks (in the bottleneck and decoder).
+\noindent
+An alternative to FiLM ios also consdieredm, namely cross-attention.
+Also new cross-attention modules (slot in replacemnt for FiLM) inside the U-Net's blocks (in the bottleneck and decoder).
 The U-Net's image features act as the Query (Q). The multimodal input embeddings act as the Key (K) 
 and Value (V). More expressive than FiLM as it allows for fine-grained spatial conditioning (per-pixel).,
 this method is consdiered state-of-the-art for high-performance conditional generation.
-
-explain addition of LORA matrices due to compute limitations/allowign working of exisitng model
-
 
 \subsubsection{Low-Rank Adaptation (LoRA)}
 \label{section:lora}
@@ -900,7 +913,7 @@ training_cfg = OmegaConf.load(cfg_path)
 
 \noindent
 Input preparation was also changed, namely priors are concatenated (if enabled) as additional channels to the input RGB images,
-before being fed into the network. Splatter Image uses the Torch DataLoader alongside custom Dataset objects 
+before being fed into the network. Splatter Image uses the PyTorch DataLoader alongside custom Dataset objects 
 to load batches of RGB images to perform inference on. The Dataset objects do not directly return a tensor of images, 
 but a dictionary containing relevant batch data:
 
@@ -921,7 +934,7 @@ return images_and_camera_poses
 
 \noindent
 This allowed our priors to be introduced into the evaluation code with ease, by simply creating a new custom Dataset object
-\verb|srn_priors.py| that provides new priors as new key/value pairs in the returned dictionary.
+\verb|srn_priors.py| that provides priors as new key/value pairs in the returned dictionary.
 Priors were specifically returned as PyTorch tensors matching the RGB image batch. 
 The priors can then be accessed and concatenated with the RGB images in a specific order to generate the 
 final input tensor for Splatter Image to perform inference on. Assertions are also performed to verify that priors are 
@@ -949,15 +962,21 @@ if model_cfg.data.origin_distances:
 \end{lstlisting}
 
 \noindent
-For the training code, .
+For the training code, for the base non-LoRA training script, two changes had to be made.
+The first change was to model loading, to add support for training from existing HuggingFace models from the 
+base Splatter Image project.
+
+CODEBLOCK
 
 ADDED HF LAODING, PERFORMS GRAFT
 
-ADDED CONATENATION< DATASET LAODING REMAINS THE SAME
-
+\noindent
+The second change was similar to that of the evaluation script, updating input preparation, the resulting updated
+code block is identical to that in \textbf{Listing 6}.
+\newline
 
 \noindent
-For the LoRA-specific training pipeline, within the modified \texttt{GaussianPredictor}, \texttt{requires\_grad=False} is explicitly set for all pre-trained backbone weights (see \texttt{gaussian\_predictor\_lora.py}), leaving only the low-rank matrices $A$ and $B$ as trainable. This ensures that optimizer updates are restricted to the adapter layers, with instances defined as \texttt{LoRALayer}.
+For the LoRA-specific training script, within the modified \texttt{GaussianPredictor}, \texttt{requires\_grad=False} is explicitly set for all pre-trained backbone weights (see \texttt{gaussian\_predictor\_lora.py}), leaving only the low-rank matrices $A$ and $B$ as trainable. This ensures that optimizer updates are restricted to the adapter layers, with instances defined as \texttt{LoRALayer}.
 
 \subsection{Data pipelines}
 [Explain your data format, how you consume the data in your algorithms, and data augmentation.]
@@ -1131,55 +1150,103 @@ we lacked compute to generate and test more models priors
 \subsection{Future directions}
 [State a few future directions for research and development. These typically follow from the discussion on limitations.]
 
-generating and testing mroe priors, trying longer training times, largert datasets
-more priors aoriented to hidden areas, could bring up planes again,
-
-
+generating and testing mroe priors (espoecially more priors aoriented to hidden areas, could bring up planes again)
+implementing and comapring cross-attention vs FiLM for multimodal data
+trying longer training times
+trying alternative datasets
+Trying alternatigve metrics for 3D reconstruction, like Chaumfeer distance, for exampel could sample
+off bunch of points of SRN cars meshes to genrate point cloud, then treat gaussians as point cloud and do comaprison
 
 \subsection{Project Contributions}
 "You may find the template for the project report here. We do not enforce any page limits but please make sure to address each section appropriately as explained in the document. In particular, please pay special attention to clarifying the contribution of each group member."
 Should we clarify here or throughout document?
+\newline
 
+\noindent
+\textbf{Report Writing Contributions:}
+\newline
 Section 1.1: Kacper and Alex
+\newline
 Section 1.2: Kacper
+\newline
 Section 1.3: Kacper
+\newline
 Section 2.1: Kacper and Radhika and Alex
+\newline
 Section 2.2: Kacper and Radhika
+\newline
 Section 2.3: Kacper and Radhika and Alex
+\newline
 Section 2.4: Kacper
+\newline
 Section 2.5: Kacper and Radhika
+\newline
 Section 2.6: Kacper
+\newline
 Section 3.1: Alex
+\newline
 Section 3.2: Radhika
+\newline
 Section 3.3: FILL IN
+\newline
 Section 3.4: Radhika and Alex
+\newline
 Section 3.5: FILL IN
+\newline
 Section 4.1: FILL IN
+\newline
 Section 4.2: FILL IN
+\newline
 Section 4.3: FILL IN
+\newline
+Image collection: Kacper and Radhika and Alex
+\newline
+Citation collection: Radhika and Alex
+\newline
 
+\noindent
+\textbf{Technical Contributions:}
+\newline
 Depths exploration: Radhika
+\newline
 Segmentation exploration: Radhika
+\newline
 Normals exploration: Alex
+\newline
 Planes exploration: Alex
-
+\newline
 Splatter Image setup and bugfixes: Radhika and Alex
+\newline
 Splatter Image architectural modification (Grafting, Channel changes, FiLM, Cross-Attention): Kacper
+\newline
 Splatter Image LoRA integration: Radhika
-Splatter Image Training Modification: Kacper
-Splatter Image Eval Modification: Radhika and Kacper
-generate depths: Kacper
-generate normals: Kacper
-generate segmentation: Radhika
-Splatter Image cars priors dataloader: Kacper
-HF dataset orchestorator: Kacper
-
-Testing dataloader: Kacper
+\newline
+Splatter Image Training Modification: Kacper and Radhika
+\newline
+Splatter Image Eval Modification: Kacper
+\newline
+Optimised depth generation: Kacper
+\newline
+Optimised normals generation: Kacper and Alex
+\newline
+Optimised segmentation generation: Radhika
+\newline
+Splatter Image \verb|cars_priors| custom Dataset: Kacper
+\newline
+HuggingFace dataset data pipeline: Kacper
+\newline
+Results processing code: Alex
+\newline
+Graphing code: Alex
+\newline
+Testing custom Dataset: Kacper
+\newline
 Testing model: Kacper
+\newline
 Testing LoRA configurations: Radhika 
 
-Results processing/graphing code: Alex
-Image collection, citation collection and verification: Alex
+
+
 
 \bibliographystyle{unsrt}
 \bibliography{citations}
