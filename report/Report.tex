@@ -682,6 +682,34 @@ Although \texttt{DPT\_Hybrid} appears to align more closely with the GT depth ma
     \label{fig:depth_example}
 \end{figure}
 
+
+\noindent
+\textbf{Exploration of Depth Discontinuities}
+\noindent
+\\We also explored the utility of explicit depth discontinuity features, or depth edges. These reflect sudden changes in depth values within a depth map. These can serve as a proxy for occlusion boundaries, and we were investigated as they potentially aid in separating foreground objects from background geometry.
+
+\noindent
+We looked four classical edge detection operators applied directly to the estimated depth maps:
+\begin{enumerate}
+\item \textbf{Canny Edge Detector:} Detects a wide range of edges using noise reduction and gradient hysteresis CITE
+\item \textbf{Sobel Operator:} Computes the gradient approximation of the image intensity function, resulting in regions highlighted that have high spatial frequency (CITE).
+\item \textbf{Scharr Operator:} An optimization of the Sobel operator that provides better rotational symmetry. (CITE)
+\item \textbf{Prewitt Operator:} A discrete differentiation operator similar to Sobel but using a simpler integer-valued kernel (CITE)
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=1.0\linewidth]{images/edgeoperators_results.png}
+\caption{Edge operators applied to estimated depth maps. From left to right: Reference RGB, Estimated Depth, Canny, Sobel, Scharr, and Prewitt outputs.}
+\label{fig:depth_edges}
+\end{figure}
+
+\noindent
+Although Sobel and Scharr effectively highlight gradient changes, Canny produces binary edges that often fragment under the noise inherent in monocular depth estimation.
+
+\noindent
+While these operators successfully identify major structural outlines, they are sensitive to artifacts in the estimated depth maps. Consequently, we determined that explicit edge channels added insufficient benefits compared to other priors, and were excluded.
+
 \subsubsection{Segmentation and Salient Object Detection Exploration}
 
 Separating pixels belonging to the foreground object, through a segmentation mask or, as will be detailed below, using a salient object detection (SOD) model, can be another prior. This involves producing a binary mask that separates an object from its background. 
