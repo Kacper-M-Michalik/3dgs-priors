@@ -461,10 +461,16 @@ the form of predicted scene planes and scene surface normal maps.
 
 \noindent
 When researching plane prediction, we reached the conclusion that this flavour would in fact be unlikely to help
-guide reconstruction. For example teddy bears (as seen on the CO3D Teddybears dataset) have complex, convex shapes, 
+guide reconstruction. For example teddy bears (as seen on the CO3D\cite{co3d} Teddybears dataset) have complex, convex shapes as shown in \ref{fig:teddy}, 
 lacking dominant planes on their surface, using a planar prior might confuse the network, causing it to 
 flatten the bear's features or causing poor quality hallucination; as such we decided against using planes as a prior.
-\newline
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=5cm]{images/teddy.png}
+    \caption{Example of CO3D Teddybears dataset from \cite{co3d}}
+    \label{fig:teddy}
+\end{figure}
 
 \noindent
 A much more favourable option were normal maps. Normal maps store surface normal data as RGB colour information, showing the 
