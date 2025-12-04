@@ -161,10 +161,10 @@ in \ref{fig:chair_splatter_1} and \ref{fig:chair_splatter_2}.
 \end{figure}
 
 \noindent
-This project aims to address this by first researching inferable geometry priors (such as planes, normals, visibility cues, depth, segmentation or edge maps) 
+This project aims to address these issues, improving reconstruction quality, by first researching inferable geometry priors (such as planes, normals, visibility cues, depth, segmentation or edge maps) 
 which can be dynamically produced for input images by existing specialized models, then proposing a lightweight augmentation for Splatter Image, allowing
-predicted priors to be fed alongside the RGB images, allowing them to guide reconstruction in a more accurate manner
-compared to current case, where the neural network needs to learn the geometric features itself.
+predicted priors to be fed alongside the RGB images, allowing them to guide reconstruction in a more accurate manner, by providing
+necessary additional information and preventing Splatter Image from having to learn how to generate these geometric features itself.
 
 \subsection{Background and related work}
 [Include a few very relevant related works and how your work relates to those, expanding on the previous section. We do not expect you to cover all previous works.]
@@ -294,6 +294,8 @@ if we want to add multimodal data, generally preserving its performance,
 
 we also propose performing ablation study to see which priors are most effective/significant in changing the reconstruction quality
 
+THJERBY TACKLING
+
 \section{Chapter 2: Method}
 \subsection{Baseline algorithm}
 [Explain the baseline architecture you used to build your algorithm on. You may reproduce figures from the original papers.]
@@ -365,12 +367,12 @@ Here, we see that $r \ll \min(d_{in}, d_{out})$, where $r$ is the rank hyperpara
 \noindent
 For \texttt{Conv2d} layers, we treat the kernel $W \in \mathbb{R}^{C_{out} \times C_{in} \times k \times k}$ as a flattened matrix of shape $C_{out} \times (C_{in} \cdot k \cdot k)$. The flattened representation is decomposed into $B$ and $A$, allowing us to apply LoRA to the full spatial kernel. By including the spatial dimensions ($k \times k$) in the decomposition, the adapter can learn spatial feature refinements, rather than being limited to channel-wise linear projections. This approach follows the implementation found in \texttt{loralib} \cite{hu2022lora}.
 
+\noindent
 During the forward pass, the input $x$ is processed by both the frozen weights $W$ and the LoRA branch:
 \begin{equation}
     h = Wx + \frac{\alpha}{r} BAx
 \end{equation}
 where $\frac{\alpha}{r}$ is a scaling factor \cite{hu2022lora}. This scaling normalises the updates across different rank choices, reducing the need to re-tune the learning rate when $r$ changes.
-
 We utilise three hyperparameters to control this adaptation:
 \begin{itemize}
     \item Rank ($r$): The rank of the low-rank matrices $A$ and $B$. Higher ranks increase the number of parameters and the capacity of the adaptation, but also increase computational cost
@@ -409,24 +411,28 @@ Pretrained Models: \url{https://huggingface.co/MVP-Group-Project/splatter-image-
 
 \subsubsection{Planes and Normal Maps Exploration}
 
-WE CONSDIERED PROVIDING MODEL WITH SPTAIL INFORAMTION ABOTU THE SCENE AS BEING ONE OF 
-THGE MSOT LIEKLY AENUES OF IMPROVEMENT, THIS CAME IN 2 FLAVOURs, PREDICITNG PLANES AND STREUCTURES IN SCENE
-AND SURFACE NORMAL MAPS
-
-WHEN CONSDIERING GENERTING PLANES
-For example teddybears (as seen on the CO3D Teddybears) do not have dominant planes, they are complex convex shapes,
-using a planar prior might confuse the network or cause it to flatten the bear's features; as such we decided against
-using planes as a prior.
-
-A much more favourable option were normal maps. Normal maps store surface normal data as RGB colour information, 
-
-showing how light interacts with the surface at a per-pixel level, hence we wanted to investigate if 
-that could help the model generate the 3D surface of the input image.
+\noindent
+We considered providing the model with structural information to be one of the most likely
+avenues of improvement. These structural priors were considered in two flavours, in
+the form of predicted scene planes and scene surface normal maps.
+\newline
 
 \noindent
-For our ground truths we use \cite{xu2019disn} which provides a dataset of higher resolution images of the ShapeNet models 
-from \cite{ShapeNet} each paired with a depth image, a normal map and an albedo image at \url{https://github.com/Xharlie/ShapenetRender_more_variation}. 
-We then feed these images into the normal map generation models and compare against the ground truth normal maps to evaluate their performance.
+When researching plane prediction, we reached the conclusion that this flavour would in fact be unlikely to help
+guide reconstruction. For example teddy bears (as seen on the CO3D Teddybears dataset) have complex, convex shapes, 
+lacking dominant planes on their surface, using a planar prior might confuse the network, causing it to 
+flatten the bear's features or causing poor quality hallucination; as such we decided against using planes as a prior.
+\newline
+
+\noindent
+A much more favourable option were normal maps. Normal maps store surface normal data as RGB colour information, showing the 
+orietneation of a surface on a per-pixel level, we considered this to be an excellent prior as it supports both complex shapes
+such as teddy bears, but can equally well describe planar surface. Hence, we selected this prior as a prime candidate 
+that could improve the models 3D surface reconstruction and help guide accurate hallucination in occluded regions.
+For our ground truth we use \cite{xu2019disn} which provides a dataset of higher resolution images of ShapeNet models 
+from \cite{ShapeNet}, each RGB image is paired with a depth map, a normal map and an albedo map at \url{https://github.com/Xharlie/ShapenetRender_more_variation}. 
+We feed these images into the normal map generation models and compare against the ground truth normal maps, using 
+Pixel Based Visual Information Fidelity as a metric to evaluate their performance.
 
 \begin{figure}[H]
     \centering
@@ -435,8 +441,10 @@ We then feed these images into the normal map generation models and compare agai
     \label{fig:ground_truth}
 \end{figure}
 
+\noindent
 For the models we referenced \cite{Bae2021} which implements a network which estimates the per-pixel surface normal probability distribution and uses uncertainty-guided sampling to improve the quality of prediction of surface normals. The paper provided code at \url{ https://github.com/baegwangbin/surface_normal_uncertainty} that implemented this method on a network trained on ScanNet \cite{dai2017scannet}, with the ground truth and data split provided by FrameNet \cite{huang2019framenet}, and another trained on NYUv2 \cite{NYUv2}, with the ground truth and data split provided by GeoNet \cite{qi2018geonet} \cite{qi2020geonet++}. Both models take in the original image and dimensions of the image as input and return a corresponding normal map with the same dimensions as the given input dimensions.
 
+\noindent
 We run both pretrained models on the dataset.
 
 \begin{figure}[H]
@@ -465,6 +473,7 @@ We run both pretrained models on the dataset.
     \caption{Comparison of original input and two model outputs}
 \end{figure}
 
+\noindent
 We then pass in input dimensions larger than the actual ones into the models, such that a normal map larger than the original input is produced. We then resize the image to the original input dimensions.
 
 \begin{figure}[H]
@@ -490,8 +499,10 @@ We then pass in input dimensions larger than the actual ones into the models, su
     \caption{Comparison of model outputs when setting input dimensions as 448x448 instead of 224x224 alongside ground truth}
 \end{figure}
 
+\noindent
 The normal map generated for images when given larger input dimensions seem to have more clearly defined edges and surface contouring. It is also important to note that the ground truth for NYUv2 is only defined for the centre crop of the image and the prediction is therefore not accurate outside the centre. This is shown in figures \ref{fig:gn1} and \ref{fig:gn2} where noise is generated around the borders of the normal maps.
 
+\noindent
 To compare our generated normal maps to the ground truth normal maps provided in \cite{xu2019disn}, we first mask out the background of the generated normal maps such that the difference in background colour does not contribute to the evaluation metrics for normal map generation.
 
 \begin{figure}[H]
@@ -518,6 +529,7 @@ To compare our generated normal maps to the ground truth normal maps provided in
     \caption{Example of masking out background for model evaluation against ground truth}
 \end{figure}
 
+\noindent
 We then use Pixel Based Visual Information Fidelity to compare the normal maps generated by the two models to the ground truth. Visual Information Fidelity is a reference image quality metric that quantifies the amount of visual information preserved after image processing \cite{vifIntro} and can be used to measure various image quality attributes such as noise level and sharpness \cite{vifMetrics}.
 
 \begin{figure}[H]
@@ -527,6 +539,7 @@ We then use Pixel Based Visual Information Fidelity to compare the normal maps g
     \label{fig:vifgraph}
 \end{figure}
 
+\noindent
 From Figure \ref{fig:vifgraph} we see that the model trained on ScanNet generates normal maps that are closer to the ground truth compared to that trained on NYUv2 on average. Hence, in the final model we decided to use the model trained on ScanNet on the ShapeNet database in \cite{ShapeNet}.
 
 \begin{figure}[H]
@@ -555,15 +568,18 @@ From Figure \ref{fig:vifgraph} we see that the model trained on ScanNet generate
     \caption{Original ShapeNet image and normal map outputs}
 \end{figure}
 
+\noindent
 Without passing in dimensions larger than the input image into the model, we can see from comparing Figures \ref{fig:highdefinput} and \ref{fig:highdefoutput} to Figures \ref{fig:lowdefinput} and \ref{fig:lowdefoutput} that the quality of the normal map generated decreases as the resolution of the original input image decreases. Hence, we pass in much larger input dimensions (512x512) to generate a normal map of higher quality, as shown in Figure \ref{fig:lowdefoutputfixed}.
 
 \subsubsection{Depth Map Exploration}
 Depth maps store the distance of a surface from the camera per-pixel. These distances vary in type, such as metric, which considers the physical distance from the camera to the observed point, and relative (such as those produced by the models below). Monocular depth estimation (MDE) models input just a singular image, and produce a depth map (relative distance). 
 
+\noindent
 Produced depth maps were compared against the ``ground truths'' produced by \url{https://github.com/Xharlie/ShapenetRender_more_variation}, as was done in the normal priors exploration. An example of the depth map produced by them is visible in Figure  \ref{fig:ground_truth}. However, it is important to note that these depth map ``ground truths'' were not always perfect, as can be seen in the following example: 
 
 - (INSERT) Image needed here of poor ground truth. 
 
+\noindent
 This inclined us to take the quantitative results produced by comparing MDE models tested against these ground truths with a pinch of salt. For each produced depth map, the following metrics were used to compare against the ground truths. 
 \begin{enumerate}
 \item \textbf{Absolute Relative Error}: Measures the average difference between the predicted depth and the ground truth, normalised by the ground truth depth.
@@ -572,7 +588,9 @@ This inclined us to take the quantitative results produced by comparing MDE mode
 \item $\mathbf{\delta}$ at $\mathbf{1.25}$ ($\delta_{1.25}$): Represents the percentage of predicted pixels $p$ that satisfy the condition $\max(\frac{p}{p^{gt}}, \frac{p^{gt}}{p}) < 1.25$, which takes into account close pixel-wise agreement.
 \end{enumerate}
 
+\noindent
 The following table summarises the metrics across the MiDaS models tested. 
+
 \begin{table}[H]
 \centering
 \caption{Comparison of MiDaS models on set of easy and hard images.}
@@ -593,6 +611,7 @@ Hard & MiDaS\_small & $0.190 \pm 0.45$ & $24.45 \pm 23.56$ & 0.164 & 0.900 \\
 }
 \end{table}
 
+\noindent
 The quantitative degradation of \texttt{DPT\_Large} on the Hard set contradicts visual inspection. This discrepancy can be attributed to the quality of the available Ground Truth (GT) depth maps (as discussed earlier). \texttt{DPT\_Large} is what is used in the final depth prior generation, as described in \textbf{2.3.4
 Selected Prior Integration}.
 
@@ -602,6 +621,7 @@ INSERT EXAMPLE IMAGE HERE OF DEPTH MAP PRODUCED
 
 Separating pixels belonging to the foreground object, through a segmentation mask or, as will be detailed below, using a salient object detection (SOD) model, can be another prior. This involves producing a binary mask that separates an object from its background. 
 
+\noindent
 Initially, we explored standard semantic and panoptic segmentation models, such as those found in the Detectron2 \cite{wu2019detectron2} model zoo, and the Segment Anything Model (SAM) \cite{kirillov2023segany}. These models are often used for segmentation, but as illustrated in Figure \ref{fig:seg_issues}, these produced non-contiguous masks that often had sections that included more background pixels. Segmentation models are also limited on their training classes, and despite being tested on categories in this set, their masks were improved on by salient object detection models. 
 
 \begin{figure}[H]
@@ -624,23 +644,26 @@ Initially, we explored standard semantic and panoptic segmentation models, such 
     \label{fig:seg_issues}
 \end{figure}
 
+\noindent
 SOD models identify the most visually distinct object in a scene, which allows producing a binary mask that tightly hugs the object boundary. 
-
 To quantitatively evaluate SOD models, we noted that the ShapeNet images used (the same as in the normal and depth priors section) had transparent backgrounds, allowing using the alpha channel to be used as the `ground truth' for the object silhouette. 
 
+\noindent
 We tested three SOD architectures: \texttt{rembg} (based on the U-2-Net architecture) \cite{Gatis_rembg_2025}, \texttt{InSPyReNet} \cite{kim2022inspyrenet}, and \texttt{BiRefNet} \cite{zheng2024birefnet}. 
 We evaluated performance using Mean Absolute Error (MAE), Intersection over Union (IoU), and $F_{\beta}$-Measure.
-
 $F_{\beta}$ is a weighted harmonic mean of precision and recall, defined as:
 \begin{equation}
 F_{\beta} = \frac{(1 + \beta^2)\,\text{Precision} \cdot \text{Recall}}
                  {\beta^2 \cdot \text{Precision} + \text{Recall}}
 \end{equation}
 
-
+\noindent
 It is commonly used is salient object detection to assess the quality of binary masks produced. When $\beta = 1$, precision and recall are equally weighted. Greater values of $\beta$ prioritise recall, while lower ones prioritise precision. We set $\beta^2$ to 0.3, following conventional practice in SOD literature, to emphasise precision over recall \cite{achantaFbeta}, \cite{chengFbeta}, \cite{borjiFbeta}.   When identifying a single salient object, false positives (background pixels incorrectly classified as foreground)  are often considered worse than small false negative sections along the boundary of the object. 
+\newline
 
+\noindent
 Note that the ShapeNet images used are split into `Easy' and `Hard' as categories, as before. 
+
 \begin{table}[H]
     \centering
     \caption{Comparison of Salient Object Detection models on ShapeNet renders. $\uparrow$ indicates higher is better, $\downarrow$ indicates lower is better.}
@@ -662,6 +685,7 @@ Note that the ShapeNet images used are split into `Easy' and `Hard' as categorie
     \end{tabular}
 \end{table}
 
+\noindent
 Figure \ref{fig:fbeta_boxplot} illustrates the distribution of $F_{\beta}$ scores across both ``Easy'' and ``Hard'' datasets. \texttt{InSPyReNet} has the tightest interquartile range, particularly on the Easy set.  \texttt{rembg} demonstrates similar stability but with a slightly broader spread on the `Hard ' dataset. \texttt{BiRefNet} is competitive (note the scale of the y-axis, with all achieving scores greater than 0.95), but comparatively shows a lower median score and higher variance, suggesting it is more sensitive to specific geometries. 
 
 \begin{figure}[H]
@@ -678,12 +702,13 @@ Figure \ref{fig:fbeta_boxplot} illustrates the distribution of $F_{\beta}$ score
     \label{fig:prec_recall}
 \end{figure}
 
-
+\noindent
 The scatter plot in Figure \ref{fig:prec_recall} shows how the models operate with different aims; . \texttt{InSPyReNet} (in orange) clusters tightly towards the top of the high-performance region (top right), suggesting a priority of precision (often very close to $1.0$). In practice, this may mean eliminating some background noise, but this may mean missing parts of the object. \texttt{rembg} (blue) also has  high recall and precision, and it could also be used as a robust general-purpose model for segmentation (that does not clip parts of the object of interest). 
 
-
+\noindent
 To identify the most frequent ``winner," we counted the number of images where each model achieved the highest $F_{\beta}$ score. \texttt{InSPyReNet} achieved the highest score on the majority (28 vs \texttt{rembg}'s 8). 
 
+\noindent
 However, to contextualise these results, all three models achieved very high scores (with $F_{\beta} > 0.97$ and IOU $> 0.95$), largely as the ShapeNet images have a clear foreground object against a uniform background. This reduces the number of possible cases of background vs foreground confusion, which means the models differ meaningfully here on fine structures at the object boundary. In practice, these can include wing mirrors, antennae, etc. Therefore, the differences in the models come from how well they capture these fine details.
 
 \subsubsection{Selected Prior Integration}
@@ -811,17 +836,16 @@ if cfg.model.network_without_offset:
 added film layer for text input
 \newline
 
-due to time constraints, and the selcted segmetnation model not providing tokens in the end
-we diud not implement the cross attention method
+\noindent
+Due to time and compute constraints, combined with the selected segmentation model not producing classification or instance labels, we did not
+implement the cross-attention mechanism for multimodal data input into the model, leaving it as an option for future development.
 \newline
 
 \noindent
 One of our desired features was to allow a model with new priors to be fine-tuned using existing weights, namely those from the
 pretrained Splatter Image models. This was achieved by grafting the old weights of a pretrained model onto a new instance of a GaussianSplatPredictor. This grafting mechanism was implemented externally to the model, as such its implementation details are covered in
 \textbf{Section 2.3.6: Training and Evaluation Changes}.
-\newline
 
-\noindent
 \subsubsection{Manual LoRA Integration}
 To adapt Splatter Image for fine-tuning on the ShapeNet-SRN Cars dataset (with depth and normal priors), we added Low-Rank Adaptation (LoRA) \cite{HuLoRA} into the GaussianPredictor module of Splatter Image.
 LoRA adds low-rank trainable matrices into frozen, pretrained layers. This preserves the base model, while further fine-tuning it to the new data. 
@@ -834,7 +858,7 @@ since the pre-trained weights cannot be directly loaded into layers with modifie
 
 \noindent
 We added LoRA manually within the \texttt{GaussianPredictor} and \texttt{train\_network} modules, using code from Microsoft's \texttt{loralib} \cite{hu2022lora}.
-We modified the underlying \texttt{Linear} and \texttt{Conv2d} layers of the U-Net architecture to include a \texttt{LoRALayer} mix-in. This allows the freezing of pre-trained base weights while injecting the LoRA matrices ($A$ and $B$) directly into the forward pass. As mentioned earlier, this preserves the frozen pretrained weights from the original 3-channel RGB model, but is compatible with the new channels. 
+We modified the underlying \texttt{Linear} and \texttt{Conv2d} layers of the U-Net architecture to include a \texttt{LoRALayer} mixin. This allows the freezing of pre-trained base weights while injecting the LoRA matrices ($A$ and $B$) directly into the forward pass. As mentioned earlier, this preserves the frozen pretrained weights from the original 3-channel RGB model, but is compatible with the new channels. 
 
 \subsubsection{Training and Evaluation Changes}
 The existing Splatter Image evaluation script needed minimal changes, thanks to how we integrated our priors into the project.
