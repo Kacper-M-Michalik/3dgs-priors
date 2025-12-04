@@ -592,8 +592,39 @@ We then use Pixel Based Visual Information Fidelity to compare the normal maps g
     \label{fig:vifgraph}
 \end{figure}
 
+\begin{table}[H]
+    \centering
+    \caption{Comparison of normal map generation models on ShapeNet renders. $\uparrow$ indicates higher is better, $\downarrow$ indicates lower is better. The images are labelled easy or hard.}
+    \label{tab:normals_results}
+    \begin{tabular}{llccc}
+        \toprule
+        \textbf{Difficulty} & \textbf{Model} & \textbf{Input dimensions} & \textbf{Mean VIF} $\uparrow$  & \textbf{Standard deviation of VIF}$\downarrow$\\
+        \midrule
+        \multirow{6}{*}{Easy} 
+        & \multirow{3}{*}{ScanNet}
+         & 224x224 & 0.400 & 0.0826 \\
+         & & 448x448 & 0.463 & 0.0802 \\
+         & & 896x896 & \textbf{0.541} & 0.119\\
+        & \multirow{3}{*}{NYUv2}
+         & 224x224 & 0.420 & 0.0736 \\
+         & & 448x448  & 0.451 & 0.0784 \\
+         & & 896x896  & 0.474 & 0.0901 \\
+         \midrule
+         \multirow{6}{*}{Hard} 
+        & \multirow{3}{*}{ScanNet}
+         & 224x224 & 0.408 & 0.0905 \\
+         & & 448x448 & 0.466 & 0.0976 \\
+         & & 896x896 & \textbf{0.526} & 0.125\\
+        & \multirow{3}{*}{NYUv2}
+         & 224x224 & 0.406 & 0.0749 \\
+         & & 448x448  & 0.444 & 0.0839 \\
+         & & 896x896  & 0.472 & 0.0981  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
 \noindent
-From Figure \ref{fig:vifgraph} we see that that normal map generation quality increases when passing in larger input arguments and that the model trained on ScanNet generates normal maps that are closer to the ground truth compared to that trained on NYUv2 on average. Hence, in the final model we decided to use the model trained on ScanNet on the ShapeNet database in \cite{ShapeNet}.
+From figure \ref{fig:vifgraph} and table \ref{tab:normals_results} we see that that normal map generation quality increases when passing in larger input arguments and that the model trained on ScanNet generates normal maps that are closer to the ground truth compared to that trained on NYUv2 on average. Hence, in the final model we decided to use the model trained on ScanNet on the ShapeNet database in \cite{ShapeNet}.
 
 \begin{figure}[H]
     \centering
