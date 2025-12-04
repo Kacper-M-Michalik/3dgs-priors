@@ -46,7 +46,7 @@
     tabsize=2,    
     frame=single,
     rulecolor=\color{moonstoneblue},
-    framerule=1.5pt,            
+    framerule=1.4pt,            
     captionpos=b,  
     aboveskip=1.5em,
     belowskip=1.5em
@@ -77,8 +77,6 @@ Supervisor: Ahmet Canberk Baykal
 
 \section{Chapter 1: Introduction and Motivation}
 \subsection{Introduction to the problem}
-[Provide a thorough introduction to the problem and why it is important. Briefly explain what general techniques there are and how your project fits.]
-\newline
 
 \noindent
 The advancement of 3D data acquisition, reconstruction, and rendering methods remains a fundamental and persistent open problem in computer vision.
@@ -316,56 +314,87 @@ THJERBY TACKLING
 \end{figure}
 
 \noindent
+
+XXXX FIX
+\newline
+
 Splatter Image uses a standard image-to-image neural network architecture to predict a Gaussian for each pixel of the input image I, 
 generating the output image M as the Splatter Image. Learning to predict the Splatter Image can be done on a single GPU using at most 
 20GB of memory at training time for most single-view reconstruction experiments (except for Objaverse, where 2 GPUs were used and 26GB 
 of memory was used on each). Most of this neural network architecture is identical to the SongUNet of \cite{songunet}, but the last layer
 is replaced with a $1 \times 1$ convolutional layer with $12 + k_c$ output channels, where $k_c \in \{3, 12\}$ depending on the colour model. 
 The output tensor codes for parameters that are then transformed to opacity, offset, depth, scale, rotation and colour respectively. 
-These parameters are then activated by non-linear functions to obtain the Gaussian paramters, such as the opacity and depth. 
+These parameters are then activated by non-linear functions to obtain the Gaussian parameters, such as the opacity and depth. 
 The Gaussian Splatting implementation of \cite{3dgs} is used for rasterization to generate $360^\circ$ views of the original input image.
-
 TALKA BOUT ARCH MORE, 
 Each blue box corresponds to a multi-channel feature map, with the number of channels denoted on top of each box. The x-y size is provided at the lower left edge of the box. White boxes represent copied feature maps. The arrows denote the different operations.
+\newline
 
+XXX
 
 \subsection{Algorithm improvements}
 [Explain what you implemented to improve over the baseline. You may include figures to explain the idea and logic. Focus on the ideas and not the implementation.]
+
+\subsubsection{Model Improvements}
+
+\noindent
+The first modification to Splatter Image's architecture is to allow the model to be initialised with
+a dynamic number of input channels, as opposed to the standard 3 for RGB; the required number of channels
+is calculated by the \verb|GaussianSplatPredictor| module at runtime, based on the supplied training 
+configuration. This allows models to be created that use the desired combination of additional priors.
 \newline
 
 \noindent
-Our first modification is to allow the Splatter Image model to dynamically calculate and intialise 
-the neccessary number of input laeyrs based on the supplied model configuration. This will allow
-it to create models that use the desired combination of additional priors. 
+The second modification is support for multimodal priors. While priors like depth or normal maps, which are images 
+themselves, can be appended as additional channels to RGB images to generate the final model input, structurally different priors
+cannot simply be appended in the same way.
+For example, modern segmentation models, like some of those we researched, are capable of producing 
+classifications (and instance IDs in the case of instance or panoptic segmentation) for identified segments.
+These classifications are typically in the form of strings or vector embeddings (which can be produced from strings regardless).
+These vector embeddings do not have matching dimensions to the RGB images and thus cannot be added as an extra channel 
+in the model input. There are a variety of ways these multimodal priors can be provided to the model, one method is broadcasting;
+in broadcasting multimodal inputs are appended to an image by replicating them across every pixel.
+Since the multimodal input is typically a 1D vector (say a scalar or vector embedding) and the image is a 3D tensor 
+(Height $\times$ Width $\times$ Channels), the vector is replicated at every single pixel location by being concatenated along 
+the channel dimension. This method is poor due to its computational cost and massive 
+data redundancy: the network is forced to process and store
+the exact same values millions of times, which wastes GPU memory and computation.
+\noindent
+Alternatively, Feature-wise Linear Modulation (FiLM) offers a much more efficient method for multimodal data input
+for U-Nets and Convolutional Layers. Instead of multimodal data being inserted into the input image,
+FiLM injects this data by modulating the intermediate feature maps of the network. FiLM layers are 
+inserted into the model at specific points, for example between a convolution and a ReLU activation or at the end of a UNet block, these FiLM layers 
+contain a generator, which is a separate, small neural network (like an MLP or RNN) which takes only the multimodal data 
+(such as the segmentation embedding, which we will call \textbf{z}) as input, and generates two output terms, $\gamma$ (scale) and $\beta$ (shift). 
+The FiLM layer then takes the intercepted feature map and applies the FiLM equation to it:
+
+\begin{equation}
+    \hat{F} = \gamma(\mathbf{z}) \cdot F + \beta(\mathbf{z})
+\end{equation}
+
+\noindent
+This modulated feature map is finally passed on in the network. The method is highly computationally efficient, 
+only requiring a multiplication and addition be performed to terms in the feature map, and allows the models image input to remain
+unchanged. As such this strategy of inserting FiLM layers into Splatter Image is how we achieve multimodal data support.
 \newline
 
 \noindent
-The second addition is of FiLM layers to support multimodal input.
-CERTAIN PRIORS ARE NOT MAPS, SAY Planes or SEGEMTNAION TEXT TOKESN
-THESE CAN BE SUBMITTED TO THE MODEL VIA METHDOS LIKE BROADCASTIGN WHERE YOU CAST THE same
-VALUE FOR EACH PXIERL AND ADD A CHANNEl, THIS LIMITED BY NUM<BER OF KNOWN Layers
-AND IS HIGHYL INEFFICIENT TOHUGH
-ALTERNATIVE METHOD TO SUPPLY MULTIMODAL DATA IS TO MODULE LAYERS/CHANNELS BEWTEEN the U-NET/coNVolitonal blocks
-in the model, via the use of FiLM layers.
-EXPLAIN FILM
-FiLM layers learn by training a separate, small neural network called a FiLM generator.
-This is a new, small network (like an MLP or RNN), segmentation embedding is then fed into the FiLM generator
-The generator outputs a gamma (scale) and beta (shift) 
-The gamma and beta values are applied to intercepted alyer using the FiLM equation: y = gamma * x + beta
-This modulated feature map is passed to the next layer of the U-Net.
-Exisitng U-Blocks support Film for camera embeddings, we modidy U-net blocks to have additional film layer for segemtnation tokens
+An alternative to FiLM is also considered, namely cross-attention. 
+FIXXX
 \newline
-
-\noindent
-An alternative to FiLM ios also consdieredm, namely cross-attention.
-Also new cross-attention modules (slot in replacemnt for FiLM) inside the U-Net's blocks (in the bottleneck and decoder).
+Cross-attention modules can be used as slot-in replacements 
+for FiLM layers inside the U-Net's blocks (in the bottleneck and decoder).
 The U-Net's image features act as the Query (Q). The multimodal input embeddings act as the Key (K) 
 and Value (V). More expressive than FiLM as it allows for fine-grained spatial conditioning (per-pixel).,
 this method is consdiered state-of-the-art for high-performance conditional generation.
+FIXXX
 
 \subsubsection{Low-Rank Adaptation (LoRA)}
 \label{section:lora}
-To address the computational constraints of fine-tuning the full U-Net architecture, we integrated Low-Rank Adaptation (LoRA) \cite{HuLoRA} directly into our GaussianPredictor. While our implementation shares a similar class structure to the official \texttt{loralib} library \cite{hu2022lora} (utilizing mixins to wrap \texttt{Linear} and \texttt{Conv2d} layers), we manually adapted the forward pass to support the specific channel dimensions of the Splatter Image architecture (further detail is in \textbf{Section X: Manual LoRA Integration}).
+To address the computational constraints of training the full U-Net architecture, we integrated Low-Rank Adaptation (LoRA) \cite{HuLoRA}
+directly into our GaussianPredictor, to instead allow for fine-tuning. While our implementation shares a similar class structure to the official \texttt{loralib} library
+\cite{hu2022lora} (utilizing mixins to wrap \texttt{Linear} and \texttt{Conv2d} layers), we manually adapted the forward pass to support 
+the specific channel dimensions of the Splatter Image architecture (further details can be found in \textbf{Section 2.3.6: Manual LoRA Integration}).
 
 \noindent
 Adapters are small modules placed after the frozen modules we wish to adapt, such as linear and convolutional layers. The adapter accepts the same input dimension as the original layer and produces the same output dimension. This allows the output from the adapter to be summed element-wise with the frozen layer's output.
@@ -996,38 +1025,41 @@ code block is identical to that in \textbf{Listing 6}.
 \noindent
 For the LoRA-specific training script, within the modified \texttt{GaussianPredictor}, \texttt{requires\_grad=False} is explicitly set for all pre-trained backbone weights (see \texttt{gaussian\_predictor\_lora.py}), leaving only the low-rank matrices $A$ and $B$ as trainable. This ensures that optimizer updates are restricted to the adapter layers, with instances defined as \texttt{LoRALayer}.
 
+CODE BLOCK
+
 \subsection{Data pipelines}
 [Explain your data format, how you consume the data in your algorithms, and data augmentation.]
 
 DIAGRAM: SRN FILE STRUCTURE -> ORCHESTRATOR -> PARALLEL MODELS -> PARQUET
 DIAGRAM: PARQUET -> HUGGINGFACE STRUCTURE -> HUGGINGFACE
 
-
 \noindent
 For training and evaluation performance reasons, we chose to generate priors in advance for selected datasets, as such we developed
-a pipeline, run by an orchestrator pattern notebook, that would set up a Virtual Machine for every model, then proceed to install the correct depednecies into each VM, using requiremtns files stored alongside the scripts in \verb|/geometry-priors|, and then
+a pipeline, run by an orchestrator pattern notebook, 
+
+that would set up a Virtual Machine for every model, then proceed to install the correct 
+depednecies into each VM, using requiremtns files stored alongside the scripts in \verb|/geometry-priors|, and then
 execute the prior generation notebooks in order to geenrate a complete, ready-to-use dataset.
+
 CODE BLOCK - VM setup
 CODE BLOCK - REQUIREMTN LOADING
-The parquet files can also be processed into a file structure appropriate for upload to HuggingFace, where the pregenereated datset remains
-avaiable. 
-Models use the pregenerated datasets via a custom laoder we implemented, taht slots in into all of the exisitng training/evlaution code.
+CODE BLOCK - CALL MODELS
 
-TO SPEED UP TRAINIG AND EVUALTION, WE PREGENERATE THE PRIORS FOR ALL MODELS USING THE MODELS SELECTED AS PER OUR research
-DOING SO WE GENERATE A NEW DATASET
-
-FIRST THE USER DOWNLAODS AND SETS UP THE APPRIPORAITE DATASET AS PER SPLATTER IMAGE DOC
-RUNS GEENRTE DATASET NTOEBOOK WITH CORRECT ARGS, THIS WILL FOLLW ORDCHESTOR PTTERN DESCRIBED IN EARIELR SECTION
-MODELS OUTPUT PARQUET FIELS IN THE SET DESTIATION, WITH EXAMPLE ROWS:
+The processign scripts geenerate PARQUET FIELS IN THE SET DESTIATION, WITH EXAMPLE ROWS:
 EXAMPLE RGBS
 EXAMPLE PSOES
 EXAMPLE INTRINS
 EXMAPLE DEPTHS
 EXAMPE NORMALS
+
 These can now be used however the user wants to, we add an additional processing step to transform aprquet files into
 file structure appropriate for uplaod to huggingface, matching the following config:
+The parquet files can also be processed into a file structure appropriate for upload to HuggingFace, where the pregenereated datset remains
+avaiable. Models use the pregenerated datasets via a custom laoder we implemented, taht slots in into all of the exisitng training/evlaution code.
 
 YAML CONFIG
+
+CODE BLOCK FOR HF UPLOAD
 
 A DIAGRAM OF HOW THIS WHOLE PEIPLEINE WORKS IS SEEN IN FIGURES
 
@@ -1037,13 +1069,16 @@ transform pipeline standard, the depth, rgb, normal columns
 store images as uint8s in C H W format, this is as there is X images, do math, thus this manmy GB of data,
 we must un fortunately for compute reasons take this loss of accuracy.
 
-TRAINIGN LOADS HF DATASET
-LOAD HF PRETRAINED WEIGHTS
-PERFORMS WEIGHT GRAFT
-TRAINING OCCURS
-WANDB SAVES WEIGHT OCCASNIONALLY
+AS STATED EARILR SECTION, WE HAVE CUSTOM DATASET FOR LAODER, THAT DOWNLOADS HF DATASET, AND PROCESSES TO STORE 
+AS CORRECT PANDAS DATAFRAME TO RETURN DATA
+
+DURIGN TRAINING WANDB SAVES WEIGHT OCCASNIONALLY
 WEIGHTS ARE FUSED AT SAVE
 THESE WEIGHTS ARE UPLOADED TO HF WITH THIS NAMING SCHEME:
+
+NAMING CODE BLOCK
+
+UPLAOD CODE BLOCK
 
 \subsection{Training procedures}
 [Explain which framework and optimizers you use, how you implemented the training logic.]
