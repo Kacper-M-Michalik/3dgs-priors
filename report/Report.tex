@@ -1214,7 +1214,11 @@ ready-to-use dataset.
 !python /content/3dgs-priors/geometry-priors/generate_base.py --in_folder="{in_folder}" --out_folder="{out_folder}" --save_iter=500
 \end{lstlisting}
 
-The processign scripts geenerate PARQUET FIELS IN THE SET DESTIATION, WITH EXAMPLE ROWS:
+\noindent
+The processing scripts generate \verb|parquet| format files containing the prior information
+alongside relevant metadata, such as the image frame\_id or depicted model's UUID.
+
+
 EXAMPLE RGBS
 EXAMPLE PSOES
 EXAMPLE INTRINS
@@ -1224,7 +1228,7 @@ EXAMPE NORMALS
 These can now be used however the user wants to, we add an additional processing step to transform aprquet files into
 file structure appropriate for uplaod to huggingface, matching the following config:
 The parquet files can also be processed into a file structure appropriate for upload to HuggingFace, where the pregenereated datset remains
-avaiable. Models use the pregenerated datasets via a custom laoder we implemented, taht slots in into all of the exisitng training/evlaution code.
+avaiable. WE structure the dataset into the foramt matching the following YAML configuration.
 
 \begin{lstlisting}[language=Python, caption=srn\_cars\_priors HuggingFace file structure config]
 ---
@@ -1278,19 +1282,24 @@ configs:
 
 CODE BLOCK FOR HF UPLOAD
 
-A DIAGRAM OF HOW THIS WHOLE PEIPLEINE WORKS IS SEEN IN FIGURES
+\noindent
+A diagram depicting this pipeline can be seen at Figure X.
 
+\noindent
 Take a concretne example, we offer one ready pregenerated dataset on HF:
 We took our input data from the ShapeNet-SRN dataset from \cite{srn} at $128 \times 128$ resolution.
 transform pipeline standard, the depth, rgb, normal columns
 store images as uint8s in C H W format, this is as there is X images, do math, thus this manmy GB of data,
 we must un fortunately for compute reasons take this loss of accuracy.
 
+\noindent
+Models use the pregenerated datasets via a custom laoder we implemented, taht slots in into all of the exisitng training/evlaution code.
 AS STATED EARILR SECTION, WE HAVE CUSTOM DATASET FOR LAODER, THAT DOWNLOADS HF DATASET, AND PROCESSES TO STORE 
 AS CORRECT PANDAS DATAFRAME TO RETURN DATA
 
-DURIGN TRAINING WANDB SAVES WEIGHT OCCASNIONALLY
-WEIGHTS ARE FUSED AT SAVE
+DURING TRAINING/ATT EMD ARE SAVED FOLLOWING FILES:
+
+THESE ARE UPLAODED 
 THESE WEIGHTS ARE UPLOADED TO HF WITH THIS NAMING SCHEME:
 
 NAMING CODE BLOCK
@@ -1363,9 +1372,8 @@ manually grafted reference model.
 \newline
 
 \noindent
-The \verb|downloader_test.ipynb| notebook tests our custom Dataset and ready generated \verb|cars_priors| data.
-It does so via the standard method for testing new Dataset implementations; by loading both the previous reference \verb|srn.py|
-Dataset and our new \verb|srn_priors.py| Dataset, walking both in an ordered mannered using Torch DataLoaders with shuffling disabled,
+The \verb|dataloader_test.ipynb| notebook tests our custom Dataset and ready generated \verb|cars_priors| data.
+It does so by loading both the previous reference \verb|srn.py| Dataset and our new \verb|srn_priors.py| Dataset, walking both in an ordered mannered using Torch DataLoaders with shuffling disabled,
 and then comparing the resulting batches, which in our case means comparing common dictionary entries, where common key/values entries should be identical.
 \newline
 
