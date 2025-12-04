@@ -90,7 +90,7 @@ Advancements in computer hardware and machine-learning methods have significantl
 of 3D reconstruction, extending its applicability for a wider variety of tasks and hardware platforms; continuing this trend, 
 one area of focus is made on further reducing the number of input images required whilst maintaining high quality reconstruction, 
 thereby improving computational efficiency and reducing data acquisition hardware requirements.
-Namely, in 2020 Neural Radiance Fields (NeRF) \cite{nerf} introduced a revolutionary method for 3D reconstruction
+Namely, in 2020 Neural Radiance Fields (NeRF) \cite{nerf} introduced a cutting-edge method for 3D reconstruction
 capable of high quality novel view synthesis. This is done by learning a continuous volumetric density and radiance function,
 typically using a deep learning model, which can then be queried by a ray-march for some new camera pose, enabling novel views to be synthesized.
 In 2023, 3D Gaussian Splatting (3DGS) \cite{3dgs} introduced an alternative method, offering major improvements in computational performance.
@@ -213,7 +213,7 @@ into an image. NeRF allowed for higher quality 3D reconstruction, eventually usi
 achieving state-of-the-art results and becoming the gold standard for novel view synthesis. TODO: CITE
 
 \noindent
-In 2023 the field was further revolutionized by 3D Gaussian Splatting, offering a computationally high-performance alternative to NeRF.
+In 2023 a further breakthrough in the field was achieved by the introduction of 3D Gaussian Splatting, offering a computationally high-performance alternative to NeRF.
 3DGS offers a new explicit geometry representation, modelling a scene as a collection of parameterized 3D Gaussians\cite{3dgs}.
 Unlike NeRF, 3D Gaussian Splatting does not rely on a neural network to generate a scene. Instead, in the original paper, reconstruction 
 is achieved by first initializing a set of Gaussians, either randomly or from a sparse point cloud (typically from Structure from Motion), where
@@ -373,7 +373,7 @@ The FiLM layer then takes the intercepted feature map and applies the FiLM equat
 \end{equation}
 
 \noindent
-This modulated feature map is finally passed on in the network. The method is highly computationally efficient, 
+This modulated feature map is finally passed on within the network. The method is highly computationally efficient, 
 only requiring a multiplication and addition be performed to terms in the feature map, and allows the models image input to remain
 unchanged. As such this strategy of inserting FiLM layers into Splatter Image is how we achieve multimodal data support.
 \newline
