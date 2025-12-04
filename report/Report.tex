@@ -1487,12 +1487,13 @@ One example of evaluation output can be seen in \ref{fig:lora_qualitative_compar
 
 \subsection{[Optional] Quantitative results}
 [A table and associated explanations for quantitative results.]
-
+\subsubsection{Metrics}
 For novel view synthesis evaluation, PSNR (Peak Signal-to-Noise Ratio), SSIM (Structural Similarity Index) and LPIPS (Learned Perceptual Image Patch Similarity) are standard metrics used to evaluate image quality from different perspectives\cite{zhang2025advancesfeedforward3dreconstruction}. 
 PSNR is calculated using the mean squared error and is commonly used to quantify reconstruction quality, such that a high PSNR suggests higher reconstruction quality. Meanwhile, SSIM depends on 3 metrics mimicking the human visual perception system: luminance, contrast and structure, where an SSIM score close to 1 indicates high similarity while a score closer to -1 indicates low similarity. Lastly, unlike pixel-wise metrics like PSNR and SSIM that assume pixel independence, LPIPS measures the perceptual similarity between images by comparing their features extracted from a deep neural network, where a low LPIPS score indicates that the compared images are perceptually similar to humans.
 
 To evaluate whether integrating different geometry priors into the model is effective, we performed a set of experiments testing different combinations of geometry priors. We measured the performance using PSNR, SSIM and LPIPS. 
 
+\subsubsection{Ablation study on geometry priors, U-Net integration}
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{images/stats-results/priors_psnr_distribution.png}
