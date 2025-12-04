@@ -692,15 +692,15 @@ Although \texttt{DPT\_Hybrid} appears to align more closely with the GT depth ma
 \noindent
 \textbf{Exploration of Depth Discontinuities}
 \noindent
-\\We also explored the utility of explicit depth discontinuity features, or depth edges. These reflect sudden changes in depth values within a depth map. These can serve as a proxy for occlusion boundaries, and we were investigated as they potentially aid in separating foreground objects from background geometry.
+\\We also explored the utility of explicit depth discontinuity features, or depth edges. These reflect sudden changes in depth values (when the first spatial derivative of the depth function is large) within a depth map. These can serve as a proxy for occlusion boundaries, and we were investigated as they potentially aid in separating foreground objects from background geometry.
 
 \noindent
 We looked four classical edge detection operators applied directly to the estimated depth maps:
 \begin{enumerate}
-\item \textbf{Canny Edge Detector:} Detects a wide range of edges using noise reduction and gradient hysteresis CITE
-\item \textbf{Sobel Operator:} Computes the gradient approximation of the image intensity function, resulting in regions highlighted that have high spatial frequency (CITE).
-\item \textbf{Scharr Operator:} An optimization of the Sobel operator that provides better rotational symmetry. (CITE)
-\item \textbf{Prewitt Operator:} A discrete differentiation operator similar to Sobel but using a simpler integer-valued kernel (CITE)
+\item \textbf{Canny Edge Detector:} Tends to produce sparse, crisp boundaries, but with noisy depth maps, it can form edges that are disjoint. Available within the OpenCV (\texttt{cv2.Canny}) library. 
+\item \textbf{Sobel Operator:} Approximates using weighted convolution kernels, acting as a low-pass differentiator. 
+\item \textbf{Scharr Operator:} Similarly to Sobel, uses weights, works to improve the Sobel operator to provide better rotational symmetry. 
+\item \textbf{Prewitt Operator:} Similar to Sobel, but uses a simpler integer-valued kernel (uniform weighting across rows and columns). 
 \end{enumerate}
 
 \begin{figure}[h]
@@ -711,10 +711,10 @@ We looked four classical edge detection operators applied directly to the estima
 \end{figure}
 
 \noindent
-Although Sobel and Scharr effectively highlight gradient changes, Canny produces binary edges that often fragment under the noise inherent in monocular depth estimation.
+Canny produces binary edges that often fragment under the noise inherent in monocular depth estimation. 
 
 \noindent
-While these operators successfully identify major structural outlines, they are sensitive to artifacts in the estimated depth maps. Consequently, we determined that explicit edge channels added insufficient benefits compared to other priors, and were excluded.
+While these operators successfully identify major structural outlines, we found that they are at times sensitive to artifacts in the estimated depth maps. Consequently, we determined that explicit edge channels added insufficient benefits compared to other priors, and were excluded.
 
 \subsubsection{Segmentation and Salient Object Detection Exploration}
 
@@ -1481,10 +1481,8 @@ We tested multiple configurations by varying these hyperparameters, while keepin
 
 From figures \ref{fig:lora_psnr}, \ref{fig:lora_ssim} and \ref{fig:lora_lpips}, we can see that all changed models now perform more consistently, as shown by the lower variance in all metrics as compared to the baseline. The PSNR metrics in figure \ref{fig:lora_psnr} and the SSIM metrics in figure \ref{fig:lora_ssim} also suggest better image reconstruction overall due to having higher mean PSNRs and SSIMs than the baseline, with the configuration $r=4, \alpha=1$ performing the best with the highest mean PSNR and SSIM. This configuration also has a lower mean LPIPS score than the baseline, further supporting our claim that this configuration is best for augmenting the model, while the other 2 configurations have higher mean LPIPS scores.
 
-\subsection{[Optional] Comparison to state-of-the-art}
-[Qualitative and/ or quantitative comparisons to one or more recent works, especially the baseline work.]
-
 (Placeholder LoRA results comparison with SplatterImage) We can compare our LoRA results with the original Splatter Image paper \cite{splatterImage}. 
+
 
 \section{Chapter 4: Conclusions and Future Directions}
 \subsection{Conclusions}
@@ -1507,6 +1505,7 @@ trying alternative datasets
 Trying alternatigve metrics for 3D reconstruction, like Chaumfeer distance, for exampel could sample
 off bunch of points of SRN cars meshes to genrate point cloud, then treat gaussians as point cloud and do comaprison
 
+As mentioned in last supervisor meeting: explicit loss function/rendering loss: e.g. depth edges for tinier Gaussians (based on the size of the covariance matrix), could help with fine details. 
 \subsection{Project Contributions}
 
 \noindent
@@ -1537,8 +1536,6 @@ Section 3.2: Radhika
 Section 3.3: FILL IN
 \newline
 Section 3.4: Radhika and Alex
-\newline
-Section 3.5: FILL IN
 \newline
 Section 4.1: FILL IN
 \newline
