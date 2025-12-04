@@ -1111,7 +1111,55 @@ In order to isolate the parameter-efficient adaptation due to LoRA, we used a de
 
 \subsection{Testing and validation procedures}
 [Explain which framework you use, how you implemented the testing/ validation logic.]
+\newline
 
+\noindent
+As discussed in previous sections, our changes often include a variety of runtime assertions to verify 
+correctness, an example can be found in our input preparation changes, where assertions are performed to check if
+every prior requested for training is available in the training/test/validation datasets requested.
+\newline
+
+\begin{lstlisting}[language=Python, caption=Excerpt from Splatter Image input tensor preparation code]
+if "use_pred_depth" in model_cfg.data and model_cfg.data.use_pred_depth:
+    assert model_cfg.data.category == "cars_priors", "Dataset does not have predicated maps!"
+    input_images = torch.cat([input_images,
+                    data["pred_depths"][:, :model_cfg.data.input_images, ...]],
+                    dim=2)
+if "use_pred_normal" in model_cfg.data and model_cfg.data.use_pred_normal:
+    assert model_cfg.data.category == "cars_priors", "Dataset does not have predicated maps!"
+    input_images = torch.cat([input_images,
+                    data["pred_normals"][:, :model_cfg.data.input_images, ...]],
+                    dim=2)
+\end{lstlisting}
+
+\noindent
+Notebooks performing unit and integration tests were additionally written. Namely, 3 such notebooks can be found in 
+the \verb|testing| folder of the \verb|3DGS-priors| repository.
+\newline
+
+\noindent
+The \verb|eval_test.ipynb| notebook performs tests to verify if the modified evaluation script 
+successfully performs evaluation both on previous datasets (such as ShapeNet cars) and our new dataset
+\verb|cars_priors|. It does so by running correctly configured evaluations and checking whether the resulting
+\verb|scortes.txt| files exist.
+\newline
+
+\noindent
+The \verb|graft_test.ipynb| notebook performs tests checking whether the 
+\verb|graft_weights_with_channel_expansion| function returns successfully, for a variety of model configurations.
+It additionally verifies whether an automatically grafted model's state dictionary exactly matches the state dictionary of a 
+manually grafted reference model.
+\newline
+
+\noindent
+The \verb|downloader_test.ipynb| notebook tests our custom Dataset and ready generated \verb|cars_priors| data.
+It does so via the standard method for testing new Dataset implementations; by loading both the previous reference \verb|srn.py|
+Dataset and our new \verb|srn_priors.py| Dataset, walking both in an ordered mannered using Torch DataLoaders with shuffling disabled,
+and then comparing the resulting batches, which in our case means comparing common dictionary entries, where common key/values entries should be identical.
+\newline
+
+\noindent
+All tests in these notebooks were passed successfully; each notebook should have visible cell outputs showing this.
 
 \section{Chapter 3: Experiments and Evaluation}
 \subsection{Datasets}
