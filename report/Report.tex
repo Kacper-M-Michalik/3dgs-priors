@@ -14,13 +14,13 @@
 \usepackage[section]{placeins}
 \usepackage{amssymb}
 \usepackage{float}
-
+\usepackage{enumitem}
 
 \titleformat{\section}
-  {\normalfont\Large\bfseries} % Text formatting (Bold, Large)
-  {}                           % <--- THE LABEL: Left empty to hide the number
-  {0pt}                        % Space between number and title (set to 0)
-  {}                           % Code before title
+  {\normalfont\Large\bfseries}
+  {}
+  {0pt}
+  {}
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -90,30 +90,37 @@ Efficient, high-quality 3D reconstruction is increasingly critical for applicati
 Historically 3D reconstruction has been a challenging task that requires large number of reference images and even larger amounts of compute.
 Advancements in computer hardware and machine-learning methods have significantly improved the efficiency and accuracy 
 of 3D reconstruction, extending its applicability for a wider variety of tasks and hardware platforms; continuing this trend, 
-one area of focus is made on further reducing the number of input images required for reconstruction, 
-thereby improving computational efficiency and reducing data acquisition hardware requirements,
-this has lead to interest in the issue of novel view synthesis.
-Namely, in 2020 Neural Radiance Fields\cite{nerf} (NeRF) introduced a revolutionary method for high quality novel view synthesis.
-This is done by learning a continuous volumetric density and radiance function, which can then be ray-marched from new camera poses, enabling novel views to be synthesized.
+one area of focus is made on further reducing the number of input images required whilst maintaining high quality reconstruction, 
+thereby improving computational efficiency and reducing data acquisition hardware requirements.
+Namely, in 2020 Neural Radiance Fields\cite{nerf} (NeRF) introduced a revolutionary method for 3D reconstruction
+capable of high quality novel view synthesis. This is done by learning a continuous volumetric density and radiance function,
+typically using a deep learning model, which can then be queried by a ray-march for some new camera pose, enabling novel views to be synthesized.
 In 2023, 3D Gaussian Splatting\cite{3dgs} (3DGS) introduced an alternative method, offering major improvements in computational performance.
-Instead of an implicit function, 3DGS optimizes a set of 3D Gaussians, defined by parameters such as position, colour, opacity, rotation and scale, 
-which can be efficiently rasterized to generate novel views.
-Developments in 3D Gaussian Splatting methods have allowed for 3D scene reconstruction using few or even single RGB images.
-While faster than other scene reconstruction techniques and requiring only a "one-shot" pass, 
-these approaches often suffer from challenges such as layout/scale drift, over-smooth geometry and hallucinations in occluded regions \cite{tang2024hisplathierarchical3dgaussian} (NOTE TODO: for now this only talks mostly about over-smooth geometry and kind of hallucinations, still looking for a layout/scale drift one). 
+Instead of an implicit function, 3DGS introduces a new explicit representation, that of a set of 3D Gaussians (called a Gaussian splat), Gaussians are volumes defined by parameters 
+such as position, colour, opacity, rotation and scale, which can be efficiently rasterized to generate novel views. Reconstruction is typically achieved by
+optimizing the set of Gaussians to produce novel view with minimized loss, alternatively deep learning methods can be used to directly
+predict the Gaussian splat. Developments in 3D Gaussian Splatting methods have allowed for 3D scene reconstruction using few or even single RGB images.
+While faster than other scene reconstruction techniques and requiring only a "one-shot" pass, these approaches often suffer from challenges
+such as layout/scale drift, over-smooth geometry and hallucinations in occluded regions \cite{tang2024hisplathierarchical3dgaussian} 
+(NOTE TODO: for now this only talks mostly about over-smooth geometry and kind of hallucinations, still looking for a layout/scale drift one). 
 \newline
 
 \noindent
 This project focuses on one recent method, Splatter Image\cite{splatterImage}, as a baseline. 
-Splatter Image allows single or few RGB image 3DGS reconstruction. Achieved by predicting 3D Gaussians as pixels in a multichannel image; this representation reduces reconstruction to 
-learning an image-to-image neural network, allowing the use of a 2D U-Net to form the representation.
-Each pixel stores the parameters for a corresponding 3D Gaussian, allowing for reconstruction in a single feed-forward pass. This overall architecture allows for a compute-efficient model. 
-Despite its speed, Splatter Image does have some issues that have been noted in related works,
+Splatter Image allows single or few RGB image 3DGS reconstruction. Achieved by predicting 3D Gaussians as pixels in a multichannel image; 
+this representation reduces reconstruction to learning an image-to-image neural network, allowing the use of a 2D U-Net to form the representation.
+Each pixel stores the parameters for a corresponding 3D Gaussian, allowing for reconstruction in a single feed-forward pass. 
+This overall architecture allows for a compute-efficient model. Despite its speed, Splatter Image has some issues that have been noted in related works,
 particularly in reconstructing structures unseen in the input view, including for views significantly different from the source. 
-One source of this problem may be that the prediction of 3D Gaussians in Splatter Image is based on input image features alone,
-which do not have sufficient conditional information for Gaussian splatting to represent structures that are not visible in the
-input view\cite{shen2024pixelworth3dgaussians}; shown in figure \ref{fig:splatter_image_problems}, Splatter Image has trouble generating the 
-occluded chair leg in \ref{fig:chair_splatter_1} and \ref{fig:chair_splatter_2}.
+We believe there are two reasons for this problem. 
+The first is inherent to Splatter Images architecture, unlike methods that utilize explicit 3D feature volumes, Splatter Image's
+choice of 3D reconstruction as a 2D-to-2D image translation task limits its ability to learn geometric priors, 
+as the model lacks an internal 3D representation to resolve issues like depth ambiguities.
+The second is that the 3DGS prediction based on only single or few RGB image features alone does
+not have sufficient conditional information for Splatter Image to infer appropriate geometry information or
+structures that are not visible in the input view\cite{shen2024pixelworth3dgaussians};
+shown in figure \ref{fig:splatter_image_problems}, Splatter Image has trouble generating the occluded chair leg 
+in \ref{fig:chair_splatter_1} and \ref{fig:chair_splatter_2}.
 
 \begin{figure}[H]
     \centering
@@ -157,21 +164,35 @@ occluded chair leg in \ref{fig:chair_splatter_1} and \ref{fig:chair_splatter_2}.
 This project aims to address this by first researching inferable geometry priors (such as planes, normals, visibility cues, depth, segmentation or edge maps) 
 which can be dynamically produced for input images by existing specialized models, then proposing a lightweight augmentation for Splatter Image, allowing
 predicted priors to be fed alongside the RGB images, allowing them to guide reconstruction in a more accurate manner
-compared to current case, where the neural network needs to learn these geometric features itself.
+compared to current case, where the neural network needs to learn the geometric features itself.
 
 \subsection{Background and related work}
 [Include a few very relevant related works and how your work relates to those, expanding on the previous section. We do not expect you to cover all previous works.]
 \newline
 
-ADD DIAGRAMS OF PHTOGRAMETRRYT GAUSSAIN SPLAT AND NERF
-\newline
-
 \begin{figure}[H]
     \centering
-    \includegraphics[width=15cm]{images/photogrammetry.png}
+    \includegraphics[width=0.6\linewidth]{images/photogrammetry.png}
     \caption{An example of 3D reconstruction with many overlapping images from \cite{photogrammetry}}
     \label{fig:photogrammetry}
 \end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{.5\textwidth}
+        \centering
+        \includegraphics[width=0.7\linewidth]{images/nerf.pdf}
+        \caption{NeRF implicit function from \cite{nerf}}
+    \label{fig:splatter_img_diagram}
+    \end{minipage}%
+    \begin{minipage}{.5\textwidth}
+        \centering
+        \includegraphics[width=0.7\linewidth]{images/u-net.png}
+        \caption{3D Gaussian Splatting Process from \cite{3dgs}}
+        \label{fig:u-net_diagram}
+    \end{minipage}
+\end{figure}
+
 
 \noindent
 Traditionally, 3D reconstruction has been performed by multi-stage photogrammetry pipelines, relying on explicit geometric
@@ -220,32 +241,57 @@ Recent examples include ExScene, Wonderland, F3D-Gaus\cite{f3dgaus}, Gauss Video
 
 \noindent
 F3D-Gaus
+TODO
 
 \noindent
 Gauss VideoDreamer
+TODO
 
 \noindent
 The triplane representation was proposed to efficiently and expressively represent 3D volumes \cite{triplane}, as a compromise between rendering speed and memory consumption. 
 They were shown to scale to large datasets like Objaverse \cite{objaversexl}\cite{objaverse}, but at the cost of hundreds of GPUs for multiple days \cite{triplanebasedmodel}.
+TODO
 
 \noindent
-Another recent method is Splatter Image \cite{splatterImage} then applies Gaussian Splatting to monocular reconstrution by using a set of 3D Gaussians as the 3D representation. 
+Another recent method is Splatter Image \cite{splatterImage} then applies Gaussian Splatting to monocular reconstruction by using a set of 3D Gaussians as the 3D representation. 
 It predicts a 3D Gaussian for each of the input image pixels and uses a 2D image as the container of the 3D Gaussians, storing the parameters of one Gaussian per pixel. 
 This reduces the reconstruction problem to learning an image-to-image neural network, allowing the reconstructor to be implemented utilizing only efficient 2D operators. 
 The use of Gaussian Splatting in this approach increases rendering and space efficiency, which benefits inference and training. 
 Our work continues to expand on this method through investigating different geometry priors and integrating them into the current model as appropriate.
+TODO
 
 \subsection{Overview of the idea}
 [Provide an overview stating why the idea of the project makes sense and what the main motivation is.]
 
-whilst providing excellent quality recsontruction from popint of vie wof refernec iamge, the actual 3d reocusntrion and resulting novel views
-suffer from hallucinations in the form of floating geometry, etc etc,
+Splatter Images high computational performance and relative reconstruction quality makes it a highly desirable model for one-shot 
+3D reconstruction
+
+the model still occasionally suffers from challenges such as layout/scale drift, over-smooth geometry and poor quality 
+hallucinations in occluded regions, particularly in reconstructing structures unseen in the input view, 
+including for views significantly different from the source. 
+
+We believe there are two reasons for this problem. The first is inherent to Splatter
+Images architecture, unlike methods that utilize explicit 3D feature volumes, Splatter Image’s choice of
+3D reconstruction as a 2D-to-2D image translation task limits its ability to learn geometric priors, as the
+model lacks an internal 3D representation to resolve issues like depth ambiguities. The second is that the
+3DGS prediction based on only single or few RGB image features alone does not have sufficient conditional
+information for Splatter Image to infer appropriate geometry information or structures that are not visible
+in the input view.
+
 this is fundamanetally due to the lack of inforamtion the model has from a single input image
-feeding models additional data improves reconstruction 
-with modern compute and ml advancements there now exist many good quality pretrained geometry related models
-for example generating depth, normal maps, segmentation
-we propose exploting the knowledge/capacibiltiy of these models to predict additional priors of input images, then creating a modified model that accepts these
-priors, allowing priors to guide reconsutrcution, improvingt recosntructio quality
+
+Currently there exists specialised, accureate models that can perorm on-shot prediction with hig haccuracy spefific geomtric features of images
+trainined on many examples so store lot of konwdleg about corectly halkucinating occluded reegions
+in a realsitic/more accuraet manner
+
+We propsoe exploting thse models to gain additional sources of inormation which could be fed into the model
+these priros solve both of our beleived problems, namely they provide
+provide large amounts of additional information, tackling issue no 2, and stop the model from nedign to learn hwo to infer these geometric
+features itself, which it is unsuitable/poor at, tackling issue no 1.
+We bleive as such these priors would guide recosntruction in a more accurate manner, impriving the recosntruction quality of the model, whislt
+requring minimal architectural changes to Splatter Image, as only have to change inpotu channel count and do minor modifications
+if we want to add multimodal data, generally preserving its performance, 
+
 we also propose performing ablation study to see which priors are most effective/significant in changing the reconstruction quality
 
 \section{Chapter 2: Method}
@@ -765,22 +811,30 @@ if cfg.model.network_without_offset:
 added film layer for text input
 \newline
 
+due to time constraints, and the selcted segmetnation model not providing tokens in the end
+we diud not implement the cross attention method
+\newline
+
 \noindent
 One of our desired features was to allow a model with new priors to be fine-tuned using existing weights, namely those from the
-pretrained Splatter Image models. This was achieved by grafting the old weights of a pretrained model onto a newly generated
-GaussianSplatPredictor. This grafting mechanism was implemented externally to the model, as such its implementation details are covered in
+pretrained Splatter Image models. This was achieved by grafting the old weights of a pretrained model onto a new instance of a GaussianSplatPredictor. This grafting mechanism was implemented externally to the model, as such its implementation details are covered in
 \textbf{Section 2.3.6: Training and Evaluation Changes}.
 \newline
 
 \noindent
 \subsubsection{Manual LoRA Integration}
-To adapt the Splatter Image architecture for fine-tuning on the ShapeNet-SRN Cars dataset (with depth and normal priors), we added Low-Rank Adaptation (LoRA) \cite{HuLoRA} into the GaussianPreidictor module of the Splatter Image. LoRA adds low-rank trainable matrices into frozen, pretrained layers. This preserves the base model, while further finetuning it to the new data. 
+To adapt Splatter Image for fine-tuning on the ShapeNet-SRN Cars dataset (with depth and normal priors), we added Low-Rank Adaptation (LoRA) \cite{HuLoRA} into the GaussianPredictor module of Splatter Image.
+LoRA adds low-rank trainable matrices into frozen, pretrained layers. This preserves the base model, while further fine-tuning it to the new data. 
 
 \noindent
-Existing libraries such as Hugging Face's PEFT \cite{peft} provide out-of-the-box LoRA integration, we found them incompatible with the weight-grafting mechanism required by the SplatterImage pipeline. Splatter Image relies on grafting weights from pre-trained checkpoints where input channel dimensions change (e.g., when adding depth or normal map channels). This leads to shape mismatches during initialisation steps (such as for PEFT's LoRA layers) since the pre-trained weights cannot be directly loaded into layers with modified input dimensions. 
+Existing libraries such as Hugging Face's PEFT \cite{peft} provide out-of-the-box LoRA integration, we found them incompatible with the weight-grafting
+mechanism required by our SplatterImage training pipeline. Due to compute limitations, we rely on Splatter Image grafting weights from pretrained checkpoints where input channel dimensions 
+change (e.g., when adding depth or normal map channels). This leads to shape mismatches during initialisation steps (such as for PEFT's LoRA layers) 
+since the pre-trained weights cannot be directly loaded into layers with modified input dimensions. 
 
 \noindent
-We added LoRA manually within the \texttt{GaussianPredictor} and \texttt{train\_network} modules, using code from Microsoft's \texttt{loralib} \cite{hu2022lora}. We modified the underlying \texttt{Linear} and \texttt{Conv2d} layers of the U-Net architecture to include a \texttt{LoRALayer} mixin. This allows the freezing of pre-trained base weights while injecting the LoRA matrices ($A$ and $B$) directly into the forward pass. As mentioned earlier, this preserves the frozen pretrained weights from the original 3-channel RGB model, but is compatible with the new channels. 
+We added LoRA manually within the \texttt{GaussianPredictor} and \texttt{train\_network} modules, using code from Microsoft's \texttt{loralib} \cite{hu2022lora}.
+We modified the underlying \texttt{Linear} and \texttt{Conv2d} layers of the U-Net architecture to include a \texttt{LoRALayer} mix-in. This allows the freezing of pre-trained base weights while injecting the LoRA matrices ($A$ and $B$) directly into the forward pass. As mentioned earlier, this preserves the frozen pretrained weights from the original 3-channel RGB model, but is compatible with the new channels. 
 
 \subsubsection{Training and Evaluation Changes}
 The existing Splatter Image evaluation script needed minimal changes, thanks to how we integrated our priors into the project.
@@ -822,15 +876,34 @@ training_cfg = OmegaConf.load(cfg_path)
 
 \noindent
 Input preparation was also changed, namely priors are concatenated (if enabled) as additional channels to the input RGB images,
-before being fed into the network. Splatter Image uses a DataLoader to receives batches of RGB images to perform infrfence on. 
-The DataLoader does not directly return a tensor of images, but a dictionary containing relevant batch data, namely XXX XXX XX. 
-This allowed our priors to be introduced into the preparation code easily, by simply providing them a key/value pairs in 
-the dictionary provided by the DataLoader, in the form of tensors matching the RGB image batch. The priors can be accessed 
-by KERY AND then concatenated with RGB images in a specific order as to generate the input tensors for the model to 
-perform inference on. Assertions are also performed to verify that priors are indeed available for the currently
-active dataset.
+before being fed into the network. Splatter Image uses the Torch DataLoader alongside custom Dataset objects 
+to load batches of RGB images to perform inference on. The Dataset objects do not directly return a tensor of images, 
+but a dictionary containing relevant batch data:
 
-\begin{lstlisting}[language=Python, caption=Network input preparation code]
+\begin{lstlisting}[language=Python, caption=Excerpt of srn.py Dataset code]
+images_and_camera_poses = {
+    "gt_images": self.all_rgbs[example_id][frame_idxs].clone(),
+    "world_view_transforms": self.all_world_view_transforms[example_id][frame_idxs],
+    "view_to_world_transforms": self.all_view_to_world_transforms[example_id][frame_idxs],
+    "full_proj_transforms": self.all_full_proj_transforms[example_id][frame_idxs],
+    "camera_centers": self.all_camera_centers[example_id][frame_idxs]
+}
+
+images_and_camera_poses = self.make_poses_relative_to_first(images_and_camera_poses)
+images_and_camera_poses["source_cv2wT_quat"] = self.get_source_cw2wT(images_and_camera_poses["view_to_world_transforms"])
+
+return images_and_camera_poses    
+\end{lstlisting}
+
+\noindent
+This allowed our priors to be introduced into the evaluation code with ease, by simply creating a new custom Dataset object
+\verb|srn_priors.py| that provides new priors as new key/value pairs in the returned dictionary.
+Priors were specifically returned as PyTorch tensors matching the RGB image batch. 
+The priors can then be accessed and concatenated with the RGB images in a specific order to generate the 
+final input tensor for Splatter Image to perform inference on. Assertions are also performed to verify that priors are 
+indeed available for the currently active Dataset.
+
+\begin{lstlisting}[language=Python, caption=Splatter Image input tensor preparation code]
 # Concatenate selected priors
 input_images = data["gt_images"][:, :model_cfg.data.input_images, ...]
 if "use_pred_depth" in model_cfg.data and model_cfg.data.use_pred_depth:
@@ -860,7 +933,7 @@ ADDED CONATENATION< DATASET LAODING REMAINS THE SAME
 
 
 \noindent
-For the LoRA-specific training pipeline, within the modified \texttt{GaussianPredictor}, \texttt{requires\_grad=False} is explicitly set for all pre-trained backbone weights (see \texttt{gaussian\_predictor\_lora.py}), leaving only the low-rank matrices $A$ and $B$ as trainable. This ensures that optimiser updates are restricted to the adapter layers, with instances defined as \texttt{LoRALayer}.
+For the LoRA-specific training pipeline, within the modified \texttt{GaussianPredictor}, \texttt{requires\_grad=False} is explicitly set for all pre-trained backbone weights (see \texttt{gaussian\_predictor\_lora.py}), leaving only the low-rank matrices $A$ and $B$ as trainable. This ensures that optimizer updates are restricted to the adapter layers, with instances defined as \texttt{LoRALayer}.
 
 \subsection{Data pipelines}
 [Explain your data format, how you consume the data in your algorithms, and data augmentation.]
