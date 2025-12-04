@@ -1211,20 +1211,56 @@ ready-to-use dataset.
 \end{lstlisting}
 
 \noindent
-The processing scripts generate \verb|parquet| format files containing the prior information
-alongside relevant metadata, such as the image frame\_id or depicted model's UUID.
+The processing scripts generate \verb|parquet| format files containing the dataset or prior information
+alongside relevant metadata, such as the image frame\_id or depicted model's UUID. Namely, the 5 parquet files currently generated are:
+\vspace{5pt}
 
+\noindent
+\begin{minipage}[t]{0.16\textwidth}
+    \textbf{srn\_cars\_intrins} \hrule \vspace{5pt}
+    \footnotesize\ttfamily
+    id : int \\
+    name : string \\
+    email : string
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.16\textwidth}
+    \textbf{srn\_cars\_poses} \hrule \vspace{5pt}
+    \footnotesize\ttfamily
+    oid : uuid \\
+    uid : int \\
+    amt : float
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.16\textwidth}
+    \textbf{srn\_cars\_rgbs} \hrule \vspace{5pt}
+    \footnotesize\ttfamily
+    sku : str \\
+    cost : float \\
+    qty : int
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.16\textwidth}
+    \textbf{srn\_cars\_depths} \hrule \vspace{5pt}
+    \footnotesize\ttfamily
+    ts : time \\
+    err : str \\
+    code : int
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.16\textwidth}
+    \textbf{srn\_cars\_normals} \hrule \vspace{5pt}
+    \footnotesize\ttfamily
+    ver : float \\
+    auth : str \\
+    hash : hex
+\end{minipage}
 
-EXAMPLE RGBS
-EXAMPLE PSOES
-EXAMPLE INTRINS
-EXMAPLE DEPTHS
-EXAMPE NORMALS
-
-These can now be used however the user wants to, we add an additional processing step to transform aprquet files into
-file structure appropriate for uplaod to huggingface, matching the following config:
-The parquet files can also be processed into a file structure appropriate for upload to HuggingFace, where the pregenereated datset remains
-avaiable. WE structure the dataset into the foramt matching the following YAML configuration.
+\vspace{10pt}
+\noindent
+These files now provide a ready-to-use dataset. To upload the dataset to HuggingFace, additional processing must be performed
+to transform the files into a file structure that's recognisable by HF for purposes of correctly indexing splits and subsets.
+Specifically, we transform the dataset to be compatible with this HuggingFace YAML configuration:
 
 \begin{lstlisting}[language=Python, caption=srn\_cars\_priors HuggingFace file structure config]
 ---
@@ -1276,10 +1312,34 @@ configs:
 ---
 \end{lstlisting}
 
-CODE BLOCK FOR HF UPLOAD
+\begin{lstlisting}[language=Python, caption=srn\_cars\_priors HuggingFace file structure config]
+# Split generated parquets into correct folder/file structure for HuggingFace upload
+%cd /content/
+!mkdir upload
+%cd upload
+
+datatypes = ["rgbs", "intrins", "poses", "depths", "normals"]
+splits = ["train", "test", "val"]
+
+for datatype in datatypes:
+    # Make a directory for the current dataset file
+    !mkdir {datatype}
+    %cd {datatype}
+    load_path = os.path.join(out_folder, datatype + ".parquet")
+    dataset = load_dataset("parquet", data_files=load_path)['train']
+    for split in splits:    
+        # Generate split specific directory
+        !mkdir {split} 
+        save_path = "/content/upload/{}/{}/{}.parquet".format(datatype, split, datatype) 
+        filter_split = lambda data: data['split'] == split
+        filtered = dataset.filter(filter_split).to_pandas().drop(columns=['split'])
+        filtered.to_parquet(save_path)
+    %cd ..
+\end{lstlisting}
 
 \noindent
 A diagram depicting this pipeline can be seen at Figure X.
+\newline
 
 \noindent
 Take a concretne example, we offer one ready pregenerated dataset on HF:

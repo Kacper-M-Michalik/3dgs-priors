@@ -1,15 +1,22 @@
-2.2
 2.4
-
+2.2
 1.3
-Commenting
+2.1
 Tests
+2.3 - FiLM
+
 
 README
-2.1
 1.2
-2.3
 2.5
 3 - verify what they write
 4
-Presentation
+Final read, cleanup of report
+
+Slides
+Presentation video
+
+Final run and README checks
+zip
+
+Submit
