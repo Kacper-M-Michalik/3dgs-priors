@@ -210,7 +210,7 @@ is optimized using a set of input images with known camera poses; the input to t
 is a single continuous 5D coordinate (spatial location and viewing direction) and the output is the volume density and view-dependent emitted radiance at that location.
 Novel views are synthesized by querying 5D coordinates along camera rays for some new camera pose (ray-marching), and output colours and densities are rendered
 into an image. NeRF allowed for higher quality 3D reconstruction, eventually using sparser image sets (PixelNeRF, RegNeRF), compared to traditional photogrammetry methods,
-achieving state-of-the-art results and becoming the gold standard for novel view synthesis. TODO: CITE
+achieving state-of-the-art results and becoming the gold standard for novel view synthesis\cite{zhang2025advancesfeedforward3dreconstruction}.
 
 \noindent
 In 2023 a further breakthrough in the field was achieved by the introduction of 3D Gaussian Splatting, offering a computationally high-performance alternative to NeRF.
@@ -226,72 +226,74 @@ Finally, for rendering, the Gaussians are rasterized using a custom tile-based r
 real-time, allowing for real-time novel view synthesis. 
 While the original method relies on per-scene optimization to generate 3D Gaussian Splats, recent works have begun using deep learning methods to 
 predict sets of Gaussians directly, with most recent developments allowing for 3D scene reconstruction using few or even single RGB images.
-\newline
-
-ADD IAMGES OF F3D GAUS, GAUSS VIDEODREAMER, TGS, SPLATTERIMAGE
-\newline
 
 \noindent
 Since the introduction of 3DGS, a number of deep learning architectures and processing pipelines based on the method have been developed 
 to find the most accurate and efficient implementation capable of producing high quality 3D Gaussian Splats.
-Recent examples include ExScene, Wonderland, F3D-Gaus\cite{f3dgaus}, Gauss VideoDreamer\cite{hao2025gaussvideodreamer3dscenegeneration}, TGS and Splatter Image\cite{splatterImage}.
+Recent examples include ExScene\cite{exscene}, Wonderland\cite{wonderland}, F3D-Gaus\cite{f3dgaus}, Gauss
+VideoDreamer\cite{hao2025gaussvideodreamer3dscenegeneration}, TGS\cite{tgs} and Splatter Image\cite{splatterImage}.
 
 \noindent
-F3D-Gaus
-TODO
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{images/f3d-gaus.png}
+    \caption{F3D-Gaus Framework from \cite{f3dgaus}}
+    \label{fig:f3dgaus}
+\end{figure}
+F3D-Gaus was proposed to help pixel-aligned Gaussian Splatting generate plausible novel viewpoints by introducing a cycle-aggregative strategy. As shown in figure \ref{fig:f3dgaus}, given a single RGB image $I_0$ and depth map $D_0$, the model directly feeds them forward to output the pixel-aligned Gaussian Splatting representation $GS_0$. The model then renders the image $\tilde{I_1}$ and depth map $\tilde{D_1}$ for the novel view, and then outputs its corresponding Gaussian Splatting representation $GS_1$. $GS_0$ and $GS_1$ are then aggregated to produce images for supervision. By enforcing this cycle consistency through aggregation, the model naturally learns through this self-supervised approach to extrapolate across views by fusing multiple representations, enhancing 3D coherence during inference. This helps to ensure that 3D representations from novel viewpoints are both aligned with and complementary to those from the original viewpoint. After complementary aggregation, F3D-Gaus then applies a video in-painting model\cite{propainter} to the rendered images and depth maps to correct inconsistencies in geometry and texture caused by large viewpoint shifts, resulting in more reliable and visually consistent outputs. 
+While the source code and a pretrained model is available, the model would require 13 days of an A100 GPU to train if any updates were made, so we deemed this unsuitable to work on.
 
 \noindent
-Gauss VideoDreamer
-TODO
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{images/gauss_video_dreamer.png}
+    \caption{GaussVideoDreamer Framework from \cite{hao2025gaussvideodreamer3dscenegeneration}}
+    \label{fig:gauss_video_dreamer}
+\end{figure}
+From the input image, GaussVideoDreamer first initializes a coarse video sequence depicting occluded regions of the input image under smooth novel view trajectories and inconsistency-aware Gaussian Splats. After that, at periodic optimization intervals, the model renders all viewpoint images and their corresponding inconsistency prediction masks from the Gaussian Splats. The masks and rendered images then guide a video diffusion model to perform progressive inpainting to refine the video sequence, which then in turn optimizes the Gaussian splatting representation and gradually generates better novel view images. However, the generation quality of GaussVideoDreamer is mainly limited by the video diffusion prior (AnimateDiff\cite{animatediff}), which was adapted from an image diffusion model lacking dedicated video inpainting training. As such, when generating videos it may result in frame inconsistencies in longer sequences, progressive colour shifts and high-frequency detail degradation, which reduces novel view reconstruction quality. 
+There was also no publicly available implementation of this method. In addition, since a proprietary evaluation dataset of 20 generated single-view images with corresponding text prompts was used in the paper, it would be difficult to compare it with other implementations.
+Therefore, we also decided not to explore this method.
 
 \noindent
-The triplane representation was proposed to efficiently and expressively represent 3D volumes \cite{triplane}, as a compromise between rendering speed and memory consumption. 
-They were shown to scale to large datasets like Objaverse \cite{objaversexl}\cite{objaverse}, but at the cost of hundreds of GPUs for multiple days \cite{triplanebasedmodel}.
-TODO
-
-\noindent
-Another recent method is Splatter Image \cite{splatterImage} then applies Gaussian Splatting to monocular reconstruction by using a set of 3D Gaussians as the 3D representation. 
-It predicts a 3D Gaussian for each of the input image pixels and uses a 2D image as the container of the 3D Gaussians, storing the parameters of one Gaussian per pixel. 
-This reduces the reconstruction problem to learning an image-to-image neural network, allowing the reconstructor to be implemented utilizing only efficient 2D operators. 
-The use of Gaussian Splatting in this approach increases rendering and space efficiency, which benefits inference and training. 
-Our work continues to expand on this method through investigating different geometry priors and integrating them into the current model as appropriate.
-TODO
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{images/tgs.png}
+    \caption{TGS Framework from \cite{tgs}}
+    \label{fig:tgs}
+\end{figure}
+In a triplane representation\cite{triplane}, explicit features of the image are aligned along three axis-aligned orthogonal feature planes. We can then query any 3D position by projecting it onto the three feature planes, retrieving the corresponding feature vector via bilinear interpolation and aggregating the three feature vectors via summation. An additional lightweight decoder network interprets the aggregated 3D features as colour and density. This representation is fast and scales efficiently with resolution by keeping the decoder small and shifting the bulk of the expressive power into the explicit features. TGS\cite{tgs} uses this representation in Triplane-Gaussian, a new hybrid representation. As shown in figure \ref{fig:tgs}, TGS first encodes the input image into a set of latent feature tokens, which are then passed into a point cloud decoder and a triplane decoder . A point cloud and a triplane can be de-tokenized from the output of these decoders. After the point cloud decoder, TGS adapts a point upsampling module to densify the point cloud and utilizes a geometry-aware encoding to project point cloud features into the initial positional embedding of triplane latent. Lastly, 3D Gaussians are decoded by the point cloud, the triplane features and the image features for novel view rendering through Gaussian splatting.
+While an official implementation of this is available at \href{https://github.com/VAST-AI-Research/TriplaneGaussian}{https://github.com/VAST-AI-Research/TriplaneGaussian} and a pretrained model is also available, the model is only trained on the Objaverse-LVIS dataset and the training time and compute needed to adapt this implementation also made it unsuitable for our project.
 
 \subsection{Overview of the idea}
 [Provide an overview stating why the idea of the project makes sense and what the main motivation is.]
+\newline
 
-Splatter Images high computational performance and relative reconstruction quality makes it a highly desirable model for one-shot 
-3D reconstruction
+\noindent
+Splatter Image's high computational efficiency and good reconstruction quality make it a highly desirable model for one-shot 3D reconstruction.
+Nonetheless, the model's occasional problems such as layout/scale drift, over-smooth geometry and poor quality hallucinations in occluded regions,
+pose a serious problem in its usage and wider adoption. As stated in the introduction, we believe the cause of these reconstruction failures is twofold; first is inherent to Splatter
+Image's architecture, the models choice of 3D reconstruction as a 2D-to-2D image translation task limits its ability to learn geometric priors, as the
+model lacks an internal 3D representation to reason correctly about 3D structures. 
+Second is that single or few RGB images simply does not have sufficient conditional
+information for Splatter Image to infer adequate geometric information about 3D scenes such as object structures, especially those that are not 
+fully visible in the input view. Modern machine learning now offers highly specialized models capable of performing high-quality 
+monocular prediction of geometric features from RGB images. These models such as MiDaS and Depth Anything, are trained on vast datasets and have 
+tailored architectures to reason about relevant 3D information; as such they store much valuable latent geometric knowledge, which is valuable in 
+situations exactly like those where Splatter Image may struggle, namely when trying to accurately hallucinate occluded regions and trying to understand
+complex 3D surfaces and structures. Ready availability of these models allows us to exploit them to gain additional sources of high quality geometric 
+information that can be fed into Splatter Image, solving both of our supposed problems simultaneously:
+preventing the Splatter Image model from needing to implicitly learn geometric features, 
+whilst also providing rich 3D information required for high quality reconstruction.
+\newline
 
-the model still occasionally suffers from challenges such as layout/scale drift, over-smooth geometry and poor quality 
-hallucinations in occluded regions, particularly in reconstructing structures unseen in the input view, 
-including for views significantly different from the source. 
-
-We believe there are two reasons for this problem. The first is inherent to Splatter
-Images architecture, unlike methods that utilize explicit 3D feature volumes, Splatter Image’s choice of
-3D reconstruction as a 2D-to-2D image translation task limits its ability to learn geometric priors, as the
-model lacks an internal 3D representation to resolve issues like depth ambiguities. The second is that the
-3DGS prediction based on only single or few RGB image features alone does not have sufficient conditional
-information for Splatter Image to infer appropriate geometry information or structures that are not visible
-in the input view.
-
-this is fundamanetally due to the lack of inforamtion the model has from a single input image
-
-Currently there exists specialised, accureate models that can perorm on-shot prediction with hig haccuracy spefific geomtric features of images
-trainined on many examples so store lot of konwdleg about corectly halkucinating occluded reegions
-in a realsitic/more accuraet manner
-
-We propsoe exploting thse models to gain additional sources of inormation which could be fed into the model
-these priros solve both of our beleived problems, namely they provide
-provide large amounts of additional information, tackling issue no 2, and stop the model from nedign to learn hwo to infer these geometric
-features itself, which it is unsuitable/poor at, tackling issue no 1.
-We bleive as such these priors would guide recosntruction in a more accurate manner, impriving the recosntruction quality of the model, whislt
-requring minimal architectural changes to Splatter Image, as only have to change inpotu channel count and do minor modifications
-if we want to add multimodal data, generally preserving its performance, 
-
-we also propose performing ablation study to see which priors are most effective/significant in changing the reconstruction quality
-
-THJERBY TACKLING
+\noindent
+As such we believe these priors will effectively help guide Splatter Image in 3D reconstruction, resulting in superior reconstruction quality
+and strongly reducing the frequency of reconstruction failures. All achieved whilst preserving Splatter Image's key features
+such as its computational efficiency, as it requires minimal architectural changes to accept these new priors in its input; altogether making 
+Splatter Image a more competitive one-shot 3D reconstruction model. Furthermore, this project gives us an opportunity to perform an ablation study to 
+see which priors are most significant in resulting 3D reconstruction quality, this study may provide useful guidance for other projects;
+namely helping researchers/developers decide on model architectures that work with optimal sets of geometric priors; 
+or helping those that may be interested in creating similar adaptations/pipelines as us.
 
 \section{Chapter 2: Method}
 \subsection{Baseline algorithm}
@@ -314,23 +316,28 @@ THJERBY TACKLING
 \end{figure}
 
 \noindent
-
-XXXX FIX
-\newline
-
 Splatter Image uses a standard image-to-image neural network architecture to predict a Gaussian for each pixel of the input image I, 
-generating the output image M as the Splatter Image. Learning to predict the Splatter Image can be done on a single GPU using at most 
+generating the output image M as the Splatter Image. 
+For this it uses a U-Net as those have demonstrated excellent performance in image generation\cite{rombach2022highresolutionimagesynthesislatent}, and their ability to capture small image details helps to obtain higher-quality novel view reconstructions. 
+
+\noindent
+As shown in figure \ref{fig:u-net_diagram}, a U-Net model architecture consists of a contracting path (left side) and an expansive path (right side). 
+The contracting path aims to capture context and follows the typical architecture of a convolutional network, which consists of the repeated application of convolutions, each followed by an activation function and a max pooling operation for downsampling. 
+At each downsampling step we increase the number of feature channels. 
+Afterwards, each step in the expansive path consists of an upsampling of the feature map followed by a convolution that decreases the number of feature channels, enabling precise localization. 
+At the final layer a convolution is used to map each feature vector to the desired number of classes.
+
+\noindent
+For the U-Net used in Splatter Image, learning to predict the Splatter Image can be done on a single GPU using at most 
 20GB of memory at training time for most single-view reconstruction experiments (except for Objaverse, where 2 GPUs were used and 26GB 
 of memory was used on each). Most of this neural network architecture is identical to the SongUNet of \cite{songunet}, but the last layer
 is replaced with a $1 \times 1$ convolutional layer with $12 + k_c$ output channels, where $k_c \in \{3, 12\}$ depending on the colour model. 
 The output tensor codes for parameters that are then transformed to opacity, offset, depth, scale, rotation and colour respectively. 
-These parameters are then activated by non-linear functions to obtain the Gaussian parameters, such as the opacity and depth. 
-The Gaussian Splatting implementation of \cite{3dgs} is used for rasterization to generate $360^\circ$ views of the original input image.
-TALKA BOUT ARCH MORE, 
-Each blue box corresponds to a multi-channel feature map, with the number of channels denoted on top of each box. The x-y size is provided at the lower left edge of the box. White boxes represent copied feature maps. The arrows denote the different operations.
-\newline
+These parameters are then activated by non-linear functions to obtain the Gaussian parameters, such as the opacity and depth.
 
-XXX
+\noindent
+The Gaussian Splatting implementation of \cite{3dgs} is used for rasterization to generate $360^\circ$ views of the original input image from these parameters. As shown in figure \ref{fig:3dgs}, Gaussian splatting then optimizes and adaptively controls the density of this set of 3D Gaussians, using a fast tile-based renderer during optimization. The renderer allows $\alpha$-blending of anisotropic splats, respecting visibility order thanks to fast sorting. It also includes a fast backwards pass by tracking accumulated $\alpha$ values, without a limit on the number of Gaussians that can receive gradients. This helps to quickly generate new images of novel views.
+\newline
 
 \subsection{Algorithm improvements}
 [Explain what you implemented to improve over the baseline. You may include figures to explain the idea and logic. Focus on the ideas and not the implementation.]
@@ -585,8 +592,39 @@ We then use Pixel Based Visual Information Fidelity to compare the normal maps g
     \label{fig:vifgraph}
 \end{figure}
 
+\begin{table}[H]
+    \centering
+    \caption{Comparison of normal map generation models on ShapeNet renders. $\uparrow$ indicates higher is better, $\downarrow$ indicates lower is better. The images are labelled easy or hard.}
+    \label{tab:normals_results}
+    \begin{tabular}{llccc}
+        \toprule
+        \textbf{Difficulty} & \textbf{Model} & \textbf{Input dimensions} & \textbf{Mean VIF} $\uparrow$  & \textbf{Standard deviation of VIF}$\downarrow$\\
+        \midrule
+        \multirow{6}{*}{Easy} 
+        & \multirow{3}{*}{ScanNet}
+         & 224x224 & 0.400 & 0.0826 \\
+         & & 448x448 & 0.463 & 0.0802 \\
+         & & 896x896 & \textbf{0.541} & 0.119\\
+        & \multirow{3}{*}{NYUv2}
+         & 224x224 & 0.420 & 0.0736 \\
+         & & 448x448  & 0.451 & 0.0784 \\
+         & & 896x896  & 0.474 & 0.0901 \\
+         \midrule
+         \multirow{6}{*}{Hard} 
+        & \multirow{3}{*}{ScanNet}
+         & 224x224 & 0.408 & 0.0905 \\
+         & & 448x448 & 0.466 & 0.0976 \\
+         & & 896x896 & \textbf{0.526} & 0.125\\
+        & \multirow{3}{*}{NYUv2}
+         & 224x224 & 0.406 & 0.0749 \\
+         & & 448x448  & 0.444 & 0.0839 \\
+         & & 896x896  & 0.472 & 0.0981  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
 \noindent
-From Figure \ref{fig:vifgraph} we see that that normal map generation quality increases when passing in larger input arguments and that the model trained on ScanNet generates normal maps that are closer to the ground truth compared to that trained on NYUv2 on average. Hence, in the final model we decided to use the model trained on ScanNet on the ShapeNet database in \cite{ShapeNet}.
+From figure \ref{fig:vifgraph} and table \ref{tab:normals_results} we see that that normal map generation quality increases when passing in larger input arguments and that the model trained on ScanNet generates normal maps that are closer to the ground truth compared to that trained on NYUv2 on average. Hence, in the final model we decided to use the model trained on ScanNet on the ShapeNet database in \cite{ShapeNet}.
 
 \begin{figure}[H]
     \centering
@@ -621,7 +659,7 @@ Without passing in dimensions larger than the input image into the model, we can
 Depth maps store the distance of a surface from the camera per-pixel. These distances vary in type, such as metric, which considers the physical distance from the camera to the observed point, and relative (such as those produced by the models below). Monocular depth estimation (MDE) models input just a singular image, and produce a depth map (relative distance). 
 
 \noindent
-Produced depth maps were compared against the ``ground truths'' produced by \url{https://github.com/Xharlie/ShapenetRender_more_variation}, as was done in the normal priors exploration. An example of the depth map produced by them is visible in Figure  \ref{fig:ground_truth}. However, it is important to note that these depth map ``ground truths'' were not always perfect, as can be seen in the following example: 
+Produced depth maps were compared against the ``ground truths'' within \url{https://github.com/Xharlie/ShapenetRender_more_variation}, provided by  \cite{xu2019disn}, as was done in the normal priors exploration. An example of the depth map produced by them is visible in Figure  \ref{fig:ground_truth}. However, it is important to note that these depth map ``ground truths'' were not always perfect, as can be seen in the following example: 
 
 \begin{figure}[H]
     \centering
@@ -681,6 +719,34 @@ Although \texttt{DPT\_Hybrid} appears to align more closely with the GT depth ma
     \caption{Depth Maps produced by the MiDaS models}
     \label{fig:depth_example}
 \end{figure}
+
+
+\noindent
+\textbf{Exploration of Depth Discontinuities}
+\noindent
+\\We also explored the utility of explicit depth discontinuity features, or depth edges. These reflect sudden changes in depth values (when the first spatial derivative of the depth function is large) within a depth map. These can serve as a proxy for occlusion boundaries, and we were investigated as they potentially aid in separating foreground objects from background geometry.
+
+\noindent
+We looked four classical edge detection operators applied directly to the estimated depth maps:
+\begin{enumerate}
+\item \textbf{Canny Edge Detector:} Tends to produce sparse, crisp boundaries, but with noisy depth maps, it can form edges that are disjoint. Available within the OpenCV (\texttt{cv2.Canny}) library. 
+\item \textbf{Sobel Operator:} Approximates using weighted convolution kernels, acting as a low-pass differentiator. 
+\item \textbf{Scharr Operator:} Similarly to Sobel, uses weights, works to improve the Sobel operator to provide better rotational symmetry. 
+\item \textbf{Prewitt Operator:} Similar to Sobel, but uses a simpler integer-valued kernel (uniform weighting across rows and columns). 
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=1.0\linewidth]{images/edgeoperators_results.png}
+\caption{Edge operators applied to estimated depth maps. From left to right: Reference RGB, Estimated Depth, Canny, Sobel, Scharr, and Prewitt outputs.}
+\label{fig:depth_edges}
+\end{figure}
+
+\noindent
+Canny produces binary edges that often fragment under the noise inherent in monocular depth estimation. 
+
+\noindent
+While these operators successfully identify major structural outlines, we found that they are at times sensitive to artifacts in the estimated depth maps. Consequently, we determined that explicit edge channels added insufficient benefits compared to other priors, and were excluded.
 
 \subsubsection{Segmentation and Salient Object Detection Exploration}
 
@@ -1180,17 +1246,18 @@ ready-to-use dataset.
 !python /content/3dgs-priors/geometry-priors/generate_base.py --in_folder="{in_folder}" --out_folder="{out_folder}" --save_iter=500
 \end{lstlisting}
 
-The processign scripts geenerate PARQUET FIELS IN THE SET DESTIATION, WITH EXAMPLE ROWS:
-EXAMPLE RGBS
-EXAMPLE PSOES
-EXAMPLE INTRINS
-EXMAPLE DEPTHS
-EXAMPE NORMALS
+\noindent
+The processing scripts generate \verb|parquet| format files containing the dataset or prior information
+alongside relevant metadata, such as the image frame\_id or depicted model's UUID. Namely, the 5 parquet files currently generated are:
+\vspace{5pt}
 
-These can now be used however the user wants to, we add an additional processing step to transform aprquet files into
-file structure appropriate for uplaod to huggingface, matching the following config:
-The parquet files can also be processed into a file structure appropriate for upload to HuggingFace, where the pregenereated datset remains
-avaiable. Models use the pregenerated datasets via a custom laoder we implemented, taht slots in into all of the exisitng training/evlaution code.
+ADD SCHEMAS
+
+\vspace{10pt}
+\noindent
+These files now provide a ready-to-use dataset. To upload the dataset to HuggingFace, additional processing must be performed
+to transform the files into a file structure that's recognisable by HF for purposes of correctly indexing splits and subsets.
+Specifically, we transform the dataset to be compatible with this HuggingFace YAML configuration:
 
 \begin{lstlisting}[language=Python, caption=srn\_cars\_priors HuggingFace file structure config]
 ---
@@ -1242,21 +1309,50 @@ configs:
 ---
 \end{lstlisting}
 
-CODE BLOCK FOR HF UPLOAD
+\begin{lstlisting}[language=Python, caption=srn\_cars\_priors HuggingFace file structure config]
+# Split generated parquets into correct folder/file structure for HuggingFace upload
+%cd /content/
+!mkdir upload
+%cd upload
 
-A DIAGRAM OF HOW THIS WHOLE PEIPLEINE WORKS IS SEEN IN FIGURES
+datatypes = ["rgbs", "intrins", "poses", "depths", "normals"]
+splits = ["train", "test", "val"]
 
+for datatype in datatypes:
+    # Make a directory for the current dataset file
+    !mkdir {datatype}
+    %cd {datatype}
+    load_path = os.path.join(out_folder, datatype + ".parquet")
+    dataset = load_dataset("parquet", data_files=load_path)['train']
+    for split in splits:    
+        # Generate split specific directory
+        !mkdir {split} 
+        save_path = "/content/upload/{}/{}/{}.parquet".format(datatype, split, datatype) 
+        filter_split = lambda data: data['split'] == split
+        filtered = dataset.filter(filter_split).to_pandas().drop(columns=['split'])
+        filtered.to_parquet(save_path)
+    %cd ..
+\end{lstlisting}
+
+\noindent
+A diagram depicting this pipeline can be seen at Figure X.
+\newline
+
+\noindent
 Take a concretne example, we offer one ready pregenerated dataset on HF:
 We took our input data from the ShapeNet-SRN dataset from \cite{srn} at $128 \times 128$ resolution.
 transform pipeline standard, the depth, rgb, normal columns
 store images as uint8s in C H W format, this is as there is X images, do math, thus this manmy GB of data,
 we must un fortunately for compute reasons take this loss of accuracy.
 
+\noindent
+Models use the pregenerated datasets via a custom laoder we implemented, taht slots in into all of the exisitng training/evlaution code.
 AS STATED EARILR SECTION, WE HAVE CUSTOM DATASET FOR LAODER, THAT DOWNLOADS HF DATASET, AND PROCESSES TO STORE 
 AS CORRECT PANDAS DATAFRAME TO RETURN DATA
 
-DURIGN TRAINING WANDB SAVES WEIGHT OCCASNIONALLY
-WEIGHTS ARE FUSED AT SAVE
+DURING TRAINING/ATT EMD ARE SAVED FOLLOWING FILES:
+
+THESE ARE UPLAODED 
 THESE WEIGHTS ARE UPLOADED TO HF WITH THIS NAMING SCHEME:
 
 NAMING CODE BLOCK
@@ -1329,9 +1425,8 @@ manually grafted reference model.
 \newline
 
 \noindent
-The \verb|downloader_test.ipynb| notebook tests our custom Dataset and ready generated \verb|cars_priors| data.
-It does so via the standard method for testing new Dataset implementations; by loading both the previous reference \verb|srn.py|
-Dataset and our new \verb|srn_priors.py| Dataset, walking both in an ordered mannered using Torch DataLoaders with shuffling disabled,
+The \verb|dataloader_test.ipynb| notebook tests our custom Dataset and ready generated \verb|cars_priors| data.
+It does so by loading both the previous reference \verb|srn.py| Dataset and our new \verb|srn_priors.py| Dataset, walking both in an ordered mannered using Torch DataLoaders with shuffling disabled,
 and then comparing the resulting batches, which in our case means comparing common dictionary entries, where common key/values entries should be identical.
 \newline
 
@@ -1342,9 +1437,14 @@ All tests in these notebooks were passed successfully; each notebook should have
 \subsection{Datasets}
 [Explain the datasets utilized: what they contain, why they are utilized, assumptions, limitations, possible extensions.]
 
+\noindent
 The standard benchmark for evaluating single-view 3D reconstruction is ShapeNet-SRN \cite{srn}, hence we used this to test and evaluate our main model implementation. For this dataset, we specifically use the "Car" class, which used the "car" class of ShapeNet v2 \cite{ShapeNet} with 2.5k 3D CAD model instances. The SRN dataset was generated by disabling transparencies and specularities and training on 50 observations of each instance at a resolution of $128 \times 128$ pixels, with camera poses being randomly generated on a sphere with the object at the origin. A limitation of this dataset is the lack of subject variety in the dataset as the model may end up overfitting to cars. A possible extension to address this limitation could be to include other classes in the ShapeNet-SRN database to make sure that the model can still generalise to other types of objects.
 
-An extension of this dataset is implemented in \cite{xu2019disn}, which presents a Deep Implicit Surface Network to generate a 3D mesh from a 2D image by predicting the underlying signed distance fields. In the paper, they generated a 2D dataset composed of renderings of the models in ShapeNet Core \cite{ShapeNet}. For each mesh model, the dataset provides 36 renderings with smaller variation and 36 views with larger variation (bigger yaw angle range and larger distance variation). The object is allowed to move away from the origin, which provides more degrees of freedom in terms of camera parameters, and the "roll" angle of the camera is ignored since it was deemed very rare in real-world scenarios. The images were rendered at a higher resolution of $224 \times 224$ pixels and were paired with a depth image, a normal map and an albedo image as shown in figure \ref{fig:ground_truth}. This dataset was mainly used as a ground truth to evaluate the generation of geometry priors (e.g. normal map and depth map). A limitation of this dataset would be its small size since only 72 samples are available for us to use, such that the performance of geometry prior generation may not be evaluated correctly. However, in the same GitHub repository, the script to generate these images from the ShapeNet Core dataset is provided, so a possible extension given more time could be to include more images by running the script on other objects in the ShapeNet Core dataset. Another limitation is that some of the depth maps provided were flawed as shown in figure \ref{fig:depth_poor_gt}, so using them as ground truths to evaluate the performance of the depth map generator model was not ideal. In the future, evaluation could benefit from regenerating these depth maps to be more accurate, perhaps by exploring a different method of depth map generation from the 3D model provided in the ShapeNet Core dataset.
+\noindent
+We also use an extension of this dataset at \url{https://github.com/Xharlie/ShapenetRender_more_variation} which was produced by \cite{xu2019disn}, which presents a Deep Implicit Surface Network to generate a 3D mesh from a 2D image by predicting the underlying signed distance fields. \cite{xu2019disn} generated a 2D dataset composed of renderings of the models in ShapeNet Core \cite{ShapeNet}. For each mesh model, the dataset provides 36 renderings with smaller variation and 36 views with larger variation (bigger yaw angle range and larger distance variation). The object is allowed to move away from the origin, which provides more degrees of freedom in terms of camera parameters, and the "roll" angle of the camera is ignored since it was deemed very rare in real-world scenarios. The images were rendered at a higher resolution of $224 \times 224$ pixels and were paired with a depth image, a normal map and an albedo image as shown in figure \ref{fig:ground_truth}. This dataset was mainly used as a ground truth to evaluate the generation of geometry priors (e.g. normal map and depth map). The ground truth subset also included an alpha channel, which allowed us to determine a deterministic binary marks. This allowed us to quantitatively evaluate the performance of our Salient Object Detection (SOD) models. The samples within this dataset are categorised into `Easy' and `Hard', which allowed us to evaluate the performance of geometry prior generation on different levels of difficulty. 
+
+\noindent
+A limitation of this dataset would be its small size since only 72 samples are available for us to use, such that the performance of geometry prior generation may not be evaluated correctly. However, in the same GitHub repository, the script to generate these images from the ShapeNet Core dataset is provided, so a possible extension given more time could be to include more images by running the script on other objects in the ShapeNet Core dataset. Another limitation is that some of the depth maps provided were flawed as shown in figure \ref{fig:depth_poor_gt}, so using them as ground truths to evaluate the performance of the depth map generator model was not ideal. In the future, evaluation could benefit from regenerating these depth maps to be more accurate, perhaps by exploring a different method of depth map generation from the 3D model provided in the ShapeNet Core dataset.
 
 \subsection{Training and testing results}
 [Explain the training and testing results with graphs and elaborating on why they make sense, what could be improved.]
@@ -1352,14 +1452,36 @@ An extension of this dataset is implemented in \cite{xu2019disn}, which presents
 \subsection{Qualitative results}
 [Show in figures and explain visual results. Include different interesting cases covering different aspects/ limitations/ dataset diversity. If not converged, explain what we can expect once converged. Include any other didactic examples here.]
 
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.35\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/lora_example246_gt.png} 
+        \caption{Ground Truth}
+        \label{fig:gt_sample}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.35\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/lora_example246_produced.png} 
+        \caption{LoRA Prediction)}
+        \label{fig:lora_sample}
+    \end{subfigure}
+    
+    \caption{Comparison of novel view case. (a) Ground truth rendering of the target view. (b) Reconstruction by a LoRA-adapted model.}
+    \label{fig:lora_qualitative_comparison}
+\end{figure}
+
+One example of evaluation output can be seen in \ref{fig:lora_qualitative_comparison}, where LoRA adapters were trained with a rank of 2, $\alpha$ of 2 (both low compared to standards) and dropout of 0.05. The LoRA-adapted model is able to reconstruct the car from a novel view while preserving details such as headlights, despite the low parameter overhead.
+
 \subsection{[Optional] Quantitative results}
 [A table and associated explanations for quantitative results.]
-
+\subsubsection{Metrics}
 For novel view synthesis evaluation, PSNR (Peak Signal-to-Noise Ratio), SSIM (Structural Similarity Index) and LPIPS (Learned Perceptual Image Patch Similarity) are standard metrics used to evaluate image quality from different perspectives\cite{zhang2025advancesfeedforward3dreconstruction}. 
 PSNR is calculated using the mean squared error and is commonly used to quantify reconstruction quality, such that a high PSNR suggests higher reconstruction quality. Meanwhile, SSIM depends on 3 metrics mimicking the human visual perception system: luminance, contrast and structure, where an SSIM score close to 1 indicates high similarity while a score closer to -1 indicates low similarity. Lastly, unlike pixel-wise metrics like PSNR and SSIM that assume pixel independence, LPIPS measures the perceptual similarity between images by comparing their features extracted from a deep neural network, where a low LPIPS score indicates that the compared images are perceptually similar to humans.
 
 To evaluate whether integrating different geometry priors into the model is effective, we performed a set of experiments testing different combinations of geometry priors. We measured the performance using PSNR, SSIM and LPIPS. 
 
+\subsubsection{Ablation study on geometry priors, U-Net integration}
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{images/stats-results/priors_psnr_distribution.png}
@@ -1439,10 +1561,8 @@ We tested multiple configurations by varying these hyperparameters, while keepin
 
 From figures \ref{fig:lora_psnr}, \ref{fig:lora_ssim} and \ref{fig:lora_lpips}, we can see that all changed models now perform more consistently, as shown by the lower variance in all metrics as compared to the baseline. The PSNR metrics in figure \ref{fig:lora_psnr} and the SSIM metrics in figure \ref{fig:lora_ssim} also suggest better image reconstruction overall due to having higher mean PSNRs and SSIMs than the baseline, with the configuration $r=4, \alpha=1$ performing the best with the highest mean PSNR and SSIM. This configuration also has a lower mean LPIPS score than the baseline, further supporting our claim that this configuration is best for augmenting the model, while the other 2 configurations have higher mean LPIPS scores.
 
-\subsection{[Optional] Comparison to state-of-the-art}
-[Qualitative and/ or quantitative comparisons to one or more recent works, especially the baseline work.]
-
 (Placeholder LoRA results comparison with SplatterImage) We can compare our LoRA results with the original Splatter Image paper \cite{splatterImage}. 
+
 
 \section{Chapter 4: Conclusions and Future Directions}
 \subsection{Conclusions}
@@ -1455,16 +1575,19 @@ halluciantion in hidden areas still a problem, as at end of the day you dont kno
 lot of data cnd comptue needed to perofrm accurate reweults
 we lacked compute to generate and test more models priors
 
+ShapeNet time to get access etc, reasoning for using the variation dataset rather than generating our own, given time constraints. 
+
 \subsection{Future directions}
 [State a few future directions for research and development. These typically follow from the discussion on limitations.]
 
-generating and testing mroe priors (espoecially more priors aoriented to hidden areas, could bring up planes again)
-implementing and comapring cross-attention vs FiLM for multimodal data
+generating and testing more priors (especially more priors oriented to hidden areas, could bring up planes again)
+implementing and comparing cross-attention vs FiLM for multimodal data
 trying longer training times
 trying alternative datasets
 Trying alternatigve metrics for 3D reconstruction, like Chaumfeer distance, for exampel could sample
 off bunch of points of SRN cars meshes to genrate point cloud, then treat gaussians as point cloud and do comaprison
 
+As mentioned in last supervisor meeting: explicit loss function/rendering loss: e.g. depth edges for tinier Gaussians (based on the size of the covariance matrix), could help with fine details. 
 \subsection{Project Contributions}
 
 \noindent
@@ -1472,11 +1595,11 @@ off bunch of points of SRN cars meshes to genrate point cloud, then treat gaussi
 \newline
 Section 1.1: Kacper and Alex
 \newline
-Section 1.2: Kacper
+Section 1.2: Kacper and Alex
 \newline
 Section 1.3: Kacper
 \newline
-Section 2.1: Kacper and Radhika and Alex
+Section 2.1: Alex
 \newline
 Section 2.2: Kacper and Radhika
 \newline
@@ -1488,15 +1611,13 @@ Section 2.5: Kacper and Radhika
 \newline
 Section 2.6: Kacper
 \newline
-Section 3.1: Alex
+Section 3.1: Alex and Radhika
 \newline
 Section 3.2: Radhika
 \newline
-Section 3.3: FILL IN
+Section 3.3: Radhika
 \newline
 Section 3.4: Radhika and Alex
-\newline
-Section 3.5: FILL IN
 \newline
 Section 4.1: FILL IN
 \newline
@@ -1519,6 +1640,8 @@ Recording: Kacper and Radhika and Alex
 \textbf{Technical Contributions:}
 \newline
 Depths exploration: Radhika
+\newline
+Edge operators exploration: Radhika
 \newline
 Segmentation exploration: Radhika
 \newline
@@ -1552,7 +1675,7 @@ Graphing code: Alex
 \newline
 Testing custom Dataset: Kacper
 \newline
-Testing evaluation: Kacper
+Testing evaluation: Kacper and Radhika
 \newline
 Testing prior configurations: Kacper
 \newline
