@@ -1949,30 +1949,38 @@ Through our ablation study, we also saw that Splatter Image performed best when 
 
 \subsection{Discussion of limitations}
 [Explain the limitations of your technique. You may want to refer to previous sections or show figures on the limitations.]
+\newline
 
-Our biggest limitations stemmed from a lack of time, compute reseources, and tooling problems.
-Splatter Image, despite it's relative high oerforamcne for a deep learnign recosuntcion model, still requires high grade hardware to run,
-and requires long amounts of time on said hardware to perform tasks like training. 
-
-In terms of tooling, we used Google Colab Pro+ to give us access to A100 GPUs and 24 hour execution notebooks, despite these promises, we found 
+\noindent
+Our biggest limitations stemmed from a lack of time, compute resources, and tooling problems.
+Splatter Image, despite its relative high performance for a deep learning reconstruction model, still requires powerful hardware to run.
+Not only does it need access to powerful hardware, but it needs access for lengthy periods of time, as to perform tasks like training. 
+In terms of tooling and hardware, we used Google Colab Pro+ to give us access to A100 GPUs and 24 hour execution notebooks; despite these promises, we found 
 that our notebooks running overnight were very often randomly killed by Google, this caused the complete loss of the VM/notebook and all associated progress 
-(namely model training progress). This meant we could not reliably train models to achieve comparable results to the original pretrained models
-which were trained continuosly on A6000 GPUs over a period of 7 days. 
+(namely model training progress). This meant we could not reliably train models to achieve comparable results to the original pretrained models, or truly
+show the effectiveness of our modifications, where for comparison, the Splatter Image provided pretrained models were trained continuously on A6000 GPUs over a period 
+of 7 days.  Should we have reached adequate training time, the quality of our selected prior models would have likely been the limiting factor
+for improvements to Splatter Image, as Splatter Image can only be as good as the quality of the input (principle of garbage-in-garbage-out).
+\newline
 
+\noindent
+Another set of limitations came in the form of poor documentation. During research of prior models
+we often struggled to run the models in the first place, due to incorrectly provided 
+package requirements, serious (or in some cases total) lack of instructions on how
+to launch and use the models, or no reference implementations being publicly provided at all, as was often the case with reserach papers.
+\newline
+
+\noindent
 We were also given access to the reference SRN cars dataset at a very late stage in the project, which did not leave us enough time 
-to implement desired things like calculting our own groudn truths, or bneing able to geenrate point clouds to be able to calcualte 
-Chaumffer distance as an addtional metric for all models. 
-
-In terms of the limitations of splatter image halluciantion in hidden areas still a problem, as at end of the day you dont know what there,
-lot of data cnd comptue needed to perofrm accurate reweults
-ute to generate and test more models priors
-
-ShapeNet time to get access etc, reasoning for using the variation dataset rather than generating our own, given time constraints. 
+to implement desired things like calculating our own reliable ground truths, or being able to implement additional reconstruction metrics like 
+Chamfer distance, where we could have generated point clouds from SRN car models necessary for the calculation.
 
 \subsection{Future Directions}
 \label{sec:future}
 [State a few future directions for research and development. These typically follow from the discussion on limitations.]
- TEST 
+\newline
+
+TEST 
 implementing and comparing cross-attention vs FiLM for multimodal data
 Trying alternatigve metrics for 3D reconstruction, like Chaumfeer distance, for exampel could sample
 off bunch of points of SRN cars meshes to genrate point cloud, then treat gaussians as point cloud and do comaprison
@@ -2026,7 +2034,7 @@ Section 3.4: Radhika and Alex
 \newline
 Section 4.1: Alex
 \newline
-Section 4.2: FILL IN
+Section 4.2: Kacper
 \newline
 Section 4.3: Radhika and Alex
 \newline
