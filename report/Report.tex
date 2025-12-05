@@ -407,11 +407,11 @@ generated plane equations
 
 
 \subsubsection{Low-Rank Adaptation (LoRA)}
-\label{section:lora}
+\label{sec:lora_parameters}
 To address the computational constraints of training the full U-Net architecture, we integrated Low-Rank Adaptation (LoRA) \cite{HuLoRA}
 directly into our GaussianPredictor, to instead allow for fine-tuning. While our implementation shares a similar class structure to the official \texttt{loralib} library
 \cite{hu2022lora} (utilizing mixins to wrap \texttt{Linear} and \texttt{Conv2d} layers), we manually adapted the forward pass to support 
-the specific channel dimensions of the Splatter Image architecture (further details can be found in \textbf{Section 2.3.6: Manual LoRA Integration}).
+the specific channel dimensions of the Splatter Image architecture (further details can be found in \textbf{Section \ref{sec:lora}: Manual LoRA Integration}).
 
 \noindent
 Adapters are small modules placed after the frozen modules we wish to adapt, such as linear and convolutional layers. The adapter accepts the same input dimension as the original layer and produces the same output dimension. This allows the output from the adapter to be summed element-wise with the frozen layer's output.
@@ -758,7 +758,7 @@ We looked four classical edge detection operators applied directly to the estima
 Canny produces binary edges that often fragment under the noise inherent in monocular depth estimation. 
 
 \noindent
-While these operators successfully identify major structural outlines, we found that they are at times sensitive to artifacts in the estimated depth maps. Consequently, we determined that explicit edge channels added insufficient benefits compared to other priors, and were excluded. However, while these edge operators were not used as input priors, we discuss their potential application in \textbf{Section 4.3 Future Directions}. 
+While these operators successfully identify major structural outlines, we found that they are at times sensitive to artifacts in the estimated depth maps. Consequently, we determined that explicit edge channels added insufficient benefits compared to other priors, and were excluded. However, while these edge operators were not used as input priors, we discuss their potential application in \textbf{Section \ref{sec:future} Future Directions}. 
 
 \subsubsection{Segmentation and Salient Object Detection Exploration}
 
@@ -929,7 +929,7 @@ All prior generation scripts can be found in the \verb|/geometry-priors| folder 
 \noindent
 As to improve training and evaluation performance, we chose to generate priors in advance for selected datasets. As such we developed
 a pipeline that executes the prior generation scripts and constructs a ready-to-use dataset, alongside a custom Torch Dataset class that can read said dataset.
-Implementation details can be found in \textbf{Section 2.4: Data pipelines}.
+Implementation details can be found in \textbf{Section \ref{sec:data_pipelines}: Data pipelines}.
 
 \subsubsection{Model Changes}
 
@@ -991,9 +991,10 @@ implement the cross-attention mechanism for multimodal data input into the model
 \noindent
 One of our desired features was to allow a model with new priors to be fine-tuned using existing weights, namely those from the
 pretrained Splatter Image models. This was achieved by grafting the old weights of a pretrained model onto a new instance of a GaussianSplatPredictor. This grafting mechanism was implemented externally to the model, as such its implementation details are covered in
-\textbf{Section 2.3.7: Training and Evaluation Changes}.
+\textbf{Section \ref{sec:training_and_eval_changes}: Training and Evaluation Changes}.
 
 \subsubsection{Manual LoRA Integration}
+\label{sec:lora}
 To adapt Splatter Image for fine-tuning on the ShapeNet-SRN Cars dataset (with depth and normal priors), we added Low-Rank Adaptation (LoRA) \cite{HuLoRA} into the GaussianPredictor module of Splatter Image.
 LoRA adds low-rank trainable matrices into frozen, pretrained layers. This preserves the base model, while further fine-tuning it to the new data. 
 
@@ -1024,6 +1025,7 @@ if lora_rank > 0 and kernel > 0 and self.weight is not None and not self.up and 
 \end{lstlisting}
 
 \subsubsection{Training and Evaluation Changes}
+\label{sec:training_and_eval_changes}
 The existing Splatter Image evaluation script needed minimal changes, thanks to how we integrated our priors into the project.
 The training script initially needed minimal changes, but then was split into two versions, one with minimal changes for standard training,
 and one with additional changes required for LoRA support. 
@@ -1225,6 +1227,7 @@ For the LoRA-specific training script, within the modified \texttt{GaussianPredi
 CODE BLOCK
 
 \subsection{Data pipelines}
+\label{sec:data_pipelines}
 [Explain your data format, how you consume the data in your algorithms, and data augmentation.]
 \newline
 
@@ -1386,7 +1389,7 @@ A diagram depicting this pipeline can be seen at Figure X.
 
 \noindent
 We offer one ready dataset computed using this pipeline on HuggingFace at \url{https://huggingface.co/datasets/MVP-Group-Project/srn_cars_priors}.
-More details about ShapeNet cars, which the precomputed dataset is based off, can be found in \textbf{Section 3.1: Datasets}.
+More details about ShapeNet cars, which the precomputed dataset is based off, can be found in \textbf{Section \ref{sec:datasets}: Datasets}.
 \newline
 
 \noindent
@@ -1565,6 +1568,29 @@ A limitation of this dataset would be its small size since only 72 samples are a
 \subsection{Training and testing results}
 [Explain the training and testing results with graphs and elaborating on why they make sense, what could be improved.]
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{report/images/Validation_loss_comparison_PSNR_novel.png}
+    \caption{Validation PSNR from 5000-10000 iterations}
+    \label{fig:val_psnr}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{report/images/Validation_loss_comparison_SSIM_novel.png}
+    \caption{Validation SSIM from 5000-10000 iterations}
+    \label{fig:val_ssim}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{report/images/Validation_loss_comparison_LPIPS_novel.png}
+    \caption{Validation LPIPS from 5000-10000 iterations}
+    \label{fig:val_lpips}
+\end{figure}
+
+When considering LoRA, the validation metrics from 5 to 10,000 iterations of finetuning reveal a distinct plateau, as we can note the y-axis scale as being extremely tight. Despite testing different rank configurations, we reached what appears to be the convergence limit of the weights early in the fine-tuning process, although it would be beneficial to confirm this by carrying on for longer or confirm this with other configurations. These metrics are discussed further in \textbf{Section \ref{sec:lora_results}: LoRA Experiment Results}.
+
 \subsection{Qualitative results}
 [Show in figures and explain visual results. Include different interesting cases covering different aspects/ limitations/ dataset diversity. If not converged, explain what we can expect once converged. Include any other didactic examples here.]
 
@@ -1598,7 +1624,7 @@ As observed below, both tests visually achieve very similar results in compariso
 \end{figure}
 
 \noindent
-The primary challenge of single-view reconstruction lies in novel view synthesis (which is consequently the focus of \textbf{Section 3.4: Quantitative Results}), where the model must infer occluded geometry without direct data. Figure \ref{fig:novel_comparison} illustrates this capability.
+The primary challenge of single-view reconstruction lies in novel view synthesis (which is consequently the focus of \textbf{Section \ref{sec:quant}: Quantitative Results}), where the model must infer occluded geometry without direct data. Figure \ref{fig:novel_comparison} illustrates this capability.
 
 \noindent
 The results in the following for a LoRA-adapted model is for a configuration of rank 32, $\alpha$ 16, and dropout 0.05. 
@@ -1626,6 +1652,7 @@ The results in the following for a LoRA-adapted model is for a configuration of 
     
 \end{figure}
 \subsection{[Optional] Quantitative Results}
+\label{sec:quant}
 [A table and associated explanations for quantitative results.]
 \subsubsection{Metrics}
 For novel view synthesis evaluation, PSNR (Peak Signal-to-Noise Ratio), SSIM (Structural Similarity Index) and LPIPS (Learned Perceptual Image Patch Similarity) are standard metrics used to evaluate image quality from different perspectives\cite{zhang2025advancesfeedforward3dreconstruction}. 
@@ -1707,7 +1734,8 @@ We conduct a two-sided significance test with non-parametric resampling to calcu
 Adding combinations of depth and normal priors to augment the model with geometry priors seems to make the model perform more consistently, as shown by the lower variance in all metrics as compared to the baseline in figures \ref{fig:priors_psnr}, \ref{fig:priors_ssim} and \ref{fig:priors_lpips}. All augmented models have a higher mean PSNR and SSIM from figures \ref{fig:priors_psnr} and \ref{fig:priors_ssim} respectively which suggests better image reconstruction quality, with the model adding both depth and normal priors performing the best. As expected, all augmented models are worse than the baseline with regards to LPIPS (as shown in figure \ref{fig:priors_lpips}), since these models were not trained with LPIPS.
 
 \subsubsection{LoRA Experiment Results}
-To evaluate whether Low-Rank Adaptation (as described in \textbf{Section 2.3.5}) is effective, we performed a set of fine-tuning experiments on the ShapeNet-SRN Cars dataset. As mentioned in Section \ref{section:lora}, LoRA behaviour is primarily controlled by three hyperparameters: rank ($r$), alpha ($\alpha$), and dropout ($d$). We tested multiple configurations by varying these hyperparameters while keeping all other components constant, measuring performance using PSNR, SSIM, and LPIPS.
+\label{sec:lora_results}
+To evaluate whether Low-Rank Adaptation (as described in \textbf{Section \ref{sec:lora}: Manual LoRA Integration}) is effective, we performed a set of fine-tuning experiments on the ShapeNet-SRN Cars dataset. As mentioned in \textbf{Section \ref{sec:lora_parameters}: Low-Rank Adaptation (LoRA)}, LoRA behaviour is primarily controlled by three hyperparameters: rank ($r$), alpha ($\alpha$), and dropout ($d$). We tested multiple configurations by varying these hyperparameters while keeping all other components constant, measuring performance using PSNR, SSIM, and LPIPS.
 
 Table \ref{tab:lora_5k} presents the quantitative results for novel view synthesis early in the process (after 5,000 iterations).
 
@@ -1792,7 +1820,7 @@ We can produce distribution plots for the scores files:
     \end{tabular}
 \end{table}
 
-We conduct a two-sided significance test with non-parametric resampling to calculate the P-value, similar to section \ref{sec:ablation}. We select the power of the test to be 0.05. Since all P-values are less than 0.05 from table \ref{tab:lora_results}, we conclude that the metrics for models with LoRA significantly differ from that of the original model.
+We conduct a two-sided significance test with non-parametric resampling to calculate the P-value, similar to \textbf{Section \ref{sec:ablation}: Ablation Study Results}. We select the power of the test to be 0.05. Since all P-values are less than 0.05 from table \ref{tab:lora_results}, we conclude that the metrics for models with LoRA significantly differ from that of the original model.
 
 % From figures \ref{fig:lora_psnr}, \ref{fig:lora_ssim} and \ref{fig:lora_lpips}, we can see that all changed models now perform more consistently, as shown by the lower variance in all metrics as compared to the baseline. The PSNR metrics in figure \ref{fig:lora_psnr} and the SSIM metrics in figure \ref{fig:lora_ssim} also suggest better image reconstruction overall due to having higher mean PSNRs and SSIMs than the baseline, with the configuration $r=4, \alpha=1$ performing the best with the highest mean PSNR and SSIM. This configuration also has a lower mean LPIPS score than the baseline, further supporting our claim that this configuration is best for augmenting the model, while the other 2 configurations have higher mean LPIPS scores.
 
@@ -1810,6 +1838,7 @@ we lacked compute to generate and test more models priors
 ShapeNet time to get access etc, reasoning for using the variation dataset rather than generating our own, given time constraints. 
 
 \subsection{Future Directions}
+\label{sec:future}
 [State a few future directions for research and development. These typically follow from the discussion on limitations.]
 
 implementing and comparing cross-attention vs FiLM for multimodal data
@@ -1819,16 +1848,16 @@ off bunch of points of SRN cars meshes to genrate point cloud, then treat gaussi
 \noindent
 One avenue for future work is generating and testing more geometry priors for future research. 
 Due to the lack of time, there were some priors that we deemed not worth investigating. 
-For example, in \textbf{Section \ref{sec:normal} Planes and Normal Maps Exploration}, we discuss how generating predicted scene planes for input images and using them as added priors to augment the model seemed unlikely to help guide reconstruction. 
+For example, in \textbf{Section \ref{sec:normal}: Planes and Normal Maps Exploration}, we discuss how generating predicted scene planes for input images and using them as added priors to augment the model seemed unlikely to help guide reconstruction. 
 In future studies, we could challenge this assumption by generating this prior and testing it alongside other geometry priors in the ablation study. 
 In general, since Splatter Image has most trouble generating sections of novel views that are obscured from the original input image, we could focus on generating and testing more priors oriented to hidden areas.
 
 \noindent
-We could also investigate the integration of explicit geometric loss functions to supplement the current standard losses. A specialised `rendering loss' could be introduced that targets depth discontinuities, especially following on from the discussion in \textbf{Section \ref{sec:depth} Depth Map Exploration}. The model could be penalised for failing to reconstruct structural boundaries (by applying edge operators on rendered views and comparing them with ground truth edge maps if possible). This strategy was successfully demonstrated in \cite{gong2024eggsedgeguidedgaussian}. This loss can also be dynamically weighted based on the size of the 3D Gaussian's covariance matrices, as `smaller' Gaussians, with smaller covaraince determinants, generally represent fine details. If this loss is prioritised, i.e. we prioritise areas contributed to by small scale Gaussians, the optimisation process could be forced to resolve fine details, rather than being treated as noise or being approximated by larger Gaussians.  
+We could also investigate the integration of explicit geometric loss functions to supplement the current standard losses. A specialised `rendering loss' could be introduced that targets depth discontinuities, especially following on from the discussion in \textbf{Section \ref{sec:depth}: Depth Map Exploration}. The model could be penalised for failing to reconstruct structural boundaries (by applying edge operators on rendered views and comparing them with ground truth edge maps if possible). This strategy was successfully demonstrated in \cite{gong2024eggsedgeguidedgaussian}. This loss can also be dynamically weighted based on the size of the 3D Gaussian's covariance matrices, as `smaller' Gaussians, with smaller covaraince determinants, generally represent fine details. If this loss is prioritised, i.e. we prioritise areas contributed to by small scale Gaussians, the optimisation process could be forced to resolve fine details, rather than being treated as noise or being approximated by larger Gaussians.  
 
 \noindent
 Another avenue for future work could be to train and evaluate the models with a more diverse set of datasets. 
-As mentioned in \textbf{Section \ref{sec:datasets} Datasets}, our training and tested was conducted with the ShapeNet-SRN cars dataset, which may cause our models to overfit to cars and not generalise well to other types of objects. 
+As mentioned in \textbf{Section \ref{sec:datasets}: Datasets}, our training and tested was conducted with the ShapeNet-SRN cars dataset, which may cause our models to overfit to cars and not generalise well to other types of objects. 
 We could try to address this by training the model with other datasets with different objects, such as the Objaverse \cite{objaverse}\cite{objaversexl} datasets and the CO3D \cite{co3d} dataset. 
 With more computational resources, we could also explore increasing training times for the models to see if their performances can be improved further with more iterations of training.
 
