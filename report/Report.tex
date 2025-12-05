@@ -2060,10 +2060,13 @@ With more computational resources and time, it would be beneficial to do more te
 \subsection{Conclusions}
 
 \noindent
-Altogether, we managed to successfully augment the baseline Splatter Image implementation with our geometry priors being normal and depth maps. We fed these priors to the model both through the input channels and by using LoRA, and found that both approaches resulted in a higher reconstruction quality than the baseline as measured by metrics PSNR, SSIM and LPIPS. By making these lightweight improvements while preserving Splatter Image's key architecture, we increase its quality while still allowing it to maintain its original computational efficiency with its 3D Gaussian Splatting approach. 
+Altogether, we managed to successfully augment the baseline Splatter Image implementation, with the geometry priors integrated in the final implementation being normal and depth maps, which were selected out of a larger subset of priors. These priors were used to augment the Splatter Image model via two methods, the first being by expanding the set of input channels and the latter being LoRA fine-tuning. We found that both of these approaches resulted in a higher reconstruction quality than the baseline as measured by PSNR.
 
 \noindent
-By performing our ablation study, we determined that Splatter Image performed best when augmented with both depth and normal maps, showing that both priors are very useful for informing the model about how to reconstruct unseen parts of the input image. We also found that LoRA finetuning also gave improved results while being efficient, over training of a few thousand iterations and fewer parameters updated than in the full model case. 
+By making these lightweight improvements while preserving Splatter Image's key architecture, we increase its quality while still allowing it to maintain its original computational efficiency with its 3D Gaussian Splatting approach. 
+
+\noindent
+Particularly considering the ablation study, we found that having both depth and normal priors produced the highest quality results, as is evident in the quantitative metrics.
 
 \subsection{Discussion of limitations}
 
@@ -2158,7 +2161,7 @@ Section 3.3: Radhika
 \newline
 Section 3.4: Radhika and Alex
 \newline
-Section 4.1: Alex and Radhika
+Section 4.1: Alex and Radhika and Kacper
 \newline
 Section 4.2: Kacper and Alex
 \newline
