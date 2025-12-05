@@ -2060,7 +2060,8 @@ With more computational resources and time, it would be beneficial to do more te
 \subsection{Conclusions}
 
 \noindent
-Altogether, we managed to successfully augment the baseline Splatter Image implementation, with the geometry priors integrated in the final implementation being normal and depth maps, which were selected out of a larger subset of priors. These priors were used to augment the Splatter Image model via two methods, the first being by expanding the set of input channels and the latter being LoRA fine-tuning. We found that both of these approaches resulted in a higher reconstruction quality than the baseline as measured by PSNR.
+Altogether, we managed to successfully augment the baseline Splatter Image implementation, adding dynamic channel depth initialisation and providing a basic method of for multimodal data input by via FiLM layers. We also successfully implemented training optimisation strategies such as LoRA and weight grafting. 
+Geometry priors were successfully integrated into the project, with the finally selected priors being normal maps, depth maps and segmentation masks, all of which were selected out of a larger subset of priors. Two of these priors were successfully used to augment the Splatter Image model via concatenation to input RGB images, and training efficiency gains from LoRA were positive. We found that both of these approaches resulted in a higher reconstruction quality than the baseline as measured by PSNR.
 
 \noindent
 By making these lightweight improvements while preserving Splatter Image's key architecture, we increase its quality while still allowing it to maintain its original computational efficiency with its 3D Gaussian Splatting approach. 
