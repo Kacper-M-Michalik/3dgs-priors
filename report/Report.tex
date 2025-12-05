@@ -300,7 +300,6 @@ or helping those that may be interested in creating similar adaptations/pipeline
 
 \section{Chapter 2: Method}
 \subsection{Baseline algorithm}
-[Explain the baseline architecture you used to build your algorithm on. You may reproduce figures from the original papers.]
 
 \begin{figure}[H]
     \centering
@@ -328,7 +327,7 @@ As shown in figure \ref{fig:u-net_diagram}, a U-Net model architecture consists 
 The contracting path aims to capture context and follows the typical architecture of a convolutional network, which consists of the repeated application of convolutions, each followed by an activation function and a max pooling operation for downsampling. 
 At each downsampling step we increase the number of feature channels. 
 Afterwards, each step in the expansive path consists of an upsampling of the feature map followed by a convolution that decreases the number of feature channels, enabling precise localization. 
-At the final layer a convolution is used to map each feature vector to the desired number of classes.
+At the final layer a convolution is used to map each feature vector to the desired number of classes. WHAT
 
 \noindent
 For the U-Net used in Splatter Image, learning to predict the Splatter Image can be done on a single GPU using at most 
@@ -337,11 +336,8 @@ of memory was used on each). Most of this neural network architecture is identic
 is replaced with a $1 \times 1$ convolutional layer with $12 + k_c$ output channels, where $k_c \in \{3, 12\}$ depending on the model configuration. 
 The output tensor codes for parameters that are then transformed by non-linear functions to obtain the final Gaussian splat parameters, 
 such as opacity, offset, depth, scale, rotation and colour respectively.
-
-\noindent
-The Gaussian Splatting implementation from \cite{3dgs} is used for rasterization to generate $360^\circ$ views of the original input image from these parameters.
-As shown in figure \ref{fig:3dgs}, Gaussian splatting then optimizes and adaptively controls the density of this set of 3D Gaussians, using a fast tile-based renderer during optimization. The renderer allows $\alpha$-blending of anisotropic splats, respecting visibility order thanks to fast sorting. It also includes a fast backwards pass by tracking accumulated $\alpha$ values, without a limit on the number of Gaussians that can receive gradients. This helps to quickly generate new images of novel views.
-\newline
+The original Gaussian Splatting fast tile-based rasterizer implementation from \cite{3dgs} is used to perform rasterization to generate $360^\circ$ novel views of the 3D reconstruction
+defined by the predicted Gaussian splat.
 
 \subsection{Algorithm improvements}
 [Explain what you implemented to improve over the baseline. You may include figures to explain the idea and logic. Focus on the ideas and not the implementation.]
@@ -352,7 +348,7 @@ As shown in figure \ref{fig:3dgs}, Gaussian splatting then optimizes and adaptiv
 The first modification to Splatter Image's architecture is to allow the model to be initialised with
 a dynamic number of input channels, as opposed to the standard 3 for RGB; the required number of channels
 is calculated by the \verb|GaussianSplatPredictor| module at runtime, based on the supplied training 
-configuration. This allows models to be created that use the desired combination of additional priors.
+configuration. This allows models using the desired combination of additional priors to be instantiated.
 \newline
 
 \noindent
@@ -369,9 +365,9 @@ Since the multimodal input is typically a 1D vector (say a scalar or vector embe
 (Height $\times$ Width $\times$ Channels), the vector is replicated at every single pixel location by being concatenated along 
 the channel dimension. This method is poor due to its computational cost and massive 
 data redundancy: the network is forced to process and store
-the exact same values millions of times, which wastes GPU memory and computation.
+the exact same values many times, which wastes GPU memory and compute.
 \noindent
-Alternatively, Feature-wise Linear Modulation (FiLM) offers a much more efficient method for multimodal data input
+Alternatively, Feature-wise Linear Modulation (FiLM) offers a significantly more efficient method for multimodal data input
 for U-Nets and Convolutional Layers. Instead of multimodal data being inserted into the input image,
 FiLM injects this data by modulating the intermediate feature maps of the network. FiLM layers are 
 inserted into the model at specific points, for example between a convolution and a ReLU activation or at the end of a UNet block, these FiLM layers 
@@ -384,14 +380,14 @@ The FiLM layer then takes the intercepted feature map and applies the FiLM equat
 \end{equation}
 
 \noindent
-This modulated feature map is finally passed on within the network. The method is highly computationally efficient, 
+This modulated feature map is finally passed on within the network. The method is highly efficient, 
 only requiring a multiplication and addition be performed to terms in the feature map, and allows the models image input to remain
 unchanged. As such this strategy of inserting FiLM layers into Splatter Image is how we achieve multimodal data support.
 \newline
 
 \noindent
+Another method for multimodal input consider is cross attention.
 
-Anotehr method for multi modal input is cross attention.
 In cross attention we add crossss attention layers to model.
 Cross attentio nworks by taking pixels in iamge, flattening them to list, 
 this list is then projected using a lienar layer or matmul to matchign dimensions
@@ -511,7 +507,7 @@ Pixel Based Visual Information Fidelity as a metric to evaluate their performanc
 \end{figure}
 
 \noindent
-For normal map generation we used models from \cite{Bae2021} which implements a network which estimates the per-pixel surface normal probability distribution and uses uncertainty-guided sampling to improve the quality of prediction of surface normals. The paper provided code at \url{ https://github.com/baegwangbin/surface_normal_uncertainty} that implemented this method on a network trained on ScanNet \cite{dai2017scannet}, with the ground truth and data split provided by FrameNet \cite{huang2019framenet}, and another trained on NYUv2 \cite{NYUv2}, with the ground truth and data split provided by GeoNet \cite{qi2018geonet} \cite{qi2020geonet++}. Both models take in the original image and dimensions of the image as input and return a corresponding normal map with the same dimensions as the given input dimensions.
+For normal map generation we used models from \cite{Bae2021} which implements a network that estimates the per-pixel surface normal probability distribution and uses uncertainty-guided sampling to improve the quality of prediction of surface normals. The paper provided code at \url{ https://github.com/baegwangbin/surface_normal_uncertainty} that implemented this method on a network trained on ScanNet \cite{dai2017scannet}, with the ground truth and data split provided by FrameNet \cite{huang2019framenet}, and another trained on NYUv2 \cite{NYUv2}, with the ground truth and data split provided by GeoNet \cite{qi2018geonet} \cite{qi2020geonet++}. Both models take in the original image and dimensions of the image as input and return a corresponding normal map with the same dimensions as the given input dimensions.
 We run both pretrained models on the dataset.
 
 \begin{figure}[H]
@@ -568,7 +564,7 @@ We then pass in input dimensions larger than the actual ones into the models, su
 \end{figure}
 
 \noindent
-The normal map generated for images when given larger input dimensions seem to have more clearly defined edges and surface contouring as shown in figures \ref{fig:highdefoutputresized} and \ref{fig:gn2} as compared to figures \ref{fig:highdefoutput} and \ref{fig:gn1}. It is also important to note that the ground truth for NYUv2 is only defined for the centre crop of the image and the prediction is therefore not accurate outside the centre. This is shown in figures \ref{fig:gn1} and \ref{fig:gn2} where noise is generated around the borders of the normal maps.
+The normal maps generated for images given larger input dimensions tend to have more clearly defined edges and surface contouring as shown in figures \ref{fig:highdefoutputresized} and \ref{fig:gn2} as compared to figures \ref{fig:highdefoutput} and \ref{fig:gn1}. It is also important to note that the ground truth for NYUv2 is only defined for the centre crop of the image and the prediction is therefore not accurate outside the centre. This is shown in figures \ref{fig:gn1} and \ref{fig:gn2} where noise is generated around the borders of the normal maps.
 
 \noindent
 To compare our generated normal maps to the ground truth normal maps provided in \cite{xu2019disn}, we first mask out the background of the generated normal maps such that the difference in background colour does not contribute to the evaluation metrics for normal map generation.
@@ -668,7 +664,7 @@ From figure \ref{fig:vifgraph} and table \ref{tab:normals_results} we see that n
 \end{figure}
 
 \noindent
-Without passing in dimensions larger than the input image into the model, we can see from comparing Figures \ref{fig:highdefinput} and \ref{fig:highdefoutput} to Figures \ref{fig:lowdefinput} and \ref{fig:lowdefoutput} that the quality of the normal map generated decreases as the resolution of the original input image decreases. Hence, we pass in much larger input dimensions (512x512) to generate a normal map of higher quality, as shown in Figure \ref{fig:lowdefoutputfixed}.
+Without passing in dimensions larger than the input image into the model, we can see from comparing Figures \ref{fig:highdefinput} and \ref{fig:highdefoutput} to Figures \ref{fig:lowdefinput} and \ref{fig:lowdefoutput} that the quality of the resulting normal map decreases as the resolution of the original input image decreases. Hence, we pass in larger input dimensions (512x512) during normal map generation as to achieve higher quality maps, as shown in Figure \ref{fig:lowdefoutputfixed}.
 
 \subsubsection{Depth Map Exploration}
 \label{sec:depth}
@@ -899,13 +895,13 @@ with torch.no_grad():
 
 \noindent
 An example of a performant rewrite is that of the depth generation python script. 
-As shown in the excerpt, inference operates on batches supplied by a DataLoader, with all other operations also being executed 
+As shown in the excerpt, inference operates on batches supplied by a PyTorch DataLoader, with all other operations also being executed 
 batchwise on the device (the GPU in our case); only once the batch is fully processed is it moved back to regular (host) 
 memory, and the individual priors extracted with relevant metadata for use/saving.
 \noindent
 We also note that predicted depths are quantized to 8-bit unsigned integers, all predicted priors are quantized this way;
-for example normals are quantized from 3 * 32-bit floats to 3 * 8-bit unsigned integers; this is due to memory and storage limitations.
-For example the SRN cars dataset contain 387,956 images, each 128 * 128 pixels, storing only priors such as depths and normals
+for example normals are quantized from 3 $\times$ 32-bit floats to 3 $\times$ 8-bit unsigned integers; this is due to memory and storage limitations.
+For example the SRN cars dataset contain 387,956 images, each 128 $\times$ 128 pixels, storing only priors such as depths and normals
 as 32-bit floats for each image would require: 
 
 \begin{align*}
@@ -1291,20 +1287,23 @@ ready-to-use dataset.
 
 \noindent
 The processing scripts generate \verb|parquet| format files containing the dataset information
-alongside relevant metadata. Parquet FORMAT WAS CHOSEN BECAUSE
-Currently 5 parquet files are generated by \verb|generate_cars_datasets.ipynb|, an example implementation of this pipeline for ShapeNet cars
-specifically, their schemas are:
-\vspace{5pt}
+alongside relevant metadata. Parquet files are chosen as they are the industry standard for storing datasets, as the file format allows 
+for efficient per column compression, support for streaming and quick read times. 
+Currently, 5 parquet files are generated by \verb|generate_cars_datasets.ipynb|, an example implementation of this pipeline for ShapeNet cars
+specifically, their contents are:
 
-ADD SCHEMAS
+\begin{description}
+   \item[srn\_cars\_intrins] UUID, Model Intrinsics
+   \item[srn\_cars\_poses] UUID, Frame ID, Pose matrix 
+   \item[srn\_cars\_rgbs] UUID, Frame ID, RGB Image
+   \item[srn\_cars\_depths] UUID, Frame ID, Depth Image
+   \item[srn\_cars\_normals] UUID, Frame ID, Normal Image
+\end{description}
 
-\vspace{10pt}
 \noindent
-These files provide a ready-to-use dataset. If the dataset is to be uploaded to HuggingFace additional processing must be performed
+These files provide a ready-to-use dataset. If the dataset is to be uploaded to HuggingFace, additional processing must be performed
 to transform the files into a file structure that's recognisable by HF for purposes of correctly indexing splits and subsets.
-Specifically, we transform the dataset to be compatible with this HuggingFace dataset YAML configuration:
-
-THIS ONE HAS NAME SPCIFIC TO ONE OF THE POSSIBLE DATASETS THAT CNA BE PROCESSED
+Specifically, we transform the dataset to be compatible with this style of HuggingFace dataset YAML configuration:
 
 \begin{lstlisting}[language=Python, caption=srn\_cars\_priors HuggingFace file structure config]
 ---
