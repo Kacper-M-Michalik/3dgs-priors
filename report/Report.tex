@@ -318,8 +318,8 @@ or helping those that may be interested in creating similar adaptations/pipeline
 \end{figure}
 
 \noindent
-Splatter Image uses a standard image-to-image neural network architecture to predict a Gaussian for each pixel of the input image I, 
-generating the output image M as the Splatter Image. For this it uses a U-Net, as these have demonstrated excellent performance in image generation 
+Splatter Image uses a standard image-to-image neural network architecture to predict a Gaussian for each pixel of the input image, 
+generating the resulting Splatter Image as output. For this it uses a U-Net, as these have demonstrated excellent performance in image generation 
 \cite{rombach2022highresolutionimagesynthesislatent}, and their ability to capture small image details helps to obtain higher-quality novel view reconstructions. 
 
 \noindent
@@ -1699,7 +1699,7 @@ Those models were then trained for 60,000 additional iterations, with the LPIPS 
 
 \noindent
 In order to isolate the parameter-efficient adaptation due to LoRA, we used a dedicated training script (\texttt{train\_network\_lora.py}). While preserving the data pipeline and training loop architecture as the standard framework, it is necessary to enforce strict freezing where the gradients for the U-Net backbone are disabled. Optimisation is therefore restricted solely to the injected low-rank matrices (as described in \textbf{2.2.1 Low-Rank Adaptation (LoRA)}). 
-All LoRA models were finetuned using the same optimizer settings as the baseline, but with LPIPS enabled. Training was conducted for 10,000 iterations, as discussed later, with checkpoints saved every 1000 iterations to handle restarts. 
+All LoRA models were fine-tuned using the same optimizer settings as the baseline, but with LPIPS enabled. Training was conducted for 10,000 iterations, as discussed later, with checkpoints saved every 1000 iterations to handle restarts. 
 
 \subsection{Testing and Validation Procedures}
 
@@ -1790,7 +1790,7 @@ A limitation of this dataset would be its small size since only 72 samples are a
 \end{figure}
 
 \noindent
-When considering LoRA, the validation metrics from 5 to 10,000 iterations of finetuning reveal a distinct plateau, as we can note the y-axis scale as being extremely tight. Despite testing different rank configurations, we reached what appears to be the convergence limit of the weights early in the fine-tuning process, although it would be beneficial to confirm this by carrying on for longer or confirm this with other configurations. These metrics are discussed further in \textbf{Section \ref{sec:lora_results}: LoRA Experiment Results}.
+When considering LoRA, the validation metrics from 5 to 10,000 iterations of fine-tuning reveal a distinct plateau, as we can note the y-axis scale as being extremely tight. Despite testing different rank configurations, we reached what appears to be the convergence limit of the weights early in the fine-tuning process, although it would be beneficial to confirm this by carrying on for longer or confirm this with other configurations. These metrics are discussed further in \textbf{Section \ref{sec:lora_results}: LoRA Experiment Results}.
 
 \subsection{Qualitative results}
 [Show in figures and explain visual results. Include different interesting cases covering different aspects/ limitations/ dataset diversity. If not converged, explain what we can expect once converged. Include any other didactic examples here.]
