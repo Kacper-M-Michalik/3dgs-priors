@@ -1509,8 +1509,6 @@ In order to isolate the parameter-efficient adaptation due to LoRA, we used a de
 All LoRA models were finetuned using the same optimizer settings as the baseline, namely Adam. Training was conducted for 10,000 iterations, as discussed later, with checkpoints saved every 1000 iterations to handle restarts. 
 
 \subsection{Testing and Validation Procedures}
-[Explain which framework you use, how you implemented the testing/ validation logic.]
-\newline
 
 \noindent
 As discussed in previous sections, our changes often include a variety of runtime assertions to verify 
@@ -1579,21 +1577,21 @@ A limitation of this dataset would be its small size since only 72 samples are a
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{report/images/Validation_loss_comparison_PSNR_novel.png}
+    \includegraphics[width=0.85\textwidth]{images/Validation_loss_comparison_PSNR_novel.png}
     \caption{Validation PSNR from 5000-10000 iterations}
     \label{fig:val_psnr}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{report/images/Validation_loss_comparison_SSIM_novel.png}
+    \includegraphics[width=0.85\textwidth]{images/Validation_loss_comparison_SSIM_novel.png}
     \caption{Validation SSIM from 5000-10000 iterations}
     \label{fig:val_ssim}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{report/images/Validation_loss_comparison_LPIPS_novel.png}
+    \includegraphics[width=0.85\textwidth]{images/Validation_loss_comparison_LPIPS_novel.png}
     \caption{Validation LPIPS from 5000-10000 iterations}
     \label{fig:val_lpips}
 \end{figure}
