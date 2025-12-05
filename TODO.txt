@@ -1,13 +1,5 @@
 2.4
-2.2
-Tests
 2.3 - FiLM
-
-
-
-
-
-
 README
 2.5
 3 - verify what they write
