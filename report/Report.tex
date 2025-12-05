@@ -704,11 +704,8 @@ Although \texttt{DPT\_Hybrid} appears to align more closely with the GT depth ma
     \label{fig:depth_example}
 \end{figure}
 
-
 \noindent
-\textbf{Exploration of Depth Discontinuities}
-\noindent
-\\We also explored the utility of explicit depth discontinuity features, or depth edges. These reflect sudden changes in depth values (when the first spatial derivative of the depth function is large) within a depth map. These can serve as a proxy for occlusion boundaries, and we were investigated as they potentially aid in separating foreground objects from background geometry.
+We also explored the utility of explicit depth discontinuity features, or depth edges. These reflect sudden changes in depth values (when the first spatial derivative of the depth function is large) within a depth map. These can serve as a proxy for occlusion boundaries, and we were investigated as they potentially aid in separating foreground objects from background geometry.
 
 \noindent
 We looked four classical edge detection operators applied directly to the estimated depth maps:
@@ -966,7 +963,7 @@ if cfg.model.network_without_offset:
 
 \noindent
 The SongUNet that Splatter Image is built on already implements support for FiLM layers in its UNet blocks, 
-using 2 FCN layers as the FiLM parameter generator. Splatter Image's top level \verb|GaussianSplatPredictor|
+using a 2 layer FCN as the FiLM parameter generator. Splatter Image's top level \verb|GaussianSplatPredictor|
 only allows FiLM to be used to inject camera pose embeddings. We provide a new configuration option, \verb|custom_embedding|,
 and modify GaussianSplatPredictor's forward pass, allowing a custom embedding to be passed in the forward pass 
 that overrides the camera pose embedding (as camera pose embeddings are often not used in the project's
