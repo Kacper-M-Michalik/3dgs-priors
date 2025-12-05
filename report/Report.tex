@@ -1669,7 +1669,7 @@ To evaluate whether integrating different geometry priors into the model is effe
 \label{sec:ablation}
 We train our models with different combinations of added geometry priors: one with depth maps, one with normal maps and one with both. We compare these models with our baseline.
 
-It is important to note that the original Splatter Image implementation recommends that single-view models be trained in two stagaes, first without LPIPS followed by fine-tuning with LPIPS. However, due to the large computational overhead caused by fine-tuning with LPIPS and our lack of computational resources and time, we did not run the second stage with LPIPS. Hence, although we include LPIPS in our metrics in this section, we do not use it to evaluate our model's performance as it is not an accurate assessment.
+It is important to note that the original Splatter Image implementation recommends that single-view models be trained in two stages, first without LPIPS, followed by fine-tuning with LPIPS. However, due to the large computational overhead caused by fine-tuning with LPIPS and our lack of computational resources and time, we did not run the second stage with LPIPS. Hence, although we include LPIPS in our metrics in this section, we do not use it to evaluate model performance as it is not an accurate assessment.
 
 \begin{table}[H]
     \centering
