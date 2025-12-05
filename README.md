@@ -120,6 +120,8 @@ python eval_lora.py [CHECKPOINT_PATH] [OUTPUT_DIR] --dataset_override [DATASET_N
 - `--dataset_override` (default: `cars_priors`): dataset config to load, to set the correct input channels. 
 - `--save_vis`: number of examples to render and save
 
+Examples of their use can be seen in the `lora/LoRA_Finetuning_Eval.ipynb' notebook. 
+
 ## Testing
 A variety of testing notebooks can be found in the ```/testing``` folder.
 
