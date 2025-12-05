@@ -1593,31 +1593,113 @@ for file_path in files:
 \end{lstlisting}
 
 \subsection{Training Procedures}
-[Explain which framework and optimizers you use, how you implemented the training logic.]
 
 \noindent 
-The Splatter Image model in fully implemented using PyTorch. The \verb|train.py|
-MODELS AND TRAINING DONE USING TORCH, WANDB USED FOR LOGGING/RUN MANAGEMENT,
-OmegaConf used to generate configs woth training parameters
+The Splatter Image model in fully implemented using PyTorch. We use the existing training loop implementation.
+The \verb|train.py| script implements the training loop using PyTorch DataLoader and Datasets classes to load in dataset entries in a batched manner.
+Wandb is used to perform logging, track training runs, configurations and track the model performance. 
+Hyrda alongside Omegaconf is used to supply a training configuration to the training loop and model.
 
-SHWO CONFGI
+\begin{lstlisting}[language=Python, caption=Initialisation excerpt from training code]
+@hydra.main(version_base=None, config_path='configs', config_name="default_config")
+def main(cfg: DictConfig):
+...
+\end{lstlisting}
 
-WHEN MODEL TRAINIGN OCCURS CONFIG OPTIOSN ARE VERFIEID TO BE COMPATIABLE
 
-OPTIONS INCLUIDE USING LORA vs NOT, WHICH PRIORS TO USE, AND WHETEHR YOU WNAT TO START THE MODEL WITH EXISITNG WEIGHTS (if so grafted)
+\begin{lstlisting}[language=Python, caption=Default YAML config for training]
+---
+defaults:
+  - wandb: defaults
+  - hydra: defaults
+  - cam_embd: defaults
+  - _self_
+general:
+  device: 0
+  random_seed: 0
+  num_devices: 1
+  mixed_precision: false
+data:
+  training_resolution: 128
+  subset: -1
+  input_images: 1
+  origin_distances: false
+  use_pred_depth : false
+  use_pred_normal : false
+  custom_embedding : false
+opt:
+  iterations: 800001
+  base_lr: 0.00005
+  batch_size: 8
+  betas:
+    - 0.9
+    - 0.999
+  loss: l2
+  imgs_per_obj: 4
+  ema: 
+    use: true
+    update_every: 10
+    update_after_step: 100
+    beta: 0.9999
+  lambda_lpips: 0.0
+  pretrained_ckpt: null
+  pretrained_hf: False
+  lora_finetune : false
 
-TRAINGING IS RUN USING DEFAULT SPALTTER IAMGE APRAMSTERS, Namely:
-LIST OPTIMSIER
-OtHER OPTIOSM
+model:
+  max_sh_degree: 1
+  inverted_x: false
+  inverted_y: true
+  name: SingleUNet
+  opacity_scale: 1.0
+  opacity_bias: -2.0
+  scale_bias: 0.02
+  scale_scale: 0.003
+  xyz_scale: 0.1
+  xyz_bias: 0.0
+  depth_scale: 1.0
+  depth_bias: 0.0
+  network_without_offset: false
+  network_with_offset: true
+  attention_resolutions:
+  - 16
+  num_blocks: 4
+  cross_view_attention: true
+  base_dim: 128
+  isotropic: false
 
-WE PRODUCE READY TRAIEND MODELS TRAINDE ON TOP OF BASE WEIGHTS, PARAMS:
-ITERS: 60K
-PRIOR COMBOS
+logging:
+  ckpt_iterations: 1000
+  val_log: 10000
+  loss_log: 10
+  loop_log: 10000
+  render_log: 10000
 
-WERE TRAINIG NNTOEBOOK RUSN ON CLOAB WITH A100 OVERNIGHT, AVAIABLE WEIGHTS ON HF AT: X
+\end{lstlisting}
 
+\noindent
+All training in Splatter Image is performed with the PyTorch Adam optimizer. 
+The betas and learning rate and EMA toggle hyperparameters are initialized based on the training configuration,
+which as seen in the default config listing above, have default values of:
+
+\begin{description}
+   \item[Betas:] (0.9, 0.999)
+   \item[Learning Rate:] 0.00005
+   \item[EMA:] On
+\end{description}
+
+\noindent
+Exponential Moving Average (EMA) stabilizes learning and improves generalization by smoothing out weight changes during backpropagation.
+\newline
+
+\noindent
+The three pretrained prior models available on HuggingFace were trained starting from the original pretrained Splatter Image models following a graft.
+Those models were then trained for 60,000 additional iterations, with the LPIPS metric disabled.
+\newline
+
+\noindent
 In order to isolate the parameter-efficient adaptation due to LoRA, we used a dedicated training script (\texttt{train\_network\_lora.py}). While preserving the data pipeline and training loop architecture as the standard framework, it is necessary to enforce strict freezing where the gradients for the U-Net backbone are disabled. Optimisation is therefore restricted solely to the injected low-rank matrices (as described in \textbf{2.2.1 Low-Rank Adaptation (LoRA)}). 
-All LoRA models were finetuned using the same optimizer settings as the baseline, namely Adam. Training was conducted for 10,000 iterations, as discussed later, with checkpoints saved every 1000 iterations to handle restarts. 
+All LoRA models were finetuned using the same optimizer settings as the baseline, but with LPIPS enabled. Training was conducted for 10,000 iterations, as discussed later, with checkpoints saved every 1000 iterations to handle restarts. 
 
 \subsection{Testing and Validation Procedures}
 
