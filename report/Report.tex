@@ -1098,12 +1098,12 @@ indeed available for the currently active Dataset.
 # Concatenate selected priors
 input_images = data["gt_images"][:, :model_cfg.data.input_images, ...]
 if "use_pred_depth" in model_cfg.data and model_cfg.data.use_pred_depth:
-    assert model_cfg.data.category == "cars_priors", "Dataset does not have predicated maps!"
+    assert model_cfg.data.category == "cars_priors", "Dataset does not have predicted maps!"
     input_images = torch.cat([input_images,
                     data["pred_depths"][:, :model_cfg.data.input_images, ...]],
                     dim=2)
 if "use_pred_normal" in model_cfg.data and model_cfg.data.use_pred_normal:
-    assert model_cfg.data.category == "cars_priors", "Dataset does not have predicated maps!"
+    assert model_cfg.data.category == "cars_priors", "Dataset does not have predicted maps!"
     input_images = torch.cat([input_images,
                     data["pred_normals"][:, :model_cfg.data.input_images, ...]],
                     dim=2)
@@ -1467,7 +1467,7 @@ for file_path in files:
     )
 \end{lstlisting}
 
-\subsection{Training procedures}
+\subsection{Training Procedures}
 [Explain which framework and optimizers you use, how you implemented the training logic.]
 
 THE ENTIRE MODEL IS PROGRAMMED USING TORCH
@@ -1491,7 +1491,7 @@ ITERS: 60K
 In order to isolate the parameter-efficient adaptation due to LoRA, we used a dedicated training script (\texttt{train\_network\_lora.py}). While preserving the data pipeline and training loop architecture as the standard framework, it is necessary to enforce strict freezing where the gradients for the U-Net backbone are disabled. Optimisation is therefore restricted solely to the injected low-rank matrices (as described in \textbf{2.2.1 Low-Rank Adaptation (LoRA)}). 
 All LoRA models were finetuned using the same optimizer settings as the baseline, using Adam. Training was conducted for up to 10,000 iterations, as discussed later, with checkpoints saved every 1000 iterations to handle restarts. 
 
-\subsection{Testing and validation procedures}
+\subsection{Testing and Validation Procedures}
 [Explain which framework you use, how you implemented the testing/ validation logic.]
 \newline
 
