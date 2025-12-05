@@ -1981,7 +1981,7 @@ for improvements to Splatter Image, as Splatter Image can only be as good as the
 Another set of limitations came in the form of poor documentation. During research of prior models
 we often struggled to run the models in the first place, due to incorrectly provided 
 package requirements, serious (or in some cases total) lack of instructions on how
-to launch and use the models, or no reference implementations being publicly provided at all, as was often the case with reserach papers.
+to launch and use the models, or no reference implementations being publicly provided at all, as was often the case with research papers.
 \newline
 
 \noindent
@@ -1994,17 +1994,15 @@ Chamfer distance, where we could have generated point clouds from SRN car models
 [State a few future directions for research and development. These typically follow from the discussion on limitations.]
 \newline
 
-TEST 
-implementing and comparing cross-attention vs FiLM for multimodal data
-Trying alternatigve metrics for 3D reconstruction, like Chaumfeer distance, for exampel could sample
-off bunch of points of SRN cars meshes to genrate point cloud, then treat gaussians as point cloud and do comaprison
-
 \noindent
 One avenue for future work is generating and testing more geometry priors for future research. 
 Due to the lack of time, there were some priors that we deemed not worth investigating. 
 For example, in \textbf{Section \ref{sec:normal}: Planes and Normal Maps Exploration}, we discuss how generating predicted scene planes for input images and using them as added priors to augment the model seemed unlikely to help guide reconstruction. 
 In future studies, we could challenge this assumption by generating this prior and testing it alongside other geometry priors in the ablation study. 
 In general, since Splatter Image has most trouble generating sections of novel views that are obscured from the original input image, we could focus on generating and testing more priors oriented to hidden areas.
+
+\noindent
+Some of these priors may be in a different format that is not compatible with the current input channels, such as classifications from segmentation models. Hence, an extension could be to implement cross attention and FiLM to the original model such that it can support multimodal input data. We can then compare the two approaches to see which is most useful for Splatter Image.
 
 \noindent
 We could also investigate the integration of explicit geometric loss functions to supplement the current standard losses. A specialised `rendering loss' could be introduced that targets depth discontinuities, especially following on from the discussion in \textbf{Section \ref{sec:depth}: Depth Map Exploration}. The model could be penalised for failing to reconstruct structural boundaries (by applying edge operators on rendered views and comparing them with ground truth edge maps if possible). This strategy was successfully demonstrated in \cite{gong2024eggsedgeguidedgaussian}. This loss can also be dynamically weighted based on the size of the 3D Gaussian's covariance matrices, as `smaller' Gaussians, with smaller covaraince determinants, generally represent fine details. If this loss is prioritised, i.e. we prioritise areas contributed to by small scale Gaussians, the optimisation process could be forced to resolve fine details, rather than being treated as noise or being approximated by larger Gaussians.  
@@ -2014,6 +2012,9 @@ Another avenue for future work could be to train and evaluate the models with a 
 As mentioned in \textbf{Section \ref{sec:datasets}: Datasets}, our training and tested was conducted with the ShapeNet-SRN cars dataset, which may cause our models to overfit to cars and not generalise well to other types of objects. 
 We could try to address this by training the model with other datasets with different objects, such as the Objaverse \cite{objaverse}\cite{objaversexl} datasets and the CO3D \cite{co3d} dataset. 
 With more computational resources, we could also explore increasing training times for the models to see if their performances can be improved further with more iterations of training.
+
+\noindent
+Another possible extension could be to try using alternative metrics for 3D reconstruction such as Chamfer distance, where we could generate point clouds from SRN models and compare them to the 3D Gaussians predicted by Splatter Image.
 
 \subsection{Project Contributions}
 
