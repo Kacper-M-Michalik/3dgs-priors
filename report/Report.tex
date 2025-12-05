@@ -1469,6 +1469,27 @@ A limitation of this dataset would be its small size since only 72 samples are a
 \subsection{Qualitative results}
 [Show in figures and explain visual results. Include different interesting cases covering different aspects/ limitations/ dataset diversity. If not converged, explain what we can expect once converged. Include any other didactic examples here.]
 
+With the successful integration of geometry priors, we can see the following example of evaluation output below:
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.35\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/ExampleImageGT.png} 
+        \caption{Ground Truth}
+        \label{fig:gt_sample}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.35\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/ExampleImageP.png} 
+        \caption{Trained Model Output}
+        \label{fig:lora_sample}
+    \end{subfigure}
+    
+    \caption{Comparison of novel view scenario. (a) Ground truth rendering of the target view. (b) Reconstruction by a model with modified architecture for additional prior channels.}
+    \label{fig:lora_qualitative_comparison}
+\end{figure}
+
+Another example of evaluation output can be seen in Figure \ref{fig:lora_qualitative_comparison}, where LoRA adapters were trained with a rank of 2, $\alpha$ of 2 (both low compared to standards) and dropout of 0.05. The LoRA-adapted model is able to reconstruct the car from a novel view while preserving details such as headlights, despite the low parameter overhead.
 \begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.35\textwidth}
@@ -1480,15 +1501,13 @@ A limitation of this dataset would be its small size since only 72 samples are a
     \begin{subfigure}[b]{0.35\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/lora_example246_produced.png} 
-        \caption{LoRA Prediction)}
+        \caption{LoRA Prediction}
         \label{fig:lora_sample}
     \end{subfigure}
     
-    \caption{Comparison of novel view case. (a) Ground truth rendering of the target view. (b) Reconstruction by a LoRA-adapted model.}
+    \caption{Comparison of novel view scenario. (a) Ground truth rendering of the target view. (b) Reconstruction by a LoRA-adapted model.}
     \label{fig:lora_qualitative_comparison}
 \end{figure}
-
-One example of evaluation output can be seen in \ref{fig:lora_qualitative_comparison}, where LoRA adapters were trained with a rank of 2, $\alpha$ of 2 (both low compared to standards) and dropout of 0.05. The LoRA-adapted model is able to reconstruct the car from a novel view while preserving details such as headlights, despite the low parameter overhead.
 
 \subsection{[Optional] Quantitative results}
 [A table and associated explanations for quantitative results.]
@@ -1498,7 +1517,7 @@ PSNR is calculated using the mean squared error and is commonly used to quantify
 
 To evaluate whether integrating different geometry priors into the model is effective, we performed a set of experiments testing different combinations of geometry priors. We measured the performance using PSNR, SSIM and LPIPS. 
 
-\subsubsection{Ablation study on geometry priors, U-Net integration}
+\subsubsection{Ablation Study Results}
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{images/stats-results/priors_psnr_distribution.png}
@@ -1587,9 +1606,6 @@ We continued training for 10,000 iterations. Table \ref{tab:lora_10k} details th
         \bottomrule
     \end{tabular}
 \end{table}
- 
-
-All LoRA configurations tested here outperform the Splatter Image baseline \cite{splatterImage} (24.00 dB).
 
 We can produce distribution plots for the scores files:
 \begin{figure}[H]
