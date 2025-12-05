@@ -96,7 +96,7 @@ typically using a deep learning model, which can then be queried by a ray-march 
 In 2023, 3D Gaussian Splatting (3DGS) \cite{3dgs} introduced an alternative method, offering major improvements in computational performance.
 Instead of an implicit function, 3DGS introduces a new explicit representation, that of a set of 3D Gaussians (called a Gaussian splat), Gaussians are volumes defined by parameters 
 such as position, colour, opacity, rotation and scale, which can be efficiently rasterized to generate novel views. Reconstruction is typically achieved by
-optimizing the set of Gaussians to produce novel view with minimized loss, alternatively deep learning methods can be used to directly
+optimizing the set of Gaussians to produce novel views with minimized loss, alternatively deep learning methods can be used to directly
 predict the Gaussian splat. Developments in 3D Gaussian Splatting methods have allowed for 3D scene reconstruction using few or even single RGB images.
 While faster than other scene reconstruction techniques and requiring only a "one-shot" pass, these approaches often suffer from challenges
 such as layout/scale drift, over-smooth geometry and hallucinations in occluded regions \cite{tang2024hisplathierarchical3dgaussian}.
@@ -110,12 +110,12 @@ Each pixel stores the parameters for a corresponding 3D Gaussian, allowing for r
 This overall architecture allows for a compute-efficient model. Despite its speed, Splatter Image has some issues that have been noted in related works,
 particularly in reconstructing structures unseen in the input view, including for views significantly different from the source. 
 We believe there are two reasons for this problem. 
-The first is inherent to Splatter Images architecture, unlike methods that utilize explicit 3D feature volumes, Splatter Image's
+The first is inherent to Splatter Image's architecture, unlike methods that utilize explicit 3D feature volumes, Splatter Image's
 choice of 3D reconstruction as a 2D-to-2D image translation task limits its ability to learn geometric priors, 
-as the model lacks an internal 3D representation to resolve issues like depth ambiguities.
+as the model lacks an internal 3D representation to reason about and resolve issues like depth ambiguities.
 The second is that the 3DGS prediction based on only single or few RGB image features alone does
 not have sufficient conditional information for Splatter Image to infer appropriate geometry information or
-structures that are not visible in the input view \cite{shen2024pixelworth3dgaussians};
+structures, especially those that are not fully visible in the input view \cite{shen2024pixelworth3dgaussians};
 shown in figure \ref{fig:splatter_image_problems}, Splatter Image has trouble generating the occluded chair leg 
 in \ref{fig:chair_splatter_1} and \ref{fig:chair_splatter_2}.
 
@@ -160,12 +160,10 @@ in \ref{fig:chair_splatter_1} and \ref{fig:chair_splatter_2}.
 \noindent
 This project aims to address these issues, improving reconstruction quality, by first researching inferable geometry priors (such as planes, normals, visibility cues, depth, segmentation or edge maps) 
 which can be dynamically produced for input images by existing specialized models, then proposing a lightweight augmentation for Splatter Image, allowing
-predicted priors to be fed alongside the RGB images, allowing them to guide reconstruction in a more accurate manner, by providing
-necessary additional information and preventing Splatter Image from having to learn how to generate these geometric features itself.
+predicted priors to be fed alongside the RGB images, allowing them to guide and improve reconstruction, by providing
+necessary geometric prior information and preventing Splatter Image from having to learn these geometric features itself.
 
 \subsection{Background and related work}
-[Include a few very relevant related works and how your work relates to those, expanding on the previous section. We do not expect you to cover all previous works.]
-\newline
 
 \begin{figure}[H]
     \centering
@@ -196,32 +194,32 @@ Traditionally, 3D reconstruction has been performed by multi-stage photogrammetr
 representations such as meshes or point clouds. The industry-standard workflow begins with Structure from Motion (SfM), 
 which matches sparse feature points across many overlapping images to estimate camera parameters and generate a sparse point cloud.
 This is typically followed by Multi-View Stereo (MVS) algorithms to compute dense depth maps, which are combined to
-generate a standard 3D mesh using techniques like Delaunay triangulation\cite{delaunayTriangulation} or Moving Least Squares with Marching Cubes\cite{marchingCubes}.
+generate a standard 3D mesh using techniques like Delaunay triangulation \cite{delaunayTriangulation} or Moving Least Squares with Marching Cubes \cite{marchingCubes}.
 While effective for static, diffuse environments, these methods struggle significantly with surfaces such as 
-transparent windows or reflective metals, this as they rely on strict photometric consistency and lack a mechanism to deal with view-dependent radiance.
+transparent windows or reflective metals, this as they rely on photometric consistency and lack a mechanism to deal with view-dependent radiance.
 Additionally, these methods require large numbers of high-resolution images with substantial overlap to achieve high-quality reconstruction.
-This heavy data acquisition requirement means the methods create a computational bottleneck, requiring hours of processing time on high-end hardware, and
+This heavy data acquisition requirement means these methods create a computational bottleneck, requiring hours of processing time on high-end hardware, and
 are impractical in the first place without complex image acquisition setups, such as in Figure \ref{fig:photogrammetry}.
 
 \noindent
-A paradigm shift occurred in 2020 with the introduction of Neural Radiance Fields\cite{nerf}. NeRF moves away from explicit geometry representations 
+A paradigm shift occurred in 2020 with the introduction of Neural Radiance Fields \cite{nerf}. NeRF moves away from explicit geometry representations 
 to an implicit volumetric representation. In NeRF an underlying continuous volumetric scene function, represented using a deep learning model, 
 is optimized using a set of input images with known camera poses; the input to the function/model
-is a single continuous 5D coordinate (spatial location and viewing direction) and the output is the volume density and view-dependent emitted radiance at that location.
-Novel views are synthesized by querying 5D coordinates along camera rays for some new camera pose (ray-marching), and output colours and densities are rendered
+is a single continuous 5D coordinate (spatial location and viewing direction) and the output is the volume density and view-dependent radiance at that location.
+Novel views are synthesized by querying 5D coordinates along camera rays for some new camera pose (ray-marching), and output colours are rendered
 into an image. NeRF allowed for higher quality 3D reconstruction, eventually using sparser image sets (PixelNeRF, RegNeRF), compared to traditional photogrammetry methods,
-achieving state-of-the-art results and becoming the gold standard for novel view synthesis\cite{zhang2025advancesfeedforward3dreconstruction}.
+achieving state-of-the-art results and becoming the gold standard for novel view synthesis \cite{zhang2025advancesfeedforward3dreconstruction}.
 
 \noindent
 In 2023 a further breakthrough in the field was achieved by the introduction of 3D Gaussian Splatting, offering a computationally high-performance alternative to NeRF.
-3DGS offers a new explicit geometry representation, modelling a scene as a collection of parameterized 3D Gaussians\cite{3dgs}.
+3DGS offers a new explicit geometry representation, modelling a scene as a collection of parameterized 3D Gaussians \cite{3dgs}.
 Unlike NeRF, 3D Gaussian Splatting does not rely on a neural network to generate a scene. Instead, in the original paper, reconstruction 
 is achieved by first initializing a set of Gaussians, either randomly or from a sparse point cloud (typically from Structure from Motion), where
 each Gaussian is defined by a set of parameters: position (mean), covariance (scale and rotation), opacity, and colour 
 (represented using Spherical Harmonics to allow for view-dependent radiance). Then an optimization process is run
 that first adjusts the Gaussians' parameters to minimize the error between rendered images and the ground truth; and secondly performs dynamic management
 of the density of Gaussians within the scene, by splitting, cloning or pruning Gaussians in an interleaved manner; namely Gaussians in under-reconstructed areas 
-are cloned, Gaussians with high variance are split, and Gaussians in areas of low opacity and of excessive size are pruned.
+are cloned, Gaussians with high variance are split, and Gaussians of low opacity and of excessive size are pruned.
 Finally, for rendering, the Gaussians are rasterized using a custom tile-based rasterizer to produce resulting views, allowing millions of Gaussians rendered in
 real-time, allowing for real-time novel view synthesis. 
 While the original method relies on per-scene optimization to generate 3D Gaussian Splats, recent works have begun using deep learning methods to 
@@ -230,8 +228,8 @@ predict sets of Gaussians directly, with most recent developments allowing for 3
 \noindent
 Since the introduction of 3DGS, a number of deep learning architectures and processing pipelines based on the method have been developed 
 to find the most accurate and efficient implementation capable of producing high quality 3D Gaussian Splats.
-Recent examples include ExScene\cite{exscene}, Wonderland\cite{wonderland}, F3D-Gaus\cite{f3dgaus}, Gauss
-VideoDreamer\cite{hao2025gaussvideodreamer3dscenegeneration}, TGS\cite{tgs} and Splatter Image\cite{splatterImage}.
+Recent examples include ExScene \cite{exscene}, Wonderland \cite{wonderland}, F3D-Gaus \cite{f3dgaus}, Gauss
+VideoDreamer \cite{hao2025gaussvideodreamer3dscenegeneration}, TGS \cite{tgs} and Splatter Image \cite{splatterImage}.
 
 \noindent
 \begin{figure}[H]
@@ -242,7 +240,7 @@ VideoDreamer\cite{hao2025gaussvideodreamer3dscenegeneration}, TGS\cite{tgs} and 
 \end{figure}
 
 \noindent
-F3D-Gaus was proposed to help pixel-aligned Gaussian Splatting generate plausible novel viewpoints by introducing a cycle-aggregative strategy. As shown in figure \ref{fig:f3dgaus}, given a single RGB image $I_0$ and depth map $D_0$, the model directly feeds them forward to output the pixel-aligned Gaussian Splatting representation $GS_0$. The model then renders the image $\tilde{I_1}$ and depth map $\tilde{D_1}$ for the novel view, and then outputs its corresponding Gaussian Splatting representation $GS_1$. $GS_0$ and $GS_1$ are then aggregated to produce images for supervision. By enforcing this cycle consistency through aggregation, the model naturally learns through this self-supervised approach to extrapolate across views by fusing multiple representations, enhancing 3D coherence during inference. This helps to ensure that 3D representations from novel viewpoints are both aligned with and complementary to those from the original viewpoint. After complementary aggregation, F3D-Gaus then applies a video in-painting model\cite{propainter} to the rendered images and depth maps to correct inconsistencies in geometry and texture caused by large viewpoint shifts, resulting in more reliable and visually consistent outputs. 
+F3D-Gaus was proposed to help pixel-aligned Gaussian Splatting generate plausible novel viewpoints by introducing a cycle-aggregative strategy. As shown in figure \ref{fig:f3dgaus}, given a single RGB image $I_0$ and depth map $D_0$, the model directly feeds them forward to output the pixel-aligned Gaussian Splatting representation $GS_0$. The model then renders the image $\tilde{I_1}$ and depth map $\tilde{D_1}$ for the novel view, and then outputs its corresponding Gaussian Splatting representation $GS_1$. $GS_0$ and $GS_1$ are then aggregated to produce images for supervision. By enforcing this cycle consistency through aggregation, the model naturally learns through this self-supervised approach to extrapolate across views by fusing multiple representations, enhancing 3D coherence during inference. This helps to ensure that 3D representations from novel viewpoints are both aligned with and complementary to those from the original viewpoint. After complementary aggregation, F3D-Gaus then applies a video in-painting model \cite{propainter} to the rendered images and depth maps to correct inconsistencies in geometry and texture caused by large viewpoint shifts, resulting in more reliable and visually consistent outputs. 
 While the source code and a pretrained model is available, the model would require 13 days of an A100 GPU to train if any updates were made, so we deemed this unsuitable to work on.
 
 \noindent
@@ -254,7 +252,7 @@ While the source code and a pretrained model is available, the model would requi
 \end{figure}
 
 \noindent
-From the input image, GaussVideoDreamer first initializes a coarse video sequence depicting occluded regions of the input image under smooth novel view trajectories and inconsistency-aware Gaussian Splats. After that, at periodic optimization intervals, the model renders all viewpoint images and their corresponding inconsistency prediction masks from the Gaussian Splats. The masks and rendered images then guide a video diffusion model to perform progressive inpainting to refine the video sequence, which then in turn optimizes the Gaussian splatting representation and gradually generates better novel view images. However, the generation quality of GaussVideoDreamer is mainly limited by the video diffusion prior (AnimateDiff\cite{animatediff}), which was adapted from an image diffusion model lacking dedicated video inpainting training. As such, when generating videos it may result in frame inconsistencies in longer sequences, progressive colour shifts and high-frequency detail degradation, which reduces novel view reconstruction quality. 
+For an input image, GaussVideoDreamer first initializes a coarse video sequence depicting occluded regions of the input image under smooth novel view trajectories and inconsistency-aware Gaussian Splats. After that, at periodic optimization intervals, the model renders all viewpoint images and their corresponding inconsistency prediction masks from the Gaussian Splats. The masks and rendered images then guide a video diffusion model to perform progressive inpainting to refine the video sequence, which then in turn optimizes the Gaussian splatting representation and gradually generates better novel view images. However, the generation quality of GaussVideoDreamer is mainly limited by the video diffusion prior (AnimateDiff \cite{animatediff}), which was adapted from an image diffusion model lacking dedicated video inpainting training. As such, when generating videos it may result in frame inconsistencies in longer sequences, progressive colour shifts and high-frequency detail degradation, which reduces novel view reconstruction quality. 
 There was also no publicly available implementation of this method. In addition, since a proprietary evaluation dataset of 20 generated single-view images with corresponding text prompts was used in the paper, it would be difficult to compare it with other implementations.
 Therefore, we also decided not to explore this method.
 
@@ -267,33 +265,32 @@ Therefore, we also decided not to explore this method.
 \end{figure}
 
 \noindent
-In a triplane representation\cite{triplane}, explicit features of the image are aligned along three axis-aligned orthogonal feature planes. We can then query any 3D position by projecting it onto the three feature planes, retrieving the corresponding feature vector via bilinear interpolation and aggregating the three feature vectors via summation. An additional lightweight decoder network interprets the aggregated 3D features as colour and density. This representation is fast and scales efficiently with resolution by keeping the decoder small and shifting the bulk of the expressive power into the explicit features. TGS\cite{tgs} uses this representation in Triplane-Gaussian, a new hybrid representation. As shown in figure \ref{fig:tgs}, TGS first encodes the input image into a set of latent feature tokens, which are then passed into a point cloud decoder and a triplane decoder. A point cloud and a triplane can be de-tokenized from the output of these decoders. After the point cloud decoder, TGS adapts a point upsampling module to densify the point cloud and utilizes a geometry-aware encoding to project point cloud features into the initial positional embedding of triplane latent. Lastly, 3D Gaussians are decoded by the point cloud, the triplane features and the image features for novel view rendering through Gaussian splatting.
+In a triplane representation \cite{triplane}, explicit features of the image are aligned along three axis-aligned orthogonal feature planes. We can then query any 3D position by projecting it onto the three feature planes, retrieving the corresponding feature vector via bilinear interpolation and aggregating the three feature vectors via summation. An additional lightweight decoder network interprets the aggregated 3D features as colour and density. This representation is fast and scales efficiently with resolution by keeping the decoder small and shifting the bulk of the expressive power into the explicit features. TGS \cite{tgs} uses this representation in Triplane-Gaussian, a new hybrid representation. As shown in figure \ref{fig:tgs}, TGS first encodes the input image into a set of latent feature tokens, which are then passed into a point cloud decoder and a triplane decoder. A point cloud and a triplane can be de-tokenized from the output of these decoders. After the point cloud decoder, TGS adapts a point upsampling module to densify the point cloud and utilizes a geometry-aware encoding to project point cloud features into the initial positional embedding of triplane latent. Lastly, 3D Gaussians are decoded by the point cloud, the triplane features and the image features for novel view rendering through Gaussian splatting.
 While an official implementation of this is available at \href{https://github.com/VAST-AI-Research/TriplaneGaussian}{https://github.com/VAST-AI-Research/TriplaneGaussian} and a pretrained model is also available, the model is only trained on the Objaverse-LVIS dataset and the training time and compute needed to adapt this implementation also made it unsuitable for our project.
 
 \subsection{Overview of the idea}
-[Provide an overview stating why the idea of the project makes sense and what the main motivation is.]
-\newline
 
 \noindent
-Splatter Image's high computational efficiency and good reconstruction quality make it a highly desirable model for one-shot 3D reconstruction.
-Nonetheless, the model's occasional problems such as layout/scale drift, over-smooth geometry and poor quality hallucinations in occluded regions,
-pose a serious problem in its usage and wider adoption. As stated in the introduction, we believe the cause of these reconstruction failures is twofold; first is inherent to Splatter
-Image's architecture, the models choice of 3D reconstruction as a 2D-to-2D image translation task limits its ability to learn geometric priors, as the
-model lacks an internal 3D representation to reason correctly about 3D structures. 
-Second is that single or few RGB images simply does not have sufficient conditional
+Splatter Image is a model introduced in late 2023, whose main highlights are its computational efficiency, and 
+ability to perform one-shot 3D scene reconstruction, whilst maintaining high quality reconstruction capabilities.
+This combination make it a highly desirable model. Nonetheless, the model's occasional problems such as layout/scale drift, over-smooth geometry and poor quality hallucinations in occluded regions,
+pose a serious problem in its usage and wider adoption. As stated in the introduction, we believe the cause of these reconstruction failures to be twofold; 
+first is inherent to Splatter Image's architecture, the models choice of 3D reconstruction as a 2D-to-2D image translation task limits its ability to learn geometric priors, as the
+model lacks an internal 3D representation to reason about said priors. 
+Second is our belief that single or few RGB images simply does not have sufficient conditional
 information for Splatter Image to infer adequate geometric information about 3D scenes such as object structures, especially those that are not 
 fully visible in the input view. Modern machine learning now offers highly specialized models capable of performing high-quality 
 monocular prediction of geometric features from RGB images. These models such as MiDaS and Depth Anything, are trained on vast datasets and have 
 tailored architectures to reason about relevant 3D information; as such they store much valuable latent geometric knowledge, which is valuable in 
-situations exactly like those where Splatter Image may struggle, namely when trying to accurately hallucinate occluded regions and trying to understand
-complex 3D surfaces and structures. Ready availability of these models allows us to exploit them to gain additional sources of high quality geometric 
+situations exactly like those where Splatter Image struggles, namely when trying to accurately hallucinate occluded regions or trying to understand
+complex 3D surfaces and structures. The ready availability of these models allows us to exploit them to gain additional sources of high quality geometric 
 information that can be fed into Splatter Image, solving both of our supposed problems simultaneously:
 preventing the Splatter Image model from needing to implicitly learn geometric features, 
 whilst also providing rich 3D information required for high quality reconstruction.
 \newline
 
 \noindent
-As such we believe these priors will effectively help guide Splatter Image in 3D reconstruction, resulting in superior reconstruction quality
+As such we believe dynamically producing and feeding these priors will effectively help guide Splatter Image in 3D reconstruction, resulting in superior reconstruction quality
 and strongly reducing the frequency of reconstruction failures. All achieved whilst preserving Splatter Image's key features
 such as its computational efficiency, as it requires minimal architectural changes to accept these new priors in its input; altogether making 
 Splatter Image a more competitive one-shot 3D reconstruction model. Furthermore, this project gives us an opportunity to perform an ablation study to 
@@ -323,8 +320,8 @@ or helping those that may be interested in creating similar adaptations/pipeline
 
 \noindent
 Splatter Image uses a standard image-to-image neural network architecture to predict a Gaussian for each pixel of the input image I, 
-generating the output image M as the Splatter Image. 
-For this it uses a U-Net as those have demonstrated excellent performance in image generation\cite{rombach2022highresolutionimagesynthesislatent}, and their ability to capture small image details helps to obtain higher-quality novel view reconstructions. 
+generating the output image M as the Splatter Image. For this it uses a U-Net, as these have demonstrated excellent performance in image generation 
+\cite{rombach2022highresolutionimagesynthesislatent}, and their ability to capture small image details helps to obtain higher-quality novel view reconstructions. 
 
 \noindent
 As shown in figure \ref{fig:u-net_diagram}, a U-Net model architecture consists of a contracting path (left side) and an expansive path (right side). 
@@ -336,13 +333,14 @@ At the final layer a convolution is used to map each feature vector to the desir
 \noindent
 For the U-Net used in Splatter Image, learning to predict the Splatter Image can be done on a single GPU using at most 
 20GB of memory at training time for most single-view reconstruction experiments (except for Objaverse, where 2 GPUs were used and 26GB 
-of memory was used on each). Most of this neural network architecture is identical to the SongUNet of \cite{songunet}, but the last layer
-is replaced with a $1 \times 1$ convolutional layer with $12 + k_c$ output channels, where $k_c \in \{3, 12\}$ depending on the colour model. 
-The output tensor codes for parameters that are then transformed to opacity, offset, depth, scale, rotation and colour respectively. 
-These parameters are then activated by non-linear functions to obtain the Gaussian parameters, such as the opacity and depth.
+of memory was used on each). Most of this neural network architecture is identical to the SongUNet used in \cite{songunet}, with the exception that the last layer
+is replaced with a $1 \times 1$ convolutional layer with $12 + k_c$ output channels, where $k_c \in \{3, 12\}$ depending on the model configuration. 
+The output tensor codes for parameters that are then transformed by non-linear functions to obtain the final Gaussian splat parameters, 
+such as opacity, offset, depth, scale, rotation and colour respectively.
 
 \noindent
-The Gaussian Splatting implementation of \cite{3dgs} is used for rasterization to generate $360^\circ$ views of the original input image from these parameters. As shown in figure \ref{fig:3dgs}, Gaussian splatting then optimizes and adaptively controls the density of this set of 3D Gaussians, using a fast tile-based renderer during optimization. The renderer allows $\alpha$-blending of anisotropic splats, respecting visibility order thanks to fast sorting. It also includes a fast backwards pass by tracking accumulated $\alpha$ values, without a limit on the number of Gaussians that can receive gradients. This helps to quickly generate new images of novel views.
+The Gaussian Splatting implementation from \cite{3dgs} is used for rasterization to generate $360^\circ$ views of the original input image from these parameters.
+As shown in figure \ref{fig:3dgs}, Gaussian splatting then optimizes and adaptively controls the density of this set of 3D Gaussians, using a fast tile-based renderer during optimization. The renderer allows $\alpha$-blending of anisotropic splats, respecting visibility order thanks to fast sorting. It also includes a fast backwards pass by tracking accumulated $\alpha$ values, without a limit on the number of Gaussians that can receive gradients. This helps to quickly generate new images of novel views.
 \newline
 
 \subsection{Algorithm improvements}
