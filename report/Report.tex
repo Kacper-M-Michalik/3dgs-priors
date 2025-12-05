@@ -385,10 +385,7 @@ unchanged. As such this strategy of inserting FiLM layers into Splatter Image is
 
 \subsubsection{Low-Rank Adaptation (LoRA)}
 \label{sec:lora_parameters}
-To address the computational constraints of training the full U-Net architecture, we integrated Low-Rank Adaptation (LoRA) \cite{HuLoRA}
-directly into our GaussianPredictor, to instead allow for fine-tuning. While our implementation shares a similar class structure to the official \texttt{loralib} library
-\cite{hu2022lora} (utilizing mixins to wrap \texttt{Linear} and \texttt{Conv2d} layers), we manually adapted the forward pass to support 
-the specific channel dimensions of the Splatter Image architecture (further details can be found in \textbf{Section \ref{sec:lora}: Manual LoRA Integration}).
+To address the computational constraints of training the full U-Net architecture, we integrated Low-Rank Adaptation (LoRA) \cite{HuLoRA} directly into our GaussianPredictor, to instead allow for fine-tuning. 
 
 \noindent
 Adapters are small modules placed after the frozen modules we wish to adapt, such as linear and convolutional layers. The adapter accepts the same input dimension as the original layer and produces the same output dimension. This allows the output from the adapter to be summed element-wise with the frozen layer's output.
@@ -401,7 +398,7 @@ Instead of learning a new large weight matrix for these adapters, the weight upd
 Here, we see that $r \ll \min(d_{in}, d_{out})$, where $r$ is the rank hyperparameter (detailed below). During training, only the parameters of $A$ and $B$ are updated, while the original weights $W$ remain frozen.
 
 \noindent
-For \texttt{Conv2d} layers, we treat the kernel $W \in \mathbb{R}^{C_{out} \times C_{in} \times k \times k}$ as a flattened matrix of shape $C_{out} \times (C_{in} \cdot k \cdot k)$. The flattened representation is decomposed into $B$ and $A$, allowing us to apply LoRA to the full spatial kernel. By including the spatial dimensions ($k \times k$) in the decomposition, the adapter can learn spatial feature refinements, rather than being limited to channel-wise linear projections. This approach follows the implementation found in \texttt{loralib} \cite{hu2022lora}.
+For \texttt{Conv2d} layers, we treat the kernel $W \in \mathbb{R}^{C_{out} \times C_{in} \times k \times k}$ as a flattened matrix of shape $C_{out} \times (C_{in} \cdot k \cdot k)$. Flattening allows the low rank adapter to process spatial neighbourhoods, and the flattened representation is decomposed into $B$ and $A$, allowing us to apply LoRA to the full spatial kernel. By including the spatial dimensions ($k \times k$) in the decomposition, the adapter can learn spatial feature refinements, rather than being limited to channel-wise linear projections. This approach follows the implementation found in \texttt{loralib} \cite{hu2022lora}.
 
 \noindent
 During the forward pass, the input $x$ is processed by both the frozen weights $W$ and the LoRA branch:
@@ -419,6 +416,9 @@ We utilise three hyperparameters to control this adaptation:
 
 \noindent
 Following \cite{hu2022lora}, $A$ uses Kaiming uniform intialisation, and $B$ is initialised to zero. This ensures that $\Delta W = 0$ at the start of training, which preserves the  behavior of the pre-trained model initially. 
+
+\noindent
+During inference, the LoRA weights can be optionally merged into the base weights by computing  $W_{merged} = W + \frac{\alpha}{r}BA$, eliminating the separate branch computation and reducing overhead for efficiency. 
 
 \subsection{Implementation details}
 [Explain how you implemented the improvements. You may include code snippets with the corresponding explanations.]
@@ -1034,6 +1034,31 @@ if lora_rank > 0 and kernel > 0 and self.weight is not None and not self.up and 
     nn.init.zeros_(self.lora_B)
 \end{lstlisting}
 
+\noindent
+These LoRA parameters are distributed throughout the U-Net via the \texttt{block\_kwargs} dictionary in \texttt{SongUNet.\_\_init\_\_()}. The rank, alpha, and dropout values are passed to each \texttt{UNetBlock}, which then forwards them to its constituent \texttt{Conv2d} and \texttt{Linear} layers. 
+
+\noindent
+We have \texttt{merge\_lora\_weights()} and \texttt{unmerge\_lora\_weights()} functions to fuse or separate LoRA adaptations from base weights. During merging, the LoRA delta $\frac{\alpha}{r}BA$ is computed and added directly to the frozen weights, eliminating the two-branch computation overhead during inference. 
+
+\begin{lstlisting}[language=Python, caption=LoRA Weight Merging (from gaussian\_predictor\_lora.py)]
+def merge_lora_weights(model: nn.Module):
+    for m in model.modules():
+        if isinstance(m, (Linear, Conv2d)) and m.has_lora and not getattr(m, "_lora_merged", False):
+            with torch.no_grad():
+                if isinstance(m, Linear):
+                    # delta = B @ A -> shape (out, in)
+                    delta = (m.lora_B @ m.lora_A).to(m.weight.dtype) * m.scaling
+                    m.weight.data += delta
+                    m._lora_merged = True
+                else:  # Conv2d
+                    delta = (m.lora_B @ m.lora_A).view_as(m.weight) * m.scaling
+                    m.weight.data += delta
+                    m._lora_merged = True
+\end{lstlisting}
+
+
+This merging is standard practice in LoRA implementations \cite{hu2022lora} and is equivalent to the two-branch forward pass, while being more computationally efficient.
+
 \subsubsection{Training and Evaluation Changes}
 \label{sec:training_and_eval_changes}
 The existing Splatter Image evaluation script needed minimal changes, thanks to how we integrated our priors into the project.
@@ -1234,7 +1259,29 @@ code block is identical to that in \textbf{Listing 6}.
 For the LoRA-specific training script, within the modified \texttt{GaussianPredictor}, \texttt{requires\_grad=False} is explicitly set for all pre-trained backbone weights (see \texttt{gaussian\_predictor\_lora.py}), leaving only the low-rank matrices $A$ and $B$ as trainable. This ensures that optimizer updates are restricted to the adapter layers, with instances defined as \texttt{LoRALayer}.
 \newline
 
-CODE BLOCK
+For the LoRA-specific training script (\texttt{train\_network\_lora.py}), parameter freezing is enforced differently. After model initialization and pretrained weight loading (which may include grafting), only LoRA parameters are set to trainable:
+\begin{lstlisting}[language=Python, caption=LoRA Parameter Freezing (from train\_network\_lora.py)]
+if cfg.opt.lora_finetune:
+    # LoRA finetuning, only finetuning adapters
+    for name, p in gaussian_predictor.named_parameters():
+        p.requires_grad = ("lora" in name.lower())
+else:
+    # Full finetune 
+    for p in gaussian_predictor.parameters():
+        p.requires_grad = True
+
+trainable = [p for p in gaussian_predictor.parameters() if p.requires_grad]
+optimizer = torch.optim.Adam(
+    trainable,
+    lr=cfg.opt.base_lr,
+    eps=1e-15,
+    betas=cfg.opt.betas
+)
+\end{lstlisting}
+
+This selective freezing ensures the optimizer only updates \texttt{lora\_A} and \texttt{lora\_B} matrices. LoRA configurations resulted in a small percent of the original parameters being trainable (compared with Splatter Image). 
+
+The dedicated evaluation script \texttt{eval\_lora.py} handles LoRA weights automatically, with a merging step standard in LoRA evaluation \cite{hu2022lora}. 
 
 \subsection{Data pipelines}
 \label{sec:data_pipelines}
