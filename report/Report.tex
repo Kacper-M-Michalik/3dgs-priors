@@ -2051,7 +2051,6 @@ We conduct a two-sided significance test with non-parametric resampling to calcu
 
 \section{Chapter 4: Conclusions and Future Directions}
 \subsection{Conclusions}
-[Summarize what the project was about and the main conclusions.]
 
 \noindent
 Altogether, we managed to successfully augment the baseline Splatter Image implementation with our geometry priors being normal and depth maps. We fed these priors to the model both through the input channels and by using LoRA, and found that both approaches resulted in a higher reconstruction quality than the baseline as measured by metrics PSNR, SSIM and LPIPS. By making these lightweight improvements while preserving Splatter Image's key architecture, we increase its quality while still allowing it to maintain its original computational efficiency with its 3D Gaussian Splatting approach. 
@@ -2060,8 +2059,6 @@ Altogether, we managed to successfully augment the baseline Splatter Image imple
 Through our ablation study, we also saw that Splatter Image performed best when augmented with both depth and normal maps, showing that both priors are very useful for informing the model about how to reconstruct unseen parts of the input image.
 
 \subsection{Discussion of limitations}
-[Explain the limitations of your technique. You may want to refer to previous sections or show figures on the limitations.]
-\newline
 
 \noindent
 Our biggest limitations stemmed from a lack of time, compute resources, and tooling problems.
@@ -2085,7 +2082,7 @@ Another set of limitations came in the form of poor documentation. During resear
 we often struggled to run the models in the first place, due to incorrectly provided 
 package requirements, serious (or in some cases total) lack of instructions on how
 to launch and use the models, or no reference implementations being publicly provided at all, as was often the case with research papers.
-This made our search for priors models difficult and time consuming, on a already very time stretched project.
+This made our search for priors models difficult and time-consuming, on an already very time stretched project.
 \newline
 
 \noindent
@@ -2095,8 +2092,6 @@ Chamfer distance, where we could have generated point clouds from SRN car models
 
 \subsection{Future Directions}
 \label{sec:future}
-[State a few future directions for research and development. These typically follow from the discussion on limitations.]
-\newline
 
 \noindent
 One avenue for future work is generating and testing more geometry priors for future research. 
@@ -2110,7 +2105,7 @@ In general, since Splatter Image has most trouble generating sections of novel v
 Some of these priors may be of a non-image format, making them incompatible with simply being stacked into the model input channels.
 Such multimodal inputs such as classifications from segmentation models require a more permanent or multi-embedding 
 capable multimodal input method, over the current basic single FiLM input integration. Better FiLM support or mechanism like cross-attention
-could be implemented in the future, and then these approaches could be comapred to see which is most useful for Splatter Image.
+could be implemented in the future, and then these approaches could be compared to see which is most useful for Splatter Image.
 
 \noindent
 We could also investigate the integration of explicit geometric loss functions to supplement the current standard losses. A specialised 
