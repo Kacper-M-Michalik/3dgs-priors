@@ -1516,12 +1516,12 @@ every prior requested for training is available in the training/test/validation 
 
 \begin{lstlisting}[language=Python, caption=Excerpt from Splatter Image input tensor preparation code]
 if "use_pred_depth" in model_cfg.data and model_cfg.data.use_pred_depth:
-    assert model_cfg.data.category == "cars_priors", "Dataset does not have predicated maps!"
+    assert model_cfg.data.category == "cars_priors", "Dataset does not have predicted maps!"
     input_images = torch.cat([input_images,
                     data["pred_depths"][:, :model_cfg.data.input_images, ...]],
                     dim=2)
 if "use_pred_normal" in model_cfg.data and model_cfg.data.use_pred_normal:
-    assert model_cfg.data.category == "cars_priors", "Dataset does not have predicated maps!"
+    assert model_cfg.data.category == "cars_priors", "Dataset does not have predicted maps!"
     input_images = torch.cat([input_images,
                     data["pred_normals"][:, :model_cfg.data.input_images, ...]],
                     dim=2)
@@ -1904,7 +1904,7 @@ Section 2.6: Kacper
 \newline
 Section 3.1: Alex and Radhika
 \newline
-Section 3.2: FILL IN
+Section 3.2: Radhika and Alex
 \newline
 Section 3.3: Radhika
 \newline

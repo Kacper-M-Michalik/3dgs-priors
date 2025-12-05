@@ -97,6 +97,29 @@ NOTE: The training cell requires further user input to select logging options du
 The notebook performs relevant set up for Splatter Image followed by training/fine-tuning, the last cells can be run to upload the resulting weights to HuggingFace.
 Due to hardware demands, it is recommended to run the notebook on a service such as Google Colab, the existing models on HuggingFace were trained overnight using the A100 runtime on Google Colab Pro+.
 
+#### Training with LoRA
+Dedicated scripts are provided for fine-tuning using Low-Rank Adaptation (LoRA), to ensure backbone freezing such that only LoRA adapters are optimised. 
+
+For example, the following command can be run for LoRA finetuning:
+```
+python train_network_lora.py +dataset=cars_priors opt.pretrained_hf=True opt.lora_finetune=True
+```
+
+The LoRA rank, alpha and dropout parameters can be customised directly from the command line:
+- `+opt.lora_rank`: rank of the low-rank matrices (default: 4)
+- `+opt.lora_alpha`: scaling factor for adapter weights (default: 1)
+- `+opt.lora_dropout`: dropout probability for LoRA layers (default: 0)
+
+#### Evaluation with LoRA
+To evaluate a LoRA adapted checkpoint, use the specialised ``eval_lora.py" script, which handles the architecture instantiation required. 
+
+Usage:
+```
+python eval_lora.py [CHECKPOINT_PATH] [OUTPUT_DIR] --dataset_override [DATASET_NAME] --save_vis [NUM]
+```
+- `--dataset_override` (default: `cars_priors`): dataset config to load, to set the correct input channels. 
+- `--save_vis`: number of examples to render and save
+
 ## Testing
 A variety of testing notebooks can be found in the ```/testing``` folder.
 
