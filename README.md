@@ -94,7 +94,7 @@ To train modified models locally:
 
 NOTE: The training cell requires further user input to select logging options due to Splatter Image's use of wandb.
 
-The notebook performs relevant set up for Splatter Image followed by training/fine-tuning, the last cells can be run to upload the resulting weights to HuggingFace.
+The notebook performs relevant set up for Splatter Image followed by regular training, the last cells can be run to upload the resulting weights to HuggingFace.
 Due to hardware demands, it is recommended to run the notebook on a service such as Google Colab, the existing models on HuggingFace were trained overnight using the A100 runtime on Google Colab Pro+.
 
 #### Training with LoRA
