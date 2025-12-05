@@ -1858,8 +1858,17 @@ The results in the following for a LoRA-adapted model is for a configuration of 
     
     \caption{Novel View Comparison considering unseen angles.}
     \label{fig:novel_comparison}
-    
 \end{figure}
+
+\noindent 
+As demonstrated in Figure \ref{fig:conditional_comparison}, the model demonstrates strong performance on conditional views (the input viewpoint). In both the Geometry Priors and LoRA configurations, the reconstruction is faithful (to the human eye) to the ground truth. The model successfully encodes the input image features into the 3D Gaussian representation, capturing sharp boundaries, correct coloring, and accurate object silhouettes. 
+
+\noindent
+However, Figure \ref{fig:novel_comparison} highlights the mentioned challenges in single-view reconstruction. When rendering novel views, where angles deviated significantly from the input, we can observe a degradation in quality. While the global geometry remains consistent, high-frequency details are lost. As seen in the LoRA prediction (Figure \ref{fig:lora_novel}), the boundaries of the vehicle, such as around the wheel edges, lack the sharper definition found in the ground truth, with the edges appearing blurred. 
+
+\noindent
+Areas that were self-occluded in the input view (such as bumper edge), as can be seen in the Geometry Priors model in Figure \ref{fig:priors_novel}, are reconstructed with a more ``muddy" texture. This adds to the drop in fine detail. Therefore, artefacts common in baseline methods are not entirely resolved by the addition of priors, in this case. 
+
 \subsection{[Optional] Quantitative Results}
 \label{sec:quant}
 [A table and associated explanations for quantitative results.]
