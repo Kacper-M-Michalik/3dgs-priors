@@ -1634,6 +1634,7 @@ PSNR is calculated using the mean squared error and is commonly used to quantify
 To evaluate whether integrating different geometry priors into the model is effective, we performed a set of experiments testing different combinations of geometry priors. We measured the performance using PSNR, SSIM and LPIPS. 
 
 \subsubsection{Ablation Study Results}
+\label{sec:ablation}
 We train our models with different combinations of added geometry priors: one with depth maps, one with normal maps and one with both. We compare these models with our baseline.
 
 It is important to note that the original Splatter Image implementation recommends that single-view models be trained in two stagaes, first without LPIPS followed by fine-tuning with LPIPS. However, due to the large computational overhead caused by fine-tuning with LPIPS and our lack of computational resources and time, we did not run the second stage with LPIPS. Hence, although we include LPIPS in our metrics in this section, we do not use it to evaluate our model's performance as it is not an accurate assessment.
@@ -1764,6 +1765,34 @@ We can produce distribution plots for the scores files:
     \caption{LPIPS distribution for different LoRA configurations}
     \label{fig:lora_lpips}
 \end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{Significance testing for metrics of different LoRA configurations vs baseline (to 3 s.f.)}
+    \label{tab:lora_results}
+    \begin{tabular}{llccc}
+        \toprule
+        \textbf{Configuration} & \textbf{Metric} & \textbf{P-value} \\
+        \midrule
+        \multirow{3}{*}{$r=8, \alpha=8, d=0.05$} 
+         & PSNR & 0.00141 \\
+         & SSIM & 0.0000600 \\
+         & LPIPS & 0.0000133 \\
+        \midrule
+        \multirow{3}{*}{$r=32, \alpha=16, d=0.05$} 
+         & PSNR & 0.000180 \\
+         & SSIM & 0.000 \\
+         & LPIPS & 0.00408 \\
+         \midrule
+         \multirow{3}{*}{$r=8, \alpha=8, d=0.1$} 
+         & PSNR & 0.000107 \\
+         & SSIM & 0.00000670 \\
+         & LPIPS & 0.00309 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+We conduct a two-sided significance test with non-parametric resampling to calculate the P-value, similar to section \ref{sec:ablation}. We select the power of the test to be 0.05. Since all P-values are less than 0.05 from table \ref{tab:lora_results}, we conclude that the metrics for models with LoRA significantly differ from that of the original model.
 
 % From figures \ref{fig:lora_psnr}, \ref{fig:lora_ssim} and \ref{fig:lora_lpips}, we can see that all changed models now perform more consistently, as shown by the lower variance in all metrics as compared to the baseline. The PSNR metrics in figure \ref{fig:lora_psnr} and the SSIM metrics in figure \ref{fig:lora_ssim} also suggest better image reconstruction overall due to having higher mean PSNRs and SSIMs than the baseline, with the configuration $r=4, \alpha=1$ performing the best with the highest mean PSNR and SSIM. This configuration also has a lower mean LPIPS score than the baseline, further supporting our claim that this configuration is best for augmenting the model, while the other 2 configurations have higher mean LPIPS scores.
 
