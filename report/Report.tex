@@ -765,6 +765,18 @@ To quantitatively evaluate SOD models, we noted that the ShapeNet images used (t
 
 \noindent
 We tested three SOD architectures: \texttt{rembg} (based on the U-2-Net architecture) \cite{Gatis_rembg_2025}, \texttt{InSPyReNet} \cite{kim2022inspyrenet}, and \texttt{BiRefNet} \cite{zheng2024birefnet}. 
+
+\noindent
+Examples of the binary masks produced by the architectures, given an input image, are in figure \ref{fig:sod_example}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/SODOutputExample.png}
+    \caption{Example of Salient Object Detection produced binary masks}
+    \label{fig:sod_example}
+\end{figure}
+
+\noindent
 We evaluated performance using Mean Absolute Error (MAE), Intersection over Union (IoU), and $F_{\beta}$-Measure.
 $F_{\beta}$ is a weighted harmonic mean of precision and recall, defined as:
 \begin{equation}
