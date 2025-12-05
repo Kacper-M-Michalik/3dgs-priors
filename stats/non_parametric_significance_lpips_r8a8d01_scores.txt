@@ -1,0 +1,2 @@
+Observed Difference: -0.0051275
+P-value: 0.0030933
