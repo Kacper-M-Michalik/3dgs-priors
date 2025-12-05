@@ -1767,6 +1767,7 @@ We also use an extension of this dataset at \url{https://github.com/Xharlie/Shap
 A limitation of this dataset would be its small size since only 72 samples are available for us to use, such that the performance of geometry prior generation may not be evaluated correctly. However, in the same GitHub repository, the script to generate these images from the ShapeNet Core dataset is provided, so a possible extension given more time could be to include more images by running the script on other objects in the ShapeNet Core dataset. Another limitation is that some of the depth maps provided were flawed as shown in figure \ref{fig:depth_poor_gt}, so using them as ground truths to evaluate the performance of the depth map generator model was not ideal. In the future, evaluation could benefit from regenerating these depth maps to be more accurate, perhaps by exploring a different method of depth map generation from the 3D model provided in the ShapeNet Core dataset.
 
 \subsection{Training and testing results}
+\label{sec:tt_results}
 [Explain the training and testing results with graphs and elaborating on why they make sense, what could be improved.]
 
 \begin{figure}[H]
@@ -1995,14 +1996,16 @@ We continued training for 10,000 iterations. Table \ref{tab:lora_10k} details th
 \end{table}
 
 \noindent
-Here we can see distribution plots for the scores files:
-
+We have the following distribution plots for the metrics we consider across the configurations (10k iterations):
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{images/stats-results/LoRA_psnr_distribution.png}
     \caption{PSNR distribution for different LoRA configurations}
     \label{fig:lora_psnr}
 \end{figure}
+
+\noindent
+PSNR increased following finetuning, improving on Splatter Image's baseline, with the largest gain observed for the LoRA configuration with rank 32. This suggests further tests to see to what extent increased rank capacity could improve reconstruction, considering the validation loss results seen in Section \ref{sec:tt_results}. The `pairing' of the two models on the right (in terms of similar results, as in section \ref{sec:tt_results}) can also be seen here when considering the variance of these models for their PSNR.  
 
 \begin{figure}[H]
     \centering
@@ -2011,12 +2014,17 @@ Here we can see distribution plots for the scores files:
     \label{fig:lora_ssim}
 \end{figure}
 
+All 3 configurations tested improved SSIM, with very similar scores, suggesting that even minimal adaptation could strengthen spatial coherence. Despite the clustering amongst results, the improvement was statistically significant, as detailed below, while no meaningful distinction was found between the parameter settings here. 
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{images/stats-results/LoRA_lpips_distribution.png}
     \caption{LPIPS distribution for different LoRA configurations}
     \label{fig:lora_lpips}
 \end{figure}
+
+\noindent
+With LPIPS, we see a slight decrease in all variants compared to the baseline. An LPIPS decrease would indicate improved perceptual retention, and we do see a slight decrease in all variants compared to the baseline, but as with all the configurations and metrics, further computation time would allow us to further confirm this. 
 
 \begin{table}[H]
     \centering
@@ -2047,7 +2055,6 @@ Here we can see distribution plots for the scores files:
 \noindent
 We conduct a two-sided significance test with non-parametric resampling to calculate the P-value, similar to \textbf{Section \ref{sec:ablation}: Ablation Study Results}. We select the power of the test to be 0.05. Since all P-values are less than 0.05 from table \ref{tab:lora_results}, we conclude that the metrics for models with LoRA significantly differ from that of the original model.
 
-% From figures \ref{fig:lora_psnr}, \ref{fig:lora_ssim} and \ref{fig:lora_lpips}, we can see that all changed models now perform more consistently, as shown by the lower variance in all metrics as compared to the baseline. The PSNR metrics in figure \ref{fig:lora_psnr} and the SSIM metrics in figure \ref{fig:lora_ssim} also suggest better image reconstruction overall due to having higher mean PSNRs and SSIMs than the baseline, with the configuration $r=4, \alpha=1$ performing the best with the highest mean PSNR and SSIM. This configuration also has a lower mean LPIPS score than the baseline, further supporting our claim that this configuration is best for augmenting the model, while the other 2 configurations have higher mean LPIPS scores.
 
 \section{Chapter 4: Conclusions and Future Directions}
 \subsection{Conclusions}
