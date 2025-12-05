@@ -339,8 +339,6 @@ The original Gaussian Splatting fast tile-based rasterizer implementation from \
 defined by the predicted Gaussian splat.
 
 \subsection{Algorithm improvements}
-[Explain what you implemented to improve over the baseline. You may include figures to explain the idea and logic. Focus on the ideas and not the implementation.]
-
 \subsubsection{Model Improvements}
 
 \noindent
@@ -421,9 +419,6 @@ Following \cite{hu2022lora}, $A$ uses Kaiming uniform intialisation, and $B$ is 
 During inference, the LoRA weights can be optionally merged into the base weights by computing  $W_{merged} = W + \frac{\alpha}{r}BA$, eliminating the separate branch computation and reducing overhead for efficiency. 
 
 \subsection{Implementation details}
-[Explain how you implemented the improvements. You may include code snippets with the corresponding explanations.]
-\newline
-
 \noindent
 All code associated with the project can be found in the following repositories:
 \newline
@@ -1056,7 +1051,7 @@ def merge_lora_weights(model: nn.Module):
                     m._lora_merged = True
 \end{lstlisting}
 
-
+\noindent
 This merging is standard practice in LoRA implementations \cite{hu2022lora} and is equivalent to the two-branch forward pass, while being more computationally efficient.
 
 \subsubsection{Training and Evaluation Changes}
@@ -1259,6 +1254,7 @@ code block is identical to that in \textbf{Listing 6}.
 For the LoRA-specific training script, within the modified \texttt{GaussianPredictor}, \texttt{requires\_grad=False} is explicitly set for all pre-trained backbone weights (see \texttt{gaussian\_predictor\_lora.py}), leaving only the low-rank matrices $A$ and $B$ as trainable. This ensures that optimizer updates are restricted to the adapter layers, with instances defined as \texttt{LoRALayer}.
 \newline
 
+\noindent
 For the LoRA-specific training script (\texttt{train\_network\_lora.py}), parameter freezing is enforced differently. After model initialization and pretrained weight loading (which may include grafting), only LoRA parameters are set to trainable:
 \begin{lstlisting}[language=Python, caption=LoRA Parameter Freezing (from train\_network\_lora.py)]
 if cfg.opt.lora_finetune:
@@ -1279,14 +1275,12 @@ optimizer = torch.optim.Adam(
 )
 \end{lstlisting}
 
-This selective freezing ensures the optimizer only updates \texttt{lora\_A} and \texttt{lora\_B} matrices. LoRA configurations resulted in a small percent of the original parameters being trainable (compared with Splatter Image). 
-
+\noindent
+This selective freezing ensures the optimizer only updates \texttt{lora\_A} and \texttt{lora\_B} matrices. LoRA configurations resulted in a small percent of the original parameters being trainable (compared with Splatter Image).
 The dedicated evaluation script \texttt{eval\_lora.py} handles LoRA weights automatically, with a merging step standard in LoRA evaluation \cite{hu2022lora}. 
 
 \subsection{Data pipelines}
 \label{sec:data_pipelines}
-[Explain your data format, how you consume the data in your algorithms, and data augmentation.]
-\newline
 
 \begin{figure}[H]
     \centering
@@ -1447,17 +1441,75 @@ More details about ShapeNet cars, which the precomputed dataset is based off, ca
 
 \noindent
 Training and evaluation scripts using PyTorch DataLoaders to load datasets into memory for inference. To allow
-easy use of our precomputed dataset, we implement a custom PyTorch Dataset class, which can be plugged into 
+easy use of our precomputed dataset, we implement a custom PyTorch Dataset class, \verb|srn_priors.py|, which can be plugged into 
 DataLoaders without any additional code changes. Our custom Dataset class first downloads the datasets from Huggingface
-and then preprocesses them to improve GETTING performance. Namely, the datasets are converted from Huggingface dataset objects
-to pandas dataframes, where rows are then grouped by model UUID and the groups saved to a dictionary, allowing
+and then preprocesses for later use. Namely, the datasets are converted from Huggingface dataset objects
+to pandas dataframes, where rows are also grouped by model UUID and the groups saved to a dictionary, allowing
 efficient model to RGB image lookup. The HuggingFace datasets and redundant pandas dataframes
-are deallocated from memory ass soon as rows are processed, this is due to the memory usage of the precomputed dataset
+are deallocated from memory as soon as rows are processed, as to minimize memory usage by the precomputed dataset.
 
-CODE BLOCK
+\begin{lstlisting}[language=Python, caption=Excerpt from custom PyTorch Dataset]
+# Download ready dataset from HuggingFace
+print("Started downloading datasets")
+dataset_intrins = load_dataset(
+    "MVP-Group-Project/srn_cars_priors",
+    name="srn_cars_intrins", 
+    split=self.dataset_name
+)
+dataset_poses = load_dataset(
+    "MVP-Group-Project/srn_cars_priors",
+    name="srn_cars_poses", 
+    split=self.dataset_name
+)
+dataset_rgbs = load_dataset(
+    "MVP-Group-Project/srn_cars_priors",
+    name="srn_cars_rgbs", 
+    split=self.dataset_name
+)
+dataset_depths = load_dataset(
+    "MVP-Group-Project/srn_cars_priors",
+    name="srn_cars_depths", 
+    split=self.dataset_name
+)
+dataset_normals = load_dataset(
+    "MVP-Group-Project/srn_cars_priors",
+    name="srn_cars_normals", 
+    split=self.dataset_name
+)
+print("Downloaded datasets")
+
+# Convert intrinsics files to a dataframe for performance reasons
+pre_dataset_intrins = dataset_intrins.to_pandas()
+pre_dataset_intrins.sort_values(by=["uuid"], ascending=[True], inplace=True)
+
+# Calculate dataset length
+assert len(dataset_poses) == len(dataset_rgbs)
+if cfg.data.subset != -1:
+    assert cfg.data.subset > 0
+    assert len(pre_dataset_intrins) >= cfg.data.subset
+    self.subset_length = cfg.data.subset
+else:
+    self.subset_length = len(pre_dataset_intrins)
+
+self.dataset_intrins = pre_dataset_intrins.iloc[:self.subset_length]
+uuids = set(self.dataset_intrins['uuid'].unique())    
+
+# Convert remaining HF datasets to dataframes indexed by uuid
+self.dataset_poses = process_and_chunk(dataset_poses, uuids)
+print("Converted poses")
+self.dataset_rgbs = process_and_chunk(dataset_rgbs, uuids)
+print("Converted rgbs")
+self.dataset_depths = process_and_chunk(dataset_depths, uuids)
+print("Converted depths")
+self.dataset_normals = process_and_chunk(dataset_normals, uuids)    
+print("Converted normals")
+
+print("Dataset intrin length: {}".format(self.subset_length))
+\end{lstlisting}
 
 \noindent
-During training, model checkpoints are occasionally saved based on the training configuration. Namely, these files are saved:
+During and after training, the model is checkpointed and saved to disk. The frequency of mid-training checkpoints is set by the training configuration.
+Namely, the files saved are:
 
 \begin{description}
    \item[config.yaml] Training run configuration.
@@ -1468,11 +1520,11 @@ During training, model checkpoints are occasionally saved based on the training 
 \end{description}
 
 \noindent
-These are directly uploaded to HuggingFace into an appropriately named folder based on the training configuration.
-Example pretrained models for the precomputed ShapeNet cars_priors dataset can be found on HuggingFace at: \url{https://huggingface.co/MVP-Group-Project/splatter-image-priors} 
+\verb|training.ipynb| also offers code that can be directly upload these checkpoints to HuggingFace into an appropriately named folder based on the training configuration.
+Pretrained models for the precomputed ShapeNet \verb|cars_priors| dataset can be found on HuggingFace at: \url{https://huggingface.co/MVP-Group-Project/splatter-image-priors} 
 
 \begin{lstlisting}[language=Python, caption=HuggingFace automated model upload code]
-# Save weights to huggingface
+# Save checkpoint to huggingface
 
 files = []
 model_path = Path(model_path)
@@ -1641,10 +1693,12 @@ A limitation of this dataset would be its small size since only 72 samples are a
     \label{fig:val_lpips}
 \end{figure}
 
+\noindent
 When considering LoRA, the validation metrics from 5 to 10,000 iterations of finetuning reveal a distinct plateau, as we can note the y-axis scale as being extremely tight. Despite testing different rank configurations, we reached what appears to be the convergence limit of the weights early in the fine-tuning process, although it would be beneficial to confirm this by carrying on for longer or confirm this with other configurations. These metrics are discussed further in \textbf{Section \ref{sec:lora_results}: LoRA Experiment Results}.
 
 \subsection{Qualitative results}
 [Show in figures and explain visual results. Include different interesting cases covering different aspects/ limitations/ dataset diversity. If not converged, explain what we can expect once converged. Include any other didactic examples here.]
+\newline
 
 \noindent
 To qualitatively assess the reconstruction quality, we can evaluate our models on two categories of viewpoints as defined in the evaluation protocol: conditional Views (the input angle) and novel views (unseen angles).
@@ -1781,14 +1835,17 @@ It is important to note that the original Splatter Image implementation recommen
     \end{tabular}
 \end{table}
 
+\noindent
 We conduct a two-sided significance test with non-parametric resampling to calculate the P-value, which is the probability that the metrics of the augmented model are not significantly different from that of the original model and any difference is only due to random variation. We select the power of the test to be 0.05. Since all P-values are less than 0.05 from table \ref{tab:priors_results}, we conclude that the metrics of augmented model significantly differ from that of the original model.
 
+\noindent
 Adding combinations of depth and normal priors to augment the model with geometry priors seems to make the model perform more consistently, as shown by the lower variance in all metrics as compared to the baseline in figures \ref{fig:priors_psnr}, \ref{fig:priors_ssim} and \ref{fig:priors_lpips}. All augmented models have a higher mean PSNR and SSIM from figures \ref{fig:priors_psnr} and \ref{fig:priors_ssim} respectively which suggests better image reconstruction quality, with the model adding both depth and normal priors performing the best. As expected, all augmented models are worse than the baseline with regards to LPIPS (as shown in figure \ref{fig:priors_lpips}), since these models were not trained with LPIPS.
 
 \subsubsection{LoRA Experiment Results}
 \label{sec:lora_results}
 To evaluate whether Low-Rank Adaptation (as described in \textbf{Section \ref{sec:lora}: Manual LoRA Integration}) is effective, we performed a set of fine-tuning experiments on the ShapeNet-SRN Cars dataset. As mentioned in \textbf{Section \ref{sec:lora_parameters}: Low-Rank Adaptation (LoRA)}, LoRA behaviour is primarily controlled by three hyperparameters: rank ($r$), alpha ($\alpha$), and dropout ($d$). We tested multiple configurations by varying these hyperparameters while keeping all other components constant, measuring performance using PSNR, SSIM, and LPIPS.
 
+\noindent
 Table \ref{tab:lora_5k} presents the quantitative results for novel view synthesis early in the process (after 5,000 iterations).
 
 \begin{table}[h]
@@ -1807,6 +1864,7 @@ Table \ref{tab:lora_5k} presents the quantitative results for novel view synthes
     \end{tabular}
 \end{table}
 
+\noindent
 We continued training for 10,000 iterations. Table \ref{tab:lora_10k} details the results for three distinct model configurations at the end of this longer run. The differences between configurations become slightly more pronounced after 10k iterations compared to the 5k mark.
 
 \begin{table}[h]
@@ -1824,7 +1882,9 @@ We continued training for 10,000 iterations. Table \ref{tab:lora_10k} details th
     \end{tabular}
 \end{table}
 
-We can produce distribution plots for the scores files:
+\noindent
+Here we can see distribution plots for the scores files:
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{images/stats-results/LoRA_psnr_distribution.png}
@@ -1872,6 +1932,7 @@ We can produce distribution plots for the scores files:
     \end{tabular}
 \end{table}
 
+\noindent
 We conduct a two-sided significance test with non-parametric resampling to calculate the P-value, similar to \textbf{Section \ref{sec:ablation}: Ablation Study Results}. We select the power of the test to be 0.05. Since all P-values are less than 0.05 from table \ref{tab:lora_results}, we conclude that the metrics for models with LoRA significantly differ from that of the original model.
 
 % From figures \ref{fig:lora_psnr}, \ref{fig:lora_ssim} and \ref{fig:lora_lpips}, we can see that all changed models now perform more consistently, as shown by the lower variance in all metrics as compared to the baseline. The PSNR metrics in figure \ref{fig:lora_psnr} and the SSIM metrics in figure \ref{fig:lora_ssim} also suggest better image reconstruction overall due to having higher mean PSNRs and SSIMs than the baseline, with the configuration $r=4, \alpha=1$ performing the best with the highest mean PSNR and SSIM. This configuration also has a lower mean LPIPS score than the baseline, further supporting our claim that this configuration is best for augmenting the model, while the other 2 configurations have higher mean LPIPS scores.
