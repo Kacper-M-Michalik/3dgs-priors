@@ -1880,6 +1880,12 @@ We conduct a two-sided significance test with non-parametric resampling to calcu
 \subsection{Conclusions}
 [Summarize what the project was about and the main conclusions.]
 
+\noindent
+Altogether, we managed to successfully augment the baseline Splatter Image implementation with our geometry priors being normal and depth maps. We fed these priors to the model both through the input channels and by using LoRA, and found that both approaches resulted in a higher reconstruction quality than the baseline as measured by metrics PSNR, SSIM and LPIPS. By making these lightweight improvements while preserving Splatter Image's key architecture, we increase its quality while still allowing it to maintain its original computational efficiency with its 3D Gaussian Splatting approach. 
+
+\noindent
+Through our ablation study, we also saw that Splatter Image performed best when augmented with both depth and normal maps, showing that both priors are very useful for informing the model about how to reconstruct unseen parts of the input image.
+
 \subsection{Discussion of limitations}
 [Explain the limitations of your technique. You may want to refer to previous sections or show figures on the limitations.]
 
@@ -1957,11 +1963,11 @@ Section 3.3: Radhika
 \newline
 Section 3.4: Radhika and Alex
 \newline
-Section 4.1: FILL IN
+Section 4.1: Alex
 \newline
 Section 4.2: FILL IN
 \newline
-Section 4.3: Radhika
+Section 4.3: Radhika and Alex
 \newline
 Image and citation collection: Kacper and Radhika and Alex
 \newline
