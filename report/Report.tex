@@ -1561,47 +1561,64 @@ A limitation of this dataset would be its small size since only 72 samples are a
 \subsection{Qualitative results}
 [Show in figures and explain visual results. Include different interesting cases covering different aspects/ limitations/ dataset diversity. If not converged, explain what we can expect once converged. Include any other didactic examples here.]
 
-With the successful integration of geometry priors, we can see the following example of evaluation output below:
+\noindent
+To qualitatively assess the reconstruction quality, we can evaluate our models on two categories of viewpoints as defined in the evaluation protocol: conditional Views (the input angle) and novel views (unseen angles).
+
+\noindent
+Figure (Figure \ref{fig:conditional_comparison}) looks at conditional views which correspond to the exact camera pose used as input to the model. We expect high performance here, as the model should successfully encode input image features into the Gaussian representation for the object. 
+
+\noindent
+As observed below, both tests visually achieve very similar results in comparison to the ground truth. We see an accurate silhouette, with sharp features. 
+
 \begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{0.35\textwidth}
+   \begin{subfigure}[b]{\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/ExampleImageGT.png} 
-        \caption{Ground Truth}
-        \label{fig:gt_sample}
+        \includegraphics[width=0.4\textwidth]{images/ExampleImageGT_Cond.png}
+        \includegraphics[width=0.4\textwidth]{images/ExampleImageP_Cond.png}
+        \caption{Geometry Priors Model (Input View)}
     \end{subfigure}
-    \begin{subfigure}[b]{0.35\textwidth}
+    \vspace{0.5cm}
+    \begin{subfigure}[b]{\textwidth} 
         \centering
-        \includegraphics[width=\textwidth]{images/ExampleImageP.png} 
-        \caption{Trained Model Output}
-        \label{fig:lora_sample}
+        \includegraphics[width=0.4\textwidth]{images/Lora_GT.png}
+        \includegraphics[width=0.4\textwidth]{images/Lora_Cond.png} 
+        \caption{LoRA Model (Input View)}
     \end{subfigure}
     
-    \caption{Comparison of novel view scenario. (a) Ground truth rendering of the target view. (b) Reconstruction by a model with modified architecture for additional prior channels.}
-    \label{fig:lora_qualitative_comparison}
+    \caption{Conditional View Comparison of the input view reconstruction. Left: Ground Truth, Right: Prediction.}
+    \label{fig:conditional_comparison}
 \end{figure}
 
-Another example of evaluation output can be seen in Figure \ref{fig:lora_qualitative_comparison}, where LoRA adapters were trained with a rank of 2, $\alpha$ of 2 (both low compared to standards) and dropout of 0.05. The LoRA-adapted model is able to reconstruct the car from a novel view while preserving details such as headlights, despite the low parameter overhead.
+\noindent
+The primary challenge of single-view reconstruction lies in novel view synthesis (which is consequently the focus of \textbf{Section 3.4: Quantitative Results}), where the model must infer occluded geometry without direct data. Figure \ref{fig:novel_comparison} illustrates this capability.
+
+\noindent
+The results in the following for a LoRA-adapted model is for a configuration of rank 32, $\alpha$ 16, and dropout 0.05. 
 \begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{0.35\textwidth}
+    \begin{subfigure}[b]{1.0\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/lora_example246_gt.png} 
-        \caption{Ground Truth}
-        \label{fig:gt_sample}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.35\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{images/lora_example246_produced.png} 
-        \caption{LoRA Prediction}
-        \label{fig:lora_sample}
+        \includegraphics[width=0.4\textwidth]{images/ExampleImageGT_Novel.png} 
+        \includegraphics[width=0.4\textwidth]{images/ExampleImageP_Novel.png} 
+        \caption{Geometry Priors Model: Novel View (Left: GT, Right: Pred)}
+        \label{fig:priors_novel}
     \end{subfigure}
     
-    \caption{Comparison of novel view scenario. (a) Ground truth rendering of the target view. (b) Reconstruction by a LoRA-adapted model.}
-    \label{fig:lora_qualitative_comparison}
+    \vspace{1em}
+    \begin{subfigure}[b]{1.0\textwidth}
+        \centering
+        \includegraphics[width=0.4\textwidth]{images/lora_example246_gt.png}  % Both here are novel views.
+        \includegraphics[width=0.4\textwidth]{images/lora_example246_produced.png} 
+        \caption{LoRA Model: Novel View (Left: GT, Right: Pred)}
+        \label{fig:lora_novel}
+    \end{subfigure}
+    
+    \caption{Novel View Comparison considering unseen angles.}
+    \label{fig:novel_comparison}
+    
 \end{figure}
-
-\subsection{[Optional] Quantitative results}
+\subsection{[Optional] Quantitative Results}
 [A table and associated explanations for quantitative results.]
 \subsubsection{Metrics}
 For novel view synthesis evaluation, PSNR (Peak Signal-to-Noise Ratio), SSIM (Structural Similarity Index) and LPIPS (Learned Perceptual Image Patch Similarity) are standard metrics used to evaluate image quality from different perspectives\cite{zhang2025advancesfeedforward3dreconstruction}. 
@@ -1767,7 +1784,7 @@ Trying alternatigve metrics for 3D reconstruction, like Chaumfeer distance, for 
 off bunch of points of SRN cars meshes to genrate point cloud, then treat gaussians as point cloud and do comaprison
 
 \noindent
-One avenue for future work is the integration of explicit geometric loss functions to supplement the current standard losses. A specialised `rendering loss' coudl be introduced that targets depth discontinuities, especially following on from the discussion in \textbf{Section 2.3.2 Depth Map Exploration}. The model could be penalised for failing to reconstruct structural boundaries (by applying edge operators on rendered views and comparing them with ground truth edge maps if possible). This strategy was successfully demonstrated in \cite{gong2024eggsedgeguidedgaussian}. This loss can also be dynamically weighted based on the size of the 3D Gaussian's covariance matrices, as `smaller' Gaussians, with smaller covaraince determinants, generally represent fine details. If this loss is prioritised, i.e. we prioritise areas contributed to by small scale Gaussians, the optimisation process could be forced to resolve fine details, rather than being treated as noise or being approximated by larger Gaussians.  
+One avenue for future work is the integration of explicit geometric loss functions to supplement the current standard losses. A specialised `rendering loss' could be introduced that targets depth discontinuities, especially following on from the discussion in \textbf{Section 2.3.2 Depth Map Exploration}. The model could be penalised for failing to reconstruct structural boundaries (by applying edge operators on rendered views and comparing them with ground truth edge maps if possible). This strategy was successfully demonstrated in \cite{gong2024eggsedgeguidedgaussian}. This loss can also be dynamically weighted based on the size of the 3D Gaussian's covariance matrices, as `smaller' Gaussians, with smaller covaraince determinants, generally represent fine details. If this loss is prioritised, i.e. we prioritise areas contributed to by small scale Gaussians, the optimisation process could be forced to resolve fine details, rather than being treated as noise or being approximated by larger Gaussians.  
 
 \subsection{Project Contributions}
 
@@ -1794,7 +1811,7 @@ Section 2.6: Kacper
 \newline
 Section 3.1: Alex and Radhika
 \newline
-Section 3.2: Radhika
+Section 3.2: FILL IN
 \newline
 Section 3.3: Radhika
 \newline
