@@ -733,6 +733,7 @@ Canny produces binary edges that often fragment under the noise inherent in mono
 While these operators successfully identify major structural outlines, we found that they are at times sensitive to artifacts in the estimated depth maps. Consequently, we determined that explicit edge channels added insufficient benefits compared to other priors, and were excluded. However, while these edge operators were not used as input priors, we discuss their potential application in \textbf{Section \ref{sec:future} Future Directions}. 
 
 \subsubsection{Segmentation and Salient Object Detection Exploration}
+\label{sec:segmentation}
 
 Separating pixels belonging to the foreground object, through a segmentation mask or, as will be detailed below, using a salient object detection (SOD) model, can be another prior. This involves producing a binary mask that separates an object from its background. 
 
@@ -837,6 +838,9 @@ To identify the most frequent ``winner," we counted the number of images where e
 
 \noindent
 However, to contextualise these results, all three models achieved very high scores (with $F_{\beta} > 0.97$ and IOU $> 0.95$), largely as the ShapeNet images have a clear foreground object against a uniform background. This reduces the number of possible cases of background vs foreground confusion, which means the models differ meaningfully here on fine structures at the object boundary. In practice, these can include wing mirrors, antennae, etc. Therefore, the differences in the models come from how well they capture these fine details.
+
+\noindent
+However, in the end we decided not to use SOD models to generate geometry priors for Splatter Image. This was in part due to the lack of computational resources and time but was also because we thought that since the binary mask only consisted of 1's and 0's, it may not be as expressive as normal and depth maps, which encode more information.
 
 \subsubsection{Selected Prior Integration}
 During model selection, basic notebooks were written to operate and evaluate the relevant models. 
@@ -2087,6 +2091,7 @@ One avenue for future work is generating and testing more geometry priors for fu
 Due to the lack of time, there were some priors that we deemed not worth investigating. 
 For example, in \textbf{Section \ref{sec:normal}: Planes and Normal Maps Exploration}, we discuss how generating predicted scene planes for input images and using them as added priors to augment the model seemed unlikely to help guide reconstruction. 
 In future studies, we could challenge this assumption by generating this prior and testing it alongside other geometry priors in the ablation study. 
+We could also use the SOD models we explored in \textbf{Section \ref{sec:segmentation}: Segmentation and Salient Object Detection Exploration} to generate binary masks and use them as priors to augment our model and see how they affect model performance.
 In general, since Splatter Image has most trouble generating sections of novel views that are obscured from the original input image, we could focus on generating and testing more priors oriented to hidden areas.
 
 \noindent
