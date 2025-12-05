@@ -971,18 +971,18 @@ def forward(self, x,
 
     ...
 
+    # Get embedding for modulation
     film_emb = None
-    # Get camera embedding
     if self.cfg.cam_embd.embedding is not None:
         if "custom_embedding" in self.cfg.data and self.cfg.data.custom_embedding:
             assert custom_emb is not None
-            assert self.cfg.cam_embd.method == "film"
             film_emb = custom_emb
         else:    
+            # Get camera embedding
             cam_embedding = self.get_camera_embeddings(source_cameras_view_to_world)
             assert self.cfg.cam_embd.method == "film"
             film_emb = cam_embedding.reshape(B*N_views, cam_embedding.shape[2])
-    
+
     ...
     
     # Runs input through SingleImageSongUNetPredictor
@@ -1410,11 +1410,11 @@ are deallocated from memory ass soon as rows are processed, this is due to the m
 CODE BLOCK
 
 \noindent
-During training, model checkpoints are occasionally saved based on the training configuration. Namely these files are saved:
+During training, model checkpoints are occasionally saved based on the training configuration. Namely, these files are saved:
 
 \begin{description}
    \item[config.yaml] Training run configuration.
-   \item[model\_best.pth] Weights, PSNR and iteration count of highest scoring model from training run.
+   \item[model\_best.pth] Weights, PSNR and iteration count of the highest scoring model from training run.
    \item[model\_latest.pth] Most recent weights, PSNR and iteration count.
    \item[scores.txt] Scores from evaluation of the model during training.
    \item[train\_network.log] Log of critical events during training run.
@@ -1422,8 +1422,7 @@ During training, model checkpoints are occasionally saved based on the training 
 
 \noindent
 These are directly uploaded to HuggingFace into an appropriately named folder based on the training configuration.
-Example pretrained models for the precomputed ShapeNet cars dataset can be found on HuggingFace at:
-\url{https://huggingface.co/MVP-Group-Project/splatter-image-priors} 
+Example pretrained models for the precomputed ShapeNet cars_priors dataset can be found on HuggingFace at: \url{https://huggingface.co/MVP-Group-Project/splatter-image-priors} 
 
 \begin{lstlisting}[language=Python, caption=HuggingFace automated model upload code]
 # Save weights to huggingface
@@ -1837,16 +1836,29 @@ We conduct a two-sided significance test with non-parametric resampling to calcu
 \subsection{Discussion of limitations}
 [Explain the limitations of your technique. You may want to refer to previous sections or show figures on the limitations.]
 
-halluciantion in hidden areas still a problem, as at end of the day you dont know what there, only doign best guess basd on alrge datasets
+Our biggest limitations stemmed from a lack of time, compute reseources, and tooling problems.
+Splatter Image, despite it's relative high oerforamcne for a deep learnign recosuntcion model, still requires high grade hardware to run,
+and requires long amounts of time on said hardware to perform tasks like training. 
+
+In terms of tooling, we used Google Colab Pro+ to give us access to A100 GPUs and 24 hour execution notebooks, despite these promises, we found 
+that our notebooks running overnight were very often randomly killed by Google, this caused the complete loss of the VM/notebook and all associated progress 
+(namely model training progress). This meant we could not reliably train models to achieve comparable results to the original pretrained models
+which were trained continuosly on A6000 GPUs over a period of 7 days. 
+
+We were also given access to the reference SRN cars dataset at a very late stage in the project, which did not leave us enough time 
+to implement desired things like calculting our own groudn truths, or bneing able to geenrate point clouds to be able to calcualte 
+Chaumffer distance as an addtional metric for all models. 
+
+In terms of the limitations of splatter image halluciantion in hidden areas still a problem, as at end of the day you dont know what there,
 lot of data cnd comptue needed to perofrm accurate reweults
-we lacked compute to generate and test more models priors
+ute to generate and test more models priors
 
 ShapeNet time to get access etc, reasoning for using the variation dataset rather than generating our own, given time constraints. 
 
 \subsection{Future Directions}
 \label{sec:future}
 [State a few future directions for research and development. These typically follow from the discussion on limitations.]
-
+ TEST 
 implementing and comparing cross-attention vs FiLM for multimodal data
 Trying alternatigve metrics for 3D reconstruction, like Chaumfeer distance, for exampel could sample
 off bunch of points of SRN cars meshes to genrate point cloud, then treat gaussians as point cloud and do comaprison
