@@ -1638,7 +1638,8 @@ trying alternative datasets
 Trying alternatigve metrics for 3D reconstruction, like Chaumfeer distance, for exampel could sample
 off bunch of points of SRN cars meshes to genrate point cloud, then treat gaussians as point cloud and do comaprison
 
-As mentioned in last supervisor meeting: explicit loss function/rendering loss: e.g. depth edges for tinier Gaussians (based on the size of the covariance matrix), could help with fine details. 
+One avenue for future work is the integration of explicit geometric loss functions to supplement the current standard losses. A specialised `rendering loss' coudl be introduced that targets depth discontinuities, especially following on from the discussion in \textbf{Section 2.3.2 Depth Map Exploration}. The model could be penalised for failing to reconstruct structural boundaries (by applying edge operators on rendered views and comparing them with ground truth edge maps if possible). This strategy was successfully demonstrated in \cite{gong2024eggsedgeguidedgaussian}. This loss can also be dynamically weighted based on the size of the 3D Gaussian's covariance matrices, as `smaller' Gaussians, with smaller covaraince determinants, generally represent fine details. If this loss is prioritised, i.e. we prioritise areas contributed to by small scale Gaussians, the optimisation process could be forced to resolve fine details, rather than being treated as noise or being approximated by larger Gaussians.  
+
 \subsection{Project Contributions}
 
 \noindent
@@ -1674,7 +1675,7 @@ Section 4.1: FILL IN
 \newline
 Section 4.2: FILL IN
 \newline
-Section 4.3: FILL IN
+Section 4.3: Radhika
 \newline
 Image and citation collection: Kacper and Radhika and Alex
 \newline
