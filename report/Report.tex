@@ -746,7 +746,7 @@ We looked four classical edge detection operators applied directly to the estima
 Canny produces binary edges that often fragment under the noise inherent in monocular depth estimation. 
 
 \noindent
-While these operators successfully identify major structural outlines, we found that they are at times sensitive to artifacts in the estimated depth maps. Consequently, we determined that explicit edge channels added insufficient benefits compared to other priors, and were excluded.
+While these operators successfully identify major structural outlines, we found that they are at times sensitive to artifacts in the estimated depth maps. Consequently, we determined that explicit edge channels added insufficient benefits compared to other priors, and were excluded. However, while these edge operators were not used as input priors, we discuss their potential application in \textbf{Section 4.3 Future Directions}. 
 
 \subsubsection{Segmentation and Salient Object Detection Exploration}
 
@@ -1469,6 +1469,27 @@ A limitation of this dataset would be its small size since only 72 samples are a
 \subsection{Qualitative results}
 [Show in figures and explain visual results. Include different interesting cases covering different aspects/ limitations/ dataset diversity. If not converged, explain what we can expect once converged. Include any other didactic examples here.]
 
+With the successful integration of geometry priors, we can see the following example of evaluation output below:
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.35\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/ExampleImageGT.png} 
+        \caption{Ground Truth}
+        \label{fig:gt_sample}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.35\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/ExampleImageP.png} 
+        \caption{Trained Model Output}
+        \label{fig:lora_sample}
+    \end{subfigure}
+    
+    \caption{Comparison of novel view scenario. (a) Ground truth rendering of the target view. (b) Reconstruction by a model with modified architecture for additional prior channels.}
+    \label{fig:lora_qualitative_comparison}
+\end{figure}
+
+Another example of evaluation output can be seen in Figure \ref{fig:lora_qualitative_comparison}, where LoRA adapters were trained with a rank of 2, $\alpha$ of 2 (both low compared to standards) and dropout of 0.05. The LoRA-adapted model is able to reconstruct the car from a novel view while preserving details such as headlights, despite the low parameter overhead.
 \begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.35\textwidth}
@@ -1480,15 +1501,13 @@ A limitation of this dataset would be its small size since only 72 samples are a
     \begin{subfigure}[b]{0.35\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/lora_example246_produced.png} 
-        \caption{LoRA Prediction)}
+        \caption{LoRA Prediction}
         \label{fig:lora_sample}
     \end{subfigure}
     
-    \caption{Comparison of novel view case. (a) Ground truth rendering of the target view. (b) Reconstruction by a LoRA-adapted model.}
+    \caption{Comparison of novel view scenario. (a) Ground truth rendering of the target view. (b) Reconstruction by a LoRA-adapted model.}
     \label{fig:lora_qualitative_comparison}
 \end{figure}
-
-One example of evaluation output can be seen in \ref{fig:lora_qualitative_comparison}, where LoRA adapters were trained with a rank of 2, $\alpha$ of 2 (both low compared to standards) and dropout of 0.05. The LoRA-adapted model is able to reconstruct the car from a novel view while preserving details such as headlights, despite the low parameter overhead.
 
 \subsection{[Optional] Quantitative results}
 [A table and associated explanations for quantitative results.]
@@ -1498,7 +1517,7 @@ PSNR is calculated using the mean squared error and is commonly used to quantify
 
 To evaluate whether integrating different geometry priors into the model is effective, we performed a set of experiments testing different combinations of geometry priors. We measured the performance using PSNR, SSIM and LPIPS. 
 
-\subsubsection{Ablation study on geometry priors, U-Net integration}
+\subsubsection{Ablation Study Results}
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{images/stats-results/priors_psnr_distribution.png}
@@ -1587,9 +1606,6 @@ We continued training for 10,000 iterations. Table \ref{tab:lora_10k} details th
         \bottomrule
     \end{tabular}
 \end{table}
- 
-
-All LoRA configurations tested here outperform the Splatter Image baseline \cite{splatterImage} (24.00 dB).
 
 We can produce distribution plots for the scores files:
 \begin{figure}[H]
@@ -1628,7 +1644,7 @@ we lacked compute to generate and test more models priors
 
 ShapeNet time to get access etc, reasoning for using the variation dataset rather than generating our own, given time constraints. 
 
-\subsection{Future directions}
+\subsection{Future Directions}
 [State a few future directions for research and development. These typically follow from the discussion on limitations.]
 
 generating and testing more priors (especially more priors oriented to hidden areas, could bring up planes again)
@@ -1638,7 +1654,9 @@ trying alternative datasets
 Trying alternatigve metrics for 3D reconstruction, like Chaumfeer distance, for exampel could sample
 off bunch of points of SRN cars meshes to genrate point cloud, then treat gaussians as point cloud and do comaprison
 
-As mentioned in last supervisor meeting: explicit loss function/rendering loss: e.g. depth edges for tinier Gaussians (based on the size of the covariance matrix), could help with fine details. 
+\noindent
+One avenue for future work is the integration of explicit geometric loss functions to supplement the current standard losses. A specialised `rendering loss' coudl be introduced that targets depth discontinuities, especially following on from the discussion in \textbf{Section 2.3.2 Depth Map Exploration}. The model could be penalised for failing to reconstruct structural boundaries (by applying edge operators on rendered views and comparing them with ground truth edge maps if possible). This strategy was successfully demonstrated in \cite{gong2024eggsedgeguidedgaussian}. This loss can also be dynamically weighted based on the size of the 3D Gaussian's covariance matrices, as `smaller' Gaussians, with smaller covaraince determinants, generally represent fine details. If this loss is prioritised, i.e. we prioritise areas contributed to by small scale Gaussians, the optimisation process could be forced to resolve fine details, rather than being treated as noise or being approximated by larger Gaussians.  
+
 \subsection{Project Contributions}
 
 \noindent
@@ -1674,7 +1692,7 @@ Section 4.1: FILL IN
 \newline
 Section 4.2: FILL IN
 \newline
-Section 4.3: FILL IN
+Section 4.3: Radhika
 \newline
 Image and citation collection: Kacper and Radhika and Alex
 \newline
