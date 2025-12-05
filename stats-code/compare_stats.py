@@ -36,7 +36,8 @@ if not os.path.exists("stats"):
 for (metric_name, combined_values) in [("PSNR", combined_psnrs), ("SSIM", combined_ssims), ("LPIPS", combined_lpips)]:
     fig, ax = plt.subplots()
     violin = plt.violinplot(combined_values, showmeans=True)
-    ax.set_xticks(np.arange(1, 5), labels=[ "Baseline", "Depth Only", "Normal Only", "Both" ])
+    x_model_labels = [ "Baseline", "Depth Only", "Normal Only", "Both" ]
+    ax.set_xticks(np.arange(1, 5), labels=x_model_labels)
     ax.set_xlim(0.25, 4 + 0.75)
     ax.set_ylabel(metric_name)
     for (i, vs) in enumerate(combined_values):

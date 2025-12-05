@@ -1591,30 +1591,29 @@ We continued training for 10,000 iterations. Table \ref{tab:lora_10k} details th
 
 All LoRA configurations tested here outperform the Splatter Image baseline \cite{splatterImage} (24.00 dB).
 
-
-We can produce distribution plots for the scores files:  (NEEDS RERUNS)
+We can produce distribution plots for the scores files:
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{images/stats-results/lora_experiments_psnr_distribution.png}
+    \includegraphics[width=0.85\textwidth]{images/stats-results/LoRA_psnr_distribution.png}
     \caption{PSNR distribution for different LoRA configurations}
     \label{fig:lora_psnr}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{images/stats-results/lora_experiments_ssim_distribution.png}
+    \includegraphics[width=0.85\textwidth]{images/stats-results/LoRA_ssim_distribution.png}
     \caption{SSIM distribution for different LoRA configurations}
     \label{fig:lora_ssim}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{images/stats-results/lora_experiments_lpips_distribution.png}
+    \includegraphics[width=0.85\textwidth]{images/stats-results/LoRA_lpips_distribution.png}
     \caption{LPIPS distribution for different LoRA configurations}
     \label{fig:lora_lpips}
 \end{figure}
 
-From figures \ref{fig:lora_psnr}, \ref{fig:lora_ssim} and \ref{fig:lora_lpips}, we can see that all changed models now perform more consistently, as shown by the lower variance in all metrics as compared to the baseline. The PSNR metrics in figure \ref{fig:lora_psnr} and the SSIM metrics in figure \ref{fig:lora_ssim} also suggest better image reconstruction overall due to having higher mean PSNRs and SSIMs than the baseline, with the configuration $r=4, \alpha=1$ performing the best with the highest mean PSNR and SSIM. This configuration also has a lower mean LPIPS score than the baseline, further supporting our claim that this configuration is best for augmenting the model, while the other 2 configurations have higher mean LPIPS scores.
+% From figures \ref{fig:lora_psnr}, \ref{fig:lora_ssim} and \ref{fig:lora_lpips}, we can see that all changed models now perform more consistently, as shown by the lower variance in all metrics as compared to the baseline. The PSNR metrics in figure \ref{fig:lora_psnr} and the SSIM metrics in figure \ref{fig:lora_ssim} also suggest better image reconstruction overall due to having higher mean PSNRs and SSIMs than the baseline, with the configuration $r=4, \alpha=1$ performing the best with the highest mean PSNR and SSIM. This configuration also has a lower mean LPIPS score than the baseline, further supporting our claim that this configuration is best for augmenting the model, while the other 2 configurations have higher mean LPIPS scores.
 
 \section{Chapter 4: Conclusions and Future Directions}
 \subsection{Conclusions}
