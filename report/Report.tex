@@ -326,8 +326,7 @@ generating the output image M as the Splatter Image. For this it uses a U-Net, a
 As shown in figure \ref{fig:u-net_diagram}, a U-Net model architecture consists of a contracting path (left side) and an expansive path (right side). 
 The contracting path aims to capture context and follows the typical architecture of a convolutional network, which consists of the repeated application of convolutions, each followed by an activation function and a max pooling operation for downsampling. 
 At each downsampling step we increase the number of feature channels. 
-Afterwards, each step in the expansive path consists of an upsampling of the feature map followed by a convolution that decreases the number of feature channels, enabling precise localization. 
-At the final layer a convolution is used to map each feature vector to the desired number of classes. WHAT
+Afterwards, each step in the expansive path consists of an upsampling of the feature map followed by a convolution that decreases the number of feature channels, enabling precise localization.
 
 \noindent
 For the U-Net used in Splatter Image, learning to predict the Splatter Image can be done on a single GPU using at most 
