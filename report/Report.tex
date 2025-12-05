@@ -2076,10 +2076,16 @@ for improvements to Splatter Image, as Splatter Image can only be as good as the
 \newline
 
 \noindent
+Lack of time and compute also meant we could not afford to generate and test additional priors other than depths
+and normals maps, despite having ready implementations of prior generation scripts like the \verb|generate_segmentation.py| script.
+\newline
+
+\noindent
 Another set of limitations came in the form of poor documentation. During research of prior models
 we often struggled to run the models in the first place, due to incorrectly provided 
 package requirements, serious (or in some cases total) lack of instructions on how
 to launch and use the models, or no reference implementations being publicly provided at all, as was often the case with research papers.
+This made our search for priors models difficult and time consuming, on a already very time stretched project.
 \newline
 
 \noindent
@@ -2101,10 +2107,14 @@ We could also use the SOD models we explored in \textbf{Section \ref{sec:segment
 In general, since Splatter Image has most trouble generating sections of novel views that are obscured from the original input image, we could focus on generating and testing more priors oriented to hidden areas.
 
 \noindent
-Some of these priors may be in a different format that is not compatible with the current input channels, such as classifications from segmentation models. Hence, an extension could be to implement cross attention and FiLM to the original model such that it can support multimodal input data. We can then compare the two approaches to see which is most useful for Splatter Image.
+Some of these priors may be of a non-image format, making them incompatible with simply being stacked into the model input channels.
+Such multimodal inputs such as classifications from segmentation models require a more permanent or multi-embedding 
+capable multimodal input method, over the current basic single FiLM input integration. Better FiLM support or mechanism like cross-attention
+could be implemented in the future, and then these approaches could be comapred to see which is most useful for Splatter Image.
 
 \noindent
-We could also investigate the integration of explicit geometric loss functions to supplement the current standard losses. A specialised `rendering loss' could be introduced that targets depth discontinuities, especially following on from the discussion in \textbf{Section \ref{sec:depth}: Depth Map Exploration}. The model could be penalised for failing to reconstruct structural boundaries (by applying edge operators on rendered views and comparing them with ground truth edge maps if possible). This strategy was successfully demonstrated in \cite{gong2024eggsedgeguidedgaussian}. This loss can also be dynamically weighted based on the size of the 3D Gaussian's covariance matrices, as `smaller' Gaussians, with smaller covaraince determinants, generally represent fine details. If this loss is prioritised, i.e. we prioritise areas contributed to by small scale Gaussians, the optimisation process could be forced to resolve fine details, rather than being treated as noise or being approximated by larger Gaussians.  
+We could also investigate the integration of explicit geometric loss functions to supplement the current standard losses. A specialised 
+`rendering loss' could be introduced that targets depth discontinuities, especially following on from the discussion in \textbf{Section \ref{sec:depth}: Depth Map Exploration}. The model could be penalised for failing to reconstruct structural boundaries (by applying edge operators on rendered views and comparing them with ground truth edge maps if possible). This strategy was successfully demonstrated in \cite{gong2024eggsedgeguidedgaussian}. This loss can also be dynamically weighted based on the size of the 3D Gaussian's covariance matrices, as `smaller' Gaussians, with smaller covariance determinants, generally represent fine details. If this loss is prioritised, i.e. we prioritise areas contributed to by small scale Gaussians, the optimisation process could be forced to resolve fine details, rather than being treated as noise or being approximated by larger Gaussians.  
 
 \noindent
 Another avenue for future work could be to train and evaluate the models with a more diverse set of datasets. 
@@ -2150,7 +2160,7 @@ Section 4.1: Alex
 \newline
 Section 4.2: Kacper and Alex
 \newline
-Section 4.3: Radhika and Alex
+Section 4.3: Kacper and Radhika and Alex
 \newline
 Image and citation collection: Kacper and Radhika and Alex
 \newline
